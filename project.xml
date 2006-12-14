@@ -1,0 +1,35 @@
+<project>
+    <name>juggler</name>
+    <packages default="icecube.daq.juggler">
+    </packages>
+    <uses>
+        <libs>
+	    daqLog.jar
+            daq-common.jar
+            daq-io.jar
+            obsolete.jar
+            payload.jar
+            payload-generator.jar
+            new-dispatch.jar
+        </libs>
+        <tools>
+            commons-logging.jar
+            concurrent.jar
+            <!-- jmdns.jar -->
+            jmxtools.jar
+            ws-commons-util.jar
+            xmlrpc-client.jar
+            xmlrpc-common.jar
+            xmlrpc-server.jar
+        </tools>
+    </uses>
+    <test>
+        <uses>
+            <libs></libs>
+            <tools>
+                log4j.jar
+                junit.jar
+            </tools>
+        </uses>
+    </test>
+</project>

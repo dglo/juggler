@@ -1,0 +1,396 @@
+package icecube.daq.juggler;
+
+import java.io.IOException;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
+import java.nio.ByteBuffer;
+
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+
+import java.nio.charset.Charset;
+
+import java.util.Enumeration;
+import java.util.Iterator;
+
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceEvent;
+import javax.jmdns.ServiceInfo;
+import javax.jmdns.ServiceListener;
+
+interface IDAQConfig
+{
+    /** Base name used for DAQ configuration service lookup. */
+    String BASE_PATH = "_daq._tcp.local.";
+    /** Configuration server info. */
+    String CONFIG_INFO = "config." + BASE_PATH;
+    int PORT = 53703;
+}
+
+class DAQConfig
+{
+    private static Charset charset = Charset.forName("UTF-8");
+
+    private ByteBuffer inBuf = ByteBuffer.allocate(16);
+    private String inputLines = "";
+
+    private SocketChannel chan;
+
+    DAQConfig(InetAddress addr, int port)
+        throws IOException
+    {
+        chan = SocketChannel.open(new InetSocketAddress(addr, port));
+
+        finishInit();
+    }
+
+    DAQConfig(SocketChannel chan)
+        throws IOException
+    {
+        this.chan = chan;
+
+        finishInit();
+    }
+
+    void close()
+    {
+        try {
+            chan.close();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+    }
+
+    private void finishInit()
+        throws IOException
+    {
+        if (chan == null) {
+            throw new IOException("Got null SocketChannel");
+        }
+
+        chan.socket().setReuseAddress(true);
+        chan.configureBlocking(false);
+    }
+
+    String readLine()
+    {
+        String line = null;
+
+        while (line == null) {
+            int nl = inputLines.indexOf("\n");
+            if (nl >= 0) {
+                line = inputLines.substring(0, nl);
+                inputLines = inputLines.substring(nl + 1);
+                break;
+            }
+
+            try {
+                // Clear the buffer and read bytes from socket
+                inBuf.clear();
+                int numBytesRead = chan.read(inBuf);
+
+                if (numBytesRead == -1) {
+                    // No more bytes can be read from the channel
+                    chan.close();
+                } else {
+                    inBuf.flip();
+
+                    inputLines += charset.decode(inBuf);
+                }
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        }
+
+        return line;
+    }
+
+    void writeLine(String msg)
+    {
+        if (!msg.endsWith("\n")) {
+            msg = msg + "\n";
+        }
+
+        ByteBuffer buf = charset.encode(msg);
+        int numWritten = 0;
+        while (numWritten < buf.limit()) {
+            try {
+                int written = chan.write(buf);
+                numWritten += written;
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+                break;
+            }
+        }
+    }
+}
+
+class DAQServer
+    implements IDAQConfig
+{
+    private JmDNS zConf;
+    private  Selector selector;
+
+    DAQServer()
+        throws IOException
+    {
+        startZeroconf();
+        setupSocket();
+        serverLoop();
+    }
+
+    private void handleClient(DAQConfig cfg)
+    {
+        cfg.writeLine("HOWDY");
+        String msg = cfg.readLine();
+        if (!msg.startsWith("IAM ")) {
+            System.out.println("Unknown command \"" + msg + "\"");
+        } else {
+            System.out.println("Saw " + msg.substring(4));
+        }
+    }
+
+    private void processSelectionKey(SelectionKey selKey)
+        throws IOException
+    {
+        // Since the ready operations are cumulative,
+        // need to check readiness for each operation
+        if (selKey.isValid() && selKey.isConnectable()) {
+            // Get channel with connection request
+            SocketChannel chan = (SocketChannel) selKey.channel();
+
+            if (!chan.finishConnect()) {
+                // An error occurred; handle it
+
+                // Unregister the channel with this selector
+                selKey.cancel();
+            } else {
+                DAQConfig cfg = new DAQConfig(chan);
+                try {
+                    handleClient(cfg);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            chan.close();
+        }
+    }
+
+    private void serverLoop()
+    {
+        int i = 0;
+        while (i < 5) {
+            try {
+                // Wait for an event
+                selector.select();
+            } catch (IOException e) {
+                // Handle error with selector
+                break;
+            }
+
+            // Get list of selection keys with pending events
+            Iterator it = selector.selectedKeys().iterator();
+
+            // Process each key at a time
+            while (it.hasNext()) {
+                // Get the selection key
+                SelectionKey selKey = (SelectionKey) it.next();
+
+                // Remove from list to indicate that it is being processed
+                it.remove();
+
+                // Check if it's a connection request
+                if (selKey.isAcceptable()) {
+                    // Get channel with connection request
+                    ServerSocketChannel ssChan =
+                        (ServerSocketChannel) selKey.channel();
+
+                    // Get port that received the connection request; this
+                    // information might be useful in determining how to
+                    // handle the connection
+                    int localPort = ssChan.socket().getLocalPort();
+
+                    try {
+                        // Accept the connection request.
+                        // If channel is blocking, this method blocks.
+                        // The returned channel is in blocking mode.
+                        SocketChannel chan = ssChan.accept();
+
+                        // If serverSocketChannel is non-blocking,
+                        // chan may be null
+                        if (chan == null) {
+                            // There were no pending connection requests;
+                        } else {
+                            handleClient(new DAQConfig(chan));
+                        }
+                    } catch (IOException e) {
+                        // ignore errors
+                    }
+                }
+            }
+
+            i = i + 1;
+        }
+
+        System.out.println("closing Zeroconf");
+        zConf.close();
+    }
+
+    private void setupSocket()
+        throws IOException
+    {
+        ServerSocketChannel ssChan = ServerSocketChannel.open();
+        ssChan.configureBlocking(false);
+        ssChan.socket().setReuseAddress(true);
+        ssChan.socket().bind(new InetSocketAddress(PORT));
+
+        selector = Selector.open();
+
+        ssChan.register(selector, ssChan.validOps());
+    }
+
+    private void startZeroconf()
+        throws IOException
+    {
+        ServiceInfo service =
+            new ServiceInfo(BASE_PATH, CONFIG_INFO, PORT, 0, 0,
+                            "description=DAQ Configuration server");
+
+        zConf = new JmDNS();
+        zConf.registerService(service);
+    }
+}
+
+class DAQClient
+    implements IDAQConfig, ServiceListener
+{
+    private Object ready = new Object();
+
+    private String compName;
+    private JmDNS zConf;
+    private DAQConfig cfg;
+
+    DAQClient(String compName)
+        throws IOException
+    {
+        this.compName = compName;
+
+        zConf = new JmDNS();
+        zConf.addServiceListener(BASE_PATH, this);
+
+        synchronized (ready) {
+            try {
+                ready.wait();
+            } catch (InterruptedException ie) {
+                // ignore interruptions
+            }
+        }
+
+        if (cfg != null) {
+            talkToServer(cfg);
+            cfg.close();
+        }
+
+        zConf.close();
+    }
+
+    public void close()
+    {
+        zConf.close();
+    }
+
+    private static void dumpEvent(ServiceEvent evt, String action)
+    {
+        System.err.println("--- " + action + " Event");
+        System.err.println("TYPE " + evt.getType());
+        System.err.println("NAME " + evt.getName());
+
+        ServiceInfo svcInfo = evt.getInfo();
+        if (svcInfo != null) {
+            System.err.println("TYPE " + svcInfo.getType());
+            System.err.println("NAME " + svcInfo.getName());
+            System.err.println("ADDR " + svcInfo.getHostAddress());
+            System.err.println("INET " + svcInfo.getAddress());
+            System.err.println("PORT " + svcInfo.getPort());
+            System.err.println("PRI " + svcInfo.getPriority());
+            System.err.println("WGT " + svcInfo.getWeight());
+
+            Enumeration names = svcInfo.getPropertyNames();
+            while (names.hasMoreElements()) {
+                String name = (String) names.nextElement();
+                System.err.println(name + "=" +
+                                   svcInfo.getPropertyString(name));
+            }
+        }
+    }
+
+    public void serviceAdded(ServiceEvent evt)
+    {
+        if (evt.getName().equals("config")) {
+            zConf.requestServiceInfo(evt.getType(), evt.getName());
+        }
+    }
+
+    public void serviceRemoved(ServiceEvent evt)
+    {
+        dumpEvent(evt, "Remove");
+    }
+
+    public void serviceResolved(ServiceEvent evt)
+    {
+        if (!evt.getName().equals("config")) {
+            System.err.println("Ignoring " + evt.getName() + "." +
+                               evt.getType());
+            return;
+        }
+
+        ServiceInfo svcInfo = evt.getInfo();
+        if (svcInfo == null) {
+            System.err.println("No ServiceInfo available");
+            return;
+        }
+
+        dumpEvent(evt, "Resolved");
+
+        System.err.println("Open " + svcInfo.getInetAddress() + ":" +
+                           svcInfo.getPort());
+        try {
+            cfg = new DAQConfig(svcInfo.getInetAddress(), svcInfo.getPort());
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            cfg = null;
+        }
+
+        synchronized (ready) {
+            ready.notifyAll();
+        }
+    }
+
+    private void talkToServer(DAQConfig cfg)
+    {
+        String msg = cfg.readLine();
+        cfg.writeLine("IAM " + compName);
+    }
+}
+
+public class AutoConfig
+{
+    public static void main(String[] args)
+        throws IOException
+    {
+        if (args.length == 0) {
+            DAQServer server = new DAQServer();
+
+        } else if (args.length == 1) {
+            DAQClient client = new DAQClient(args[0]);
+        } else {
+            System.err.println("Please specify only component name");
+            System.exit(1);
+        }
+
+    }
+}
