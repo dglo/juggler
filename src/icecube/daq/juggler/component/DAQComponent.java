@@ -265,7 +265,9 @@ public abstract class DAQComponent
 
         for (Iterator iter = engines.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
-            if (!dc.isInput()) {
+            if (!dc.isInput() && !dc.isSplicer() &&
+                !((DAQOutputConnector) dc).isConnected())
+            {
                 throw new DAQCompException("Component " + name + "#" + num +
                                            " has unconnected " +
                                            dc.getType() + " output");
@@ -308,6 +310,13 @@ public abstract class DAQComponent
                     }
 
                     conn = (DAQOutputConnector) dc;
+                    if (conn.isConnected()) {
+                        final String errMsg = "Component " + name + "#" + num +
+                            " output " + list[i].getType() +
+                            " is already connected";
+
+                        throw new DAQCompException(errMsg);
+                    }
                 }
             }
 

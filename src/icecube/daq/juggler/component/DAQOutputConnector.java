@@ -122,6 +122,16 @@ public class DAQOutputConnector
     }
 
     /**
+     * Is the output engine connected to an input engine?
+     *
+     * @return <tt>true</tt> if the output engine is connected
+     */
+    public boolean isConnected()
+    {
+        return engine.isConnected();
+    }
+
+    /**
      * Is this connector running?
      *
      * @return <tt>true</tt> if this connector is running
