@@ -25,6 +25,9 @@ import org.apache.commons.logging.LogFactory;
 class GenTask
     implements Runnable
 {
+    /** logger */
+    private static final Log LOG = LogFactory.getLog(GenTask.class);
+
     private String name;
     private Generator gen;
     private PayloadOutputEngine engine;
@@ -68,7 +71,7 @@ class GenTask
         while (!stopping && gen.isGenerating()) {
             ByteBuffer buf = gen.generate();
             if (buf == null) {
-                System.err.println("Generated NULL buffer");
+                LOG.error("Generated NULL buffer");
             } else {
                 // wait a second...
                 try {
@@ -79,13 +82,13 @@ class GenTask
 
                 final String dbgStr =
                     icecube.daq.payload.DebugDumper.toString(buf);
-                System.err.println(name + ": " + dbgStr);
+                LOG.error(name + ": " + dbgStr);
 
                 xmitChan.receiveByteBuffer(buf);
             }
         }
 
-        System.err.println(name + ": StopMsg");
+        LOG.error(name + ": StopMsg");
         engine.sendLastAndStop();
     }
 
@@ -94,6 +97,7 @@ class GenTask
      */
     public void stopRun()
     {
+        LOG.error("Stopping Run");
         stopping = true;
     }
 }
@@ -261,6 +265,7 @@ public class HitSource
      */
     public void stopping()
     {
+        LOG.error("Stopping");
         task.stopRun();
     }
 }

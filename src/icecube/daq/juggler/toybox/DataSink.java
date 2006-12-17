@@ -23,6 +23,9 @@ import org.apache.commons.logging.LogFactory;
 public class DataSink
     extends DAQComponent
 {
+    /** logger */
+    private static final Log LOG = LogFactory.getLog(DataSink.class);
+
     /**
      * Input engine.
      */
@@ -55,11 +58,11 @@ public class DataSink
         {
             final int len = buf.getInt(0);
             if (len != 38) {
-                System.err.println(name + ": Expected 38 bytes, not " + len);
+                LOG.error(name + ": Expected 38 bytes, not " + len);
             } else {
                 final String dbgStr =
                     icecube.daq.payload.DebugDumper.toString(buf);
-                System.out.println(name + ": " + dbgStr);
+                LOG.error(name + ": " + dbgStr);
             }
 
             bufMgr.returnBuffer(buf);
@@ -70,13 +73,10 @@ public class DataSink
          */
         public void sendStop()
         {
-            System.out.println(name + ": StopMsg");
+            LOG.error(name + ": StopMsg");
             // do nothing
         }
     }
-
-    /** logger */
-    private static final Log LOG = LogFactory.getLog(DataSink.class);
 
     /** input engine. */
     private PushPayloadInputEngine dataSink;
