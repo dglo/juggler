@@ -947,5 +947,4 @@ public abstract class DAQComponent
             return (obj == this);
         }
     }
-
 }
