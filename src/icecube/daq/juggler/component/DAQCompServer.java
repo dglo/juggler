@@ -2,6 +2,8 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.juggler.mock.MockAppender;
 
+import icecube.daq.log.DAQLogAppender;
+
 import java.io.IOException;
 
 import java.net.BindException;
@@ -9,6 +11,7 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
+import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 
@@ -18,6 +21,10 @@ import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.apache.log4j.Appender;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 
 import org.apache.xmlrpc.XmlRpcException;
 
@@ -82,11 +89,14 @@ public class DAQCompServer
     /** Logger for most output */
     private static final Log LOG = LogFactory.getLog(DAQCompServer.class);
 
-    /** URL of configuration server */
-    private URL configURL;
-
     /** List of components */
     private static ArrayList list = new ArrayList();
+
+    /** default log appender. */
+    private static Appender defaultAppender;
+
+    /** URL of configuration server */
+    private URL configURL;
 
     /**
      * XML-RPC stub
@@ -129,6 +139,8 @@ public class DAQCompServer
         throws DAQCompException
     {
         processArgs(comp, args);
+
+        resetLogAppender();
 
         comp.start();
 
@@ -173,14 +185,42 @@ public class DAQCompServer
         };
 
         Object rtnObj = client.execute("rpc_register_component", params);
-        if (!(rtnObj instanceof Integer)) {
+        if (rtnObj == null) {
+            throw new XmlRpcException("rpc_register_component returned null");
+        } else if (!rtnObj.getClass().isArray()) {
             throw new XmlRpcException("Unexpected return object [ " + rtnObj +
                                       "] (type " +
-                                      (rtnObj == null ? "<null>" :
-                                       rtnObj.getClass().getName()) + ")");
+                                      rtnObj.getClass().getName() + ")");
         }
 
-        comp.setId(((Integer) rtnObj).intValue());
+        Object[] rtnArray = (Object[] )rtnObj;
+        if (rtnArray.length != 4) {
+            throw new XmlRpcException("Expected 4-element array, got " +
+                                      rtnArray.length + " elements");
+        }
+
+        final int compId = ((Integer) rtnArray[0]).intValue();
+        final String logIP = (String) rtnArray[1];
+        final int logPort = ((Integer) rtnArray[2]).intValue();
+        final String levelStr = (String) rtnArray[3];
+
+        final Level logLevel = getLogLevel(levelStr);
+        if (logLevel == null) {
+            throw new XmlRpcException("Bad log level '" + levelStr + "'");
+        }
+
+        comp.setId(compId);
+
+        try {
+            setDefaultAppender(logIP, logPort, logLevel);
+        } catch (UnknownHostException uhe) {
+            throw new XmlRpcException("Unknown log host '" + logIP + "'", uhe);
+        } catch (SocketException se) {
+            throw new XmlRpcException("Couldn't connect to log '" + logIP +
+                                      ":" + logPort + "'", se);
+        }
+
+        resetLogAppender();
     }
 
     /**
@@ -332,19 +372,27 @@ public class DAQCompServer
      * @param id component ID
      * @param address log host address
      * @param port log host port
+     * @param levelStr log level string
      *
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if no component matches the specified ID
      */
-    public String logTo(int id, String address, int port)
+    public String logTo(int id, String address, int port, String levelStr)
         throws DAQCompException, IOException
     {
         DAQComponent comp = getComponent(id);
         if (comp == null) {
             throw new DAQCompException("Component#" + id + " not found");
         }
-        comp.logTo(address, port);
+
+        Level level = getLogLevel(levelStr);
+        if (level == null) {
+            throw new DAQCompException("Bad log level '" + levelStr + "'");
+        }
+
+        setLogAppender(new DAQLogAppender(level, address, port));
+
         return "OK";
     }
 
@@ -406,6 +454,42 @@ public class DAQCompServer
         }
 
         return null;
+    }
+
+    /**
+     * Get logging level for the specified string.
+     *
+     * @param levelStr one of 'off', 'fatal', 'error', 'warn', 'debug', or
+     *                 'all' (in increasing verbosity)
+     *
+     * @return <tt>null</tt> if the string was not a valid level
+     */
+    private static final Level getLogLevel(String levelStr)
+    {
+        Level logLevel;
+        if (levelStr.equalsIgnoreCase("off") ||
+            levelStr.equalsIgnoreCase("none"))
+        {
+            logLevel = Level.OFF;
+        } else if (levelStr.equalsIgnoreCase("fatal")) {
+            logLevel = Level.FATAL;
+        } else if (levelStr.equalsIgnoreCase("error")) {
+            logLevel = Level.ERROR;
+        } else if (levelStr.equalsIgnoreCase("warn")) {
+            logLevel = Level.WARN;
+        } else if (levelStr.equalsIgnoreCase("info")) {
+            logLevel = Level.INFO;
+        } else if (levelStr.equalsIgnoreCase("debug")) {
+            logLevel = Level.DEBUG;
+            //} else if (levelStr.equalsIgnoreCase("trace")) {
+            //    logLevel = Level.TRACE;
+        } else if (levelStr.equalsIgnoreCase("all")) {
+            logLevel = Level.ALL;
+        } else {
+            logLevel = null;
+        }
+
+        return logLevel;
     }
 
     /**
@@ -497,16 +581,43 @@ public class DAQCompServer
                     i++;
                     String addrStr = args[i];
                     int ic = addrStr.indexOf(':');
-                    String logAddress = addrStr.substring(0, ic);
+                    if (ic < 0) {
+                        System.err.println("Bad log argument '" +
+                                           addrStr + "'");
+                        usage = true;
+                        break;
+                    }
+
+                    String logHost = addrStr.substring(0, ic);
+                    String portStr = addrStr.substring(ic+1);
+
+                    int logPort;
                     try {
-                        int logPort = Integer.parseInt(addrStr.substring(ic+1));
-                        comp.logTo(logAddress, logPort);
+                        logPort =
+                            Integer.parseInt(portStr);
                     } catch (NumberFormatException e) {
-                        System.err.println("Bad port argument in: \"" +
-                                           addrStr + "\"");
+                        System.err.println("Bad log port '" +
+                                           portStr + "' in '" +
+                                           addrStr + "'");
+                        usage = true;
+                        break;
+                    }
+
+                    try {
+                        setDefaultAppender(logHost, logPort,
+                                           Level.INFO);
+                    } catch (UnknownHostException uhe) {
+                        System.err.println("Bad log host '" +
+                                           logHost + "' in '" +
+                                           addrStr + "'");
+                        usage = true;
+                    } catch (SocketException se) {
+                        System.err.println("Couldn't set logging" +
+                                           " to '" + addrStr +
+                                           "'");
                         usage = true;
                     }
-                                    
+
                     break;
                 default:
                     System.err.println("Unknown option '" + args[i] + "'");
@@ -541,25 +652,6 @@ public class DAQCompServer
         }
     }
 
-//    private void logToDefault() {
-//            BasicConfigurator.resetConfiguration();
-//
-//            if(logAddress != null) {
-//                    //System.out.println("Will log to port " + logPort + " on " + logAddress);
-//                    try {
-//                            BasicConfigurator.configure(new DAQLogAppender(Level.INFO,
-//                                            logAddress, 
-//                                            logPort));
-//                    } catch(Exception e) {
-//                            System.err.println(e);
-//                            System.exit(-1);
-//                    }
-//                    LOG.info("Started catch-all logging at "+logAddress+":"+logPort);
-//            } else {
-//                    BasicConfigurator.configure(new MockAppender(Level.INFO));
-//            }
-//    }
-
     /**
      * XML-RPC method to reset the specified component back to the idle state.
      *
@@ -578,9 +670,23 @@ public class DAQCompServer
             throw new DAQCompException("Component#" + id + " not found");
         }
 
+        resetLogAppender();
+
         comp.reset();
 
         return "OK";
+    }
+
+    /**
+     * Reset Log4J to the default appender.
+     */
+    private static void resetLogAppender()
+    {
+        if (defaultAppender == null) {
+            defaultAppender = new MockAppender(Level.INFO);
+        }
+
+        setLogAppender(defaultAppender);
     }
 
     /**
@@ -652,6 +758,34 @@ public class DAQCompServer
                 }
             }
         }
+    }
+
+    /**
+     * Set the default log appender.
+     *
+     * @param logIP log host address
+     * @param logPort log host port
+     * @param logLevel log level
+     */
+    private static void setDefaultAppender(String logIP, int logPort,
+                                           Level logLevel)
+        throws SocketException, UnknownHostException
+    {
+        defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
+    }
+
+    /**
+     * Reset Log4J to the default appender.
+     */
+    private static void setLogAppender(Appender appender)
+    {
+        LOG.info("Resetting logging");
+
+        BasicConfigurator.resetConfiguration();
+
+        BasicConfigurator.configure(appender);
+
+        LOG.info("Logging has been reset");
     }
 
     /**
