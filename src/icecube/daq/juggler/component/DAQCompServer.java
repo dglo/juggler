@@ -469,6 +469,11 @@ public class DAQCompServer
     	for (int i = 0; i < args.length; i++) {
     		if (args[i].length() > 1 && args[i].charAt(0) == '-') {
     			switch(args[i].charAt(1)) {
+			case 'g':
+			        i++;
+				String glDir = args[i];
+				comp.setGlobalConfigurationDir(glDir);
+				break;
     			case 'l':
     				i++;
     				String addrStr = args[i];
@@ -523,7 +528,7 @@ public class DAQCompServer
 
     	if (usage) {
     		System.err.println("java " + comp.getClass().getName() + " " +
-    				" [-c configServerURL] [-l logAddress:logPort]" +
+    				" [-c configServerURL] [-l logAddress:logPort] [-g globalConfigPath]" +
     		"");
     		System.exit(1);
     	}
