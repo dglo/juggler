@@ -6,12 +6,17 @@ import icecube.daq.juggler.component.DAQComponent;
 
 import icecube.daq.payload.IByteBufferCache;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * Timer task.
  */
 class TimerTask
     implements Runnable
 {
+    private static final Log LOG = LogFactory.getLog(TimerTask.class);
+
     private Zero zero;
     private int delay;
 
@@ -31,7 +36,7 @@ class TimerTask
      */
     public void run()
     {
-        System.err.println("ZERO start");
+        LOG.info("ZERO start");
 
         try {
             Thread.sleep(delay);
@@ -41,7 +46,7 @@ class TimerTask
 
         zero.endRun();
 
-        System.err.println("ZERO stop");
+        LOG.info("ZERO stop");
     }
 }
 
