@@ -771,7 +771,11 @@ public class DAQCompServer
                                            Level logLevel)
         throws SocketException, UnknownHostException
     {
-        defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
+        if (logIP == null || logIP.length() == 0 || logPort <= 0) {
+            defaultAppender = new MockAppender(Level.INFO);
+        } else {
+            defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
+        }
     }
 
     /**
