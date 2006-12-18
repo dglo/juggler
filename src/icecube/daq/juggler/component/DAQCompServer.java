@@ -79,11 +79,11 @@ public class DAQCompServer
     /** XML-RPC parameter list for server ping */
     private static final Object[] NO_PARAMS = new Object[0];
 
+    /** Logger for most output */
+    private static final Log LOG = LogFactory.getLog(DAQCompServer.class);
+
     /** URL of configuration server */
     private URL configURL;
-
-    /** Logger for most output */
-    private static final Log log = LogFactory.getLog(DAQCompServer.class);
 
     /** List of components */
     private static ArrayList list = new ArrayList();
@@ -291,46 +291,50 @@ public class DAQCompServer
     }
 
     /**
-	 * Check that the server is still alive.
-	 *
-	 * @param client object used to communicate with config server
-	 * @param comp component to notify if server dies
-	 *
-	 * @return <tt>false</tt> if component was destroyed
-	 */
-	private boolean monitorServer(XmlRpcClient client, DAQComponent comp)
-	{
-	    Spinner spinner = new Spinner("-\\|/");
-	
-	    int numFails = 0;
-	    boolean compDestroyed = false;
-	
-	    // wait for the end of time
-	    while (true) {
-	        try {
-	            Thread.sleep(PING_FREQUENCY);
-	        } catch (InterruptedException ex) {
-	            // ignore interrupts
-	        }
-	
-	        if (pingServer(client)) {
-	            numFails = 0;
-	        } else if (++numFails >= 3) {
-	            compDestroyed = comp.serverDied();
-	            break;
-	        }
-	
-	        spinner.print();
-	    }
-	
-	    return !compDestroyed;
-	}
+     * Check that the server is still alive.
+     *
+     * @param client object used to communicate with config server
+     * @param comp component to notify if server dies
+     *
+     * @return <tt>false</tt> if component was destroyed
+     */
+    private boolean monitorServer(XmlRpcClient client, DAQComponent comp)
+    {
+        Spinner spinner = new Spinner("-\\|/");
+        
+        int numFails = 0;
+        boolean compDestroyed = false;
+        
+        // wait for the end of time
+        while (true) {
+            try {
+                Thread.sleep(PING_FREQUENCY);
+            } catch (InterruptedException ex) {
+                // ignore interrupts
+            }
+        
+            if (pingServer(client)) {
+                numFails = 0;
+            } else if (++numFails >= 3) {
+                compDestroyed = comp.serverDied();
+                break;
+            }
+        
+            spinner.print();
+        }
+        
+        return !compDestroyed;
+    }
 
-	/**        
-     * XML-RPC method to tell a component where to log                                      
-     * @param id component ID                                                                             
+    /**        
+     * XML-RPC method to tell a component where to log
+     *
+     * @param id component ID
+     * @param address log host address
+     * @param port log host port
+     *
      * @return <tt>"OK"</tt>
-     * 
+     *
      * @throws DAQCompException if no component matches the specified ID
      */
     public String logTo(int id, String address, int port)
@@ -465,92 +469,95 @@ public class DAQCompServer
      */
     private void processArgs(DAQComponent comp, String[] args)
     {
-    	boolean usage = false;
-    	for (int i = 0; i < args.length; i++) {
-    		if (args[i].length() > 1 && args[i].charAt(0) == '-') {
-    			switch(args[i].charAt(1)) {
-			case 'g':
-			        i++;
-				String glDir = args[i];
-				comp.setGlobalConfigurationDir(glDir);
-				break;
-    			case 'l':
-    				i++;
-    				String addrStr = args[i];
-    				int ic = addrStr.indexOf(':');
-    				String logAddress = addrStr.substring(0, ic);
-    				try {
-    					int logPort = Integer.parseInt(addrStr.substring(ic+1));
-    					comp.logTo(logAddress, logPort);
-    				} catch (NumberFormatException e) {
-    					System.err.println("Bad port argument in: \"" + addrStr + "\"");
-    					usage = true;
-    				}
-    				
-    				break;
-    			case 'c':
-    				i++;
-    				String urlStr = args[i];
-    				if (!urlStr.startsWith("http://")) {
-    					urlStr = "http://" + urlStr;
-    				}
+        boolean usage = false;
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].length() > 1 && args[i].charAt(0) == '-') {
+                switch(args[i].charAt(1)) {
+                case 'c':
+                    i++;
+                    String urlStr = args[i];
+                    if (!urlStr.startsWith("http://")) {
+                        urlStr = "http://" + urlStr;
+                    }
 
-    				try {
-    					configURL = new URL(urlStr);
-    				} catch (MalformedURLException mue) {
-    					System.err.println("Bad configuration URL \"" +
-    							urlStr + "\"");
-    					usage = true;
-    				}
-    				break;
-    			default:
-    				System.err.println("Unknown option '" + args[i] + "'");
-    			usage = true;
-    			break;
-    			}
-    		} else if (args[i].length() == 0) {
-    			// ignore empty arguments
-    		} else {
-    			System.err.println("Unknown argument '" + args[i] + "'");
-    			usage = true;
-    		}
-    	}
+                    try {
+                        configURL = new URL(urlStr);
+                    } catch (MalformedURLException mue) {
+                        System.err.println("Bad configuration URL \"" +
+                                           urlStr + "\"");
+                        usage = true;
+                    }
+                    break;
+                case 'g':
+                    i++;
+                    String glDir = args[i];
+                    comp.setGlobalConfigurationDir(glDir);
+                    break;
+                case 'l':
+                    i++;
+                    String addrStr = args[i];
+                    int ic = addrStr.indexOf(':');
+                    String logAddress = addrStr.substring(0, ic);
+                    try {
+                        int logPort = Integer.parseInt(addrStr.substring(ic+1));
+                        comp.logTo(logAddress, logPort);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Bad port argument in: \"" +
+                                           addrStr + "\"");
+                        usage = true;
+                    }
+                                    
+                    break;
+                default:
+                    System.err.println("Unknown option '" + args[i] + "'");
+                    usage = true;
+                    break;
+                }
+            } else if (args[i].length() == 0) {
+                // ignore empty arguments
+            } else {
+                System.err.println("Unknown argument '" + args[i] + "'");
+                usage = true;
+            }
+        }
 
-    	if (configURL == null) {
-    		final String urlStr = "http://localhost:8080";
-    		try {
-    			configURL = new URL(urlStr);
-    		} catch (MalformedURLException mue) {
-    			System.err.println("Bad configuration URL \"" + urlStr + "\"");
-    			usage = true;
-    		}
-    	}
+        if (configURL == null) {
+            final String urlStr = "http://localhost:8080";
+            try {
+                configURL = new URL(urlStr);
+            } catch (MalformedURLException mue) {
+                System.err.println("Bad configuration URL \"" + urlStr + "\"");
+                usage = true;
+            }
+        }
 
-    	if (usage) {
-    		System.err.println("java " + comp.getClass().getName() + " " +
-    				" [-c configServerURL] [-l logAddress:logPort] [-g globalConfigPath]" +
-    		"");
-    		System.exit(1);
-    	}
+        if (usage) {
+            System.err.println("java " + comp.getClass().getName() + " " +
+                               " [-c configServerURL]" +
+                               " [-g globalConfigPath]" +
+                               " [-l logAddress:logPort]" +
+                               "");
+            System.exit(1);
+        }
     }
 
 //    private void logToDefault() {
-//    	BasicConfigurator.resetConfiguration();
+//            BasicConfigurator.resetConfiguration();
 //
-//    	if(logAddress != null) {
-//    		//System.out.println("Will log to port " + logPort + " on " + logAddress);
-//    		try {
-//    			BasicConfigurator.configure(new DAQLogAppender(Level.INFO,
-//    					logAddress, 
-//    					logPort));
-//    		} catch(Exception e) {
-//    			System.err.println(e);
-//    			System.exit(-1);
-//    		}
-//    		log.info("Started catch-all logging at "+logAddress+":"+logPort);
-//    	} else {
-//    		BasicConfigurator.configure(new MockAppender(Level.INFO));
-//    	}
+//            if(logAddress != null) {
+//                    //System.out.println("Will log to port " + logPort + " on " + logAddress);
+//                    try {
+//                            BasicConfigurator.configure(new DAQLogAppender(Level.INFO,
+//                                            logAddress, 
+//                                            logPort));
+//                    } catch(Exception e) {
+//                            System.err.println(e);
+//                            System.exit(-1);
+//                    }
+//                    LOG.info("Started catch-all logging at "+logAddress+":"+logPort);
+//            } else {
+//                    BasicConfigurator.configure(new MockAppender(Level.INFO));
+//            }
 //    }
 
     /**
@@ -588,7 +595,7 @@ public class DAQCompServer
         throws DAQCompException
     {
         WebServer webServer = startServer();
-        log.info("XML-RPC on port " + webServer.getPort());
+        LOG.info("XML-RPC on port " + webServer.getPort());
 
         try {
             XmlRpcClient client = buildClient(cfgServerURL);
@@ -718,7 +725,7 @@ public class DAQCompServer
         server.setHandlerMapping(propMap);
 
         XmlRpcServerConfigImpl serverConfig =
-              (XmlRpcServerConfigImpl) server.getConfig();
+            (XmlRpcServerConfigImpl) server.getConfig();
         serverConfig.setEnabledForExtensions(true);
         serverConfig.setContentLengthOptional(false);
 

@@ -182,24 +182,27 @@ public abstract class DAQComponent
      *
      */
     public void logTo(String address, int port) {
-    	Log log = LogFactory.getLog(DAQComponent.class);
-    	BasicConfigurator.resetConfiguration();
-    	try {
-    		BasicConfigurator.configure(new DAQLogAppender(Level.INFO,
-    				address,
-    				port));
+        Log log = LogFactory.getLog(DAQComponent.class);
+        BasicConfigurator.resetConfiguration();
+        try {
+            BasicConfigurator.configure(new DAQLogAppender(Level.INFO,
+                                                           address, port));
 
-    	} catch(Exception e) {
-    		System.err.println(e);
-    	}
-    	log.info("Started logging at "+address+":"+port);
+        } catch(Exception e) {
+            System.err.println(e);
+        }
+        log.info("Started logging at "+address+":"+port);
     }
 
     /** 
-     * Tell trigger or other component where top level XML configuration tree lives 
+     * Tell trigger or other component where top level XML configuration tree
+     * lives.
+     *
+     * @param dirName directory name
      */
-    public void setGlobalConfigurationDir(String dirName) {
-	/* Override me! */ 
+    public void setGlobalConfigurationDir(String dirName)
+    {
+        /* Override me! */ 
     }
 
     /**
@@ -768,8 +771,8 @@ public abstract class DAQComponent
                     conn.startServer(getByteBufferCache(conn.getType()));
 
                     LOG.info(name + "#" + num + ":" +
-			     conn.getType() + " listening on port " +
-			     conn.getPort());
+                             conn.getType() + " listening on port " +
+                             conn.getPort());
                 } catch (IOException ioe) {
                     compEx = new DAQCompException("Couldn't start " + name +
                                                   "#" + num + ":" +
