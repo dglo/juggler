@@ -195,6 +195,13 @@ public abstract class DAQComponent
     	log.info("Started logging at "+address+":"+port);
     }
 
+    /** 
+     * Tell trigger or other component where top level XML configuration tree lives 
+     */
+    public void setGlobalConfigurationDir(String dirName) {
+	/* Override me! */ 
+    }
+
     /**
      * Configure a component.
      *
