@@ -18,7 +18,6 @@ import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import icecube.daq.log.DAQLogAppender;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -175,23 +174,6 @@ public abstract class DAQComponent
                 state = STATE_READY;
             }
         }
-    }
-
-    /**
-     * Tell a component what address/port to log to
-     *
-     */
-    public void logTo(String address, int port) {
-        Log log = LogFactory.getLog(DAQComponent.class);
-        BasicConfigurator.resetConfiguration();
-        try {
-            BasicConfigurator.configure(new DAQLogAppender(Level.INFO,
-                                                           address, port));
-
-        } catch(Exception e) {
-            System.err.println(e);
-        }
-        log.info("Started logging at "+address+":"+port);
     }
 
     /** 
