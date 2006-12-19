@@ -900,7 +900,8 @@ public abstract class DAQComponent
 
         stopping();
 
-        while (state == STATE_STOPPING) {
+        int attempts = 0;
+        while (state == STATE_STOPPING && attempts < 5) {
             if (isStopped()) {
                 stopped();
                 state = STATE_READY;
@@ -911,6 +912,8 @@ public abstract class DAQComponent
                 } catch (InterruptedException ie) {
                     // ignore interrupts
                 }
+
+                attempts++;
             }
         }
     }
