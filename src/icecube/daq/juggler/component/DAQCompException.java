@@ -22,7 +22,7 @@ public class DAQCompException
      * @param msg error message
      * @param thr encapsulated exception
      */
-    DAQCompException(String msg, Throwable thr)
+    public DAQCompException(String msg, Throwable thr)
     {
         super(msg, thr);
     }
