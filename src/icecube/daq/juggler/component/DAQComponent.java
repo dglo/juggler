@@ -673,6 +673,8 @@ public abstract class DAQComponent
             }
         }
 
+        resetting();
+
         if (state == STATE_CONNECTING || state == STATE_CONNECTED ||
             state == STATE_CONFIGURING || state == STATE_READY)
         {
@@ -685,6 +687,18 @@ public abstract class DAQComponent
 
         throw new DAQCompException("Reset from " + getStateString() +
                                    " is not implemented");
+    }
+
+    /**
+     * Override this method to reset internal state after a component has
+     * moved to idle.
+     *
+     * @throws DAQCompException if there is a problem resetting
+     */
+    public void resetting()
+        throws DAQCompException
+    {
+        // Override me!
     }
 
     /**
