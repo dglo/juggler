@@ -4,8 +4,6 @@ import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 
-import icecube.daq.payload.IByteBufferCache;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

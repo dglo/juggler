@@ -19,10 +19,6 @@ import java.util.Iterator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import java.net.UnknownHostException;
-
 /**
  * Generic DAQ component methods.
  */
@@ -85,9 +81,9 @@ public abstract class DAQComponent
     private HashMap caches = new HashMap();
 
     /** Port and address to log to */
-    private String logAddress = null;
-    private int    logPort    = 9001;
-    
+    private String logAddress;
+    private int logPort = 9001;
+
     private DAQOutputHack outputHack;
 
     /**
@@ -106,6 +102,8 @@ public abstract class DAQComponent
 
     /**
      * Add a generic byte buffer cache.
+     *
+     * @param cache buffer cache
      */
     public void addCache(IByteBufferCache cache)
     {
@@ -114,6 +112,9 @@ public abstract class DAQComponent
 
     /**
      * Add a byte buffer cache for the specified data type.
+     *
+     * @param type buffer cache type
+     * @param cache buffer cache
      */
     public void addCache(String type, IByteBufferCache cache)
     {
@@ -126,6 +127,9 @@ public abstract class DAQComponent
 
     /**
      * Add an input engine with the specified type.
+     *
+     * @param type engine type
+     * @param engine input engine
      */
     public void addEngine(String type, PayloadInputEngine engine)
     {
@@ -135,6 +139,9 @@ public abstract class DAQComponent
 
     /**
      * Add an output engine with the specified type.
+     *
+     * @param type engine type
+     * @param engine output engine
      */
     public void addEngine(String type, PayloadOutputEngine engine)
     {
@@ -144,6 +151,8 @@ public abstract class DAQComponent
 
     /**
      * Add a splicer.
+     *
+     * @param splicer splicer
      */
     public void addSplicer(Splicer splicer)
     {
@@ -152,6 +161,9 @@ public abstract class DAQComponent
 
     /**
      * Add a splicer.
+     *
+     * @param splicer splicer
+     * @param needStart <tt>true</tt> if splicer should be started
      */
     public void addSplicer(Splicer splicer, boolean needStart)
     {
@@ -176,7 +188,7 @@ public abstract class DAQComponent
         }
     }
 
-    /** 
+    /**
      * Tell trigger or other component where top level XML configuration tree
      * lives.
      *
@@ -184,7 +196,7 @@ public abstract class DAQComponent
      */
     public void setGlobalConfigurationDir(String dirName)
     {
-        /* Override me! */ 
+        // Override me!
     }
 
     /**
@@ -243,6 +255,7 @@ public abstract class DAQComponent
      * Connect a component which has no output channels.
      *
      * @throws DAQCompException if the component is not in the correct state
+     * @throws IOException if the connection failed
      */
     public void connect()
         throws DAQCompException, IOException
@@ -429,6 +442,8 @@ public abstract class DAQComponent
      * @param type data type of buffer cache
      *
      * @return byte buffer cache
+     *
+     * @throws DAQCompException if the cache could not be found
      */
     public IByteBufferCache getByteBufferCache(String type)
         throws DAQCompException
@@ -477,7 +492,7 @@ public abstract class DAQComponent
         for (Iterator iter = engines.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
             if (dc.isInput() && !dc.isSplicer()) {
-                if (dc.getType().equals(type)){
+                if (dc.getType().equals(type)) {
                     return ((DAQInputConnector) dc).getInputEngine();
                 }
             }
@@ -518,7 +533,7 @@ public abstract class DAQComponent
         for (Iterator iter = engines.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
             if (!dc.isInput() && !dc.isSplicer()) {
-                if (dc.getType().equals(type)){
+                if (dc.getType().equals(type)) {
                     return ((DAQOutputConnector) dc).getOutputEngine();
                 }
             }
@@ -539,7 +554,7 @@ public abstract class DAQComponent
         for (Iterator iter = engines.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
             if (dc.isSplicer()) {
-                if (dc.getType().equals(type)){
+                if (dc.getType().equals(type)) {
                     return ((DAQSplicer) dc).getSplicer();
                 }
             }
@@ -800,6 +815,8 @@ public abstract class DAQComponent
     /**
      * Start a run.
      *
+     * @param runNumber run number
+     *
      * @throws DAQCompException if there is a problem
      */
     public void startRun(int runNumber)
@@ -820,8 +837,11 @@ public abstract class DAQComponent
 
     /**
      * Method to override for actions which happen when a run is starting.
+     *
+     * @throws DAQCompException if there is a problem starting the component
      */
-    public void starting() throws DAQCompException
+    public void starting()
+        throws DAQCompException
     {
         // do nothing
     }

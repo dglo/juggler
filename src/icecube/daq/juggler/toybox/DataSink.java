@@ -3,7 +3,6 @@ package icecube.daq.juggler.toybox;
 import icecube.daq.io.PushPayloadInputEngine;
 
 import icecube.daq.juggler.component.DAQCompConfig;
-import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
 
@@ -108,8 +107,8 @@ public class DataSink
      * @param inputType input type
      *
      * @return component name
-     */ 
-    private static final String getCompName(String inputType)
+     */
+    private static String getCompName(String inputType)
     {
         if (inputType == null) {
             throw new Error("Input type is null");
@@ -131,8 +130,7 @@ public class DataSink
             return "dataSink";
         }
 
-        if (!inputType.equals(DAQConnector.TYPE_TEST_HIT))
-        {
+        if (!inputType.equals(DAQConnector.TYPE_TEST_HIT)) {
             LOG.error("Unknown DataSink input type \"" + inputType + "\"");
         }
 

@@ -111,8 +111,6 @@ public class DAQSplicer
 
     /**
      * Start processing data.
-     *
-     * @throws Exception if there is a problem
      */
     public void startProcessing()
     {

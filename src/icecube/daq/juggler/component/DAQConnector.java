@@ -34,7 +34,7 @@ public abstract class DAQConnector
 
     /** General-purpose byte buffer cache. */
     public static final String TYPE_GENERIC_CACHE = "genericCache";
- 
+
     private String type;
 
     /**

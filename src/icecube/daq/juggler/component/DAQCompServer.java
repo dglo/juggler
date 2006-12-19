@@ -193,7 +193,7 @@ public class DAQCompServer
                                       rtnObj.getClass().getName() + ")");
         }
 
-        Object[] rtnArray = (Object[] )rtnObj;
+        Object[] rtnArray = (Object[]) rtnObj;
         if (rtnArray.length != 4) {
             throw new XmlRpcException("Expected 4-element array, got " +
                                       rtnArray.length + " elements");
@@ -341,10 +341,10 @@ public class DAQCompServer
     private boolean monitorServer(XmlRpcClient client, DAQComponent comp)
     {
         Spinner spinner = new Spinner("-\\|/");
-        
+
         int numFails = 0;
         boolean compDestroyed = false;
-        
+
         // wait for the end of time
         while (true) {
             try {
@@ -352,21 +352,21 @@ public class DAQCompServer
             } catch (InterruptedException ex) {
                 // ignore interrupts
             }
-        
+
             if (pingServer(client)) {
                 numFails = 0;
             } else if (++numFails >= 3) {
                 compDestroyed = comp.serverDied();
                 break;
             }
-        
+
             spinner.print();
         }
-        
+
         return !compDestroyed;
     }
 
-    /**        
+    /**
      * XML-RPC method to tell a component where to log
      *
      * @param id component ID
@@ -377,6 +377,7 @@ public class DAQCompServer
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if no component matches the specified ID
+     * @throws IOException if new appender could not be created
      */
     public String logTo(int id, String address, int port, String levelStr)
         throws DAQCompException, IOException
@@ -464,7 +465,7 @@ public class DAQCompServer
      *
      * @return <tt>null</tt> if the string was not a valid level
      */
-    private static final Level getLogLevel(String levelStr)
+    private static Level getLogLevel(String levelStr)
     {
         Level logLevel;
         if (levelStr.equalsIgnoreCase("off") ||
@@ -589,7 +590,7 @@ public class DAQCompServer
                     }
 
                     String logHost = addrStr.substring(0, ic);
-                    String portStr = addrStr.substring(ic+1);
+                    String portStr = addrStr.substring(ic + 1);
 
                     int logPort;
                     try {

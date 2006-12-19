@@ -76,7 +76,7 @@ class GenTask
                 // wait a second...
                 try {
                     Thread.sleep(1000);
-                } catch (Exception ex) {
+                } catch (InterruptedException ex) {
                     // ignore interrupts
                 }
 
@@ -121,6 +121,7 @@ public class HitSource
      * Create a hit generator.
      *
      * @param config configuration info
+     * @param outputType label to use for output engine
      */
     public HitSource(DAQCompConfig config, String outputType)
     {
@@ -214,7 +215,7 @@ public class HitSource
      *
      * @return component name
      */
-    private static final String getCompName(String outputType)
+    private static String getCompName(String outputType)
     {
         if (outputType == null) {
             throw new Error("Output type is null");
@@ -232,8 +233,7 @@ public class HitSource
             return "moniSrc";
         }
 
-        if (!outputType.equals(DAQConnector.TYPE_TEST_HIT))
-        {
+        if (!outputType.equals(DAQConnector.TYPE_TEST_HIT)) {
             LOG.error("Unknown HitSource output type \"" + outputType + "\"");
         }
 

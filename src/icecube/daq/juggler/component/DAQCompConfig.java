@@ -1,14 +1,28 @@
 package icecube.daq.juggler.component;
 
 /**
- * This interface provides the ByteBufferCache paramaters 
+ * This interface provides the ByteBufferCache paramaters
  */
-public interface DAQCompConfig {
+public interface DAQCompConfig
+{
+    /**
+     * Get byte buffer granularity.
+     *
+     * @return granularity
+     */
+    int getGranularity();
 
-    public int getGranularity();
+    /**
+     * Get maximum number of bytes allocated for this cache
+     *
+     * @return maximum number of cached bytes
+     */
+    long getMaxCacheBytes();
 
-    public long getMaxCacheBytes();
-
-    public long getMaxAcquireBytes();
-
+    /**
+     * Get maximum numer of bytes acquired by this cache.
+     *
+     * @return maximum acquired bytes
+     */
+    long getMaxAcquireBytes();
 }

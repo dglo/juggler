@@ -7,7 +7,6 @@ import icecube.daq.io.PushPayloadInputEngine;
 import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
-import icecube.daq.juggler.component.DAQConnector;
 import icecube.daq.juggler.component.DAQOutputHack;
 
 import icecube.daq.payload.ByteBufferCache;
