@@ -658,6 +658,8 @@ public abstract class DAQComponent
         throws DAQCompException, IOException
     {
         if (state == STATE_RUNNING || state == STATE_STOPPING) {
+            stopping();
+
             emergencyStop();
 
             for (int numTries = 0; numTries < 3 && !isStopped(); numTries++) {
@@ -669,6 +671,7 @@ public abstract class DAQComponent
             }
 
             if (isStopped()) {
+                stopped();
                 state = STATE_READY;
             }
         }
