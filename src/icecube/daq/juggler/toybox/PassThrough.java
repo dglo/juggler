@@ -131,13 +131,10 @@ public class PassThrough
      * Clear cached transmit engine.
      *
      * @throws DAQCompException if the transmit channel was not properly closed
-     * @throws IOException if there is a problem disconnecting
      */
-    public void disconnect()
-        throws DAQCompException, IOException
+    public void disconnected()
+        throws DAQCompException
     {
-        super.disconnect();
-
         final String xmitState = xmitChan.presentState();
 
         xmitChan = null;

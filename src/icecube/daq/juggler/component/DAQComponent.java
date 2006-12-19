@@ -105,7 +105,7 @@ public abstract class DAQComponent
      *
      * @param cache buffer cache
      */
-    public void addCache(IByteBufferCache cache)
+    public final void addCache(IByteBufferCache cache)
     {
         addCache(DAQConnector.TYPE_GENERIC_CACHE, cache);
     }
@@ -116,7 +116,7 @@ public abstract class DAQComponent
      * @param type buffer cache type
      * @param cache buffer cache
      */
-    public void addCache(String type, IByteBufferCache cache)
+    public final void addCache(String type, IByteBufferCache cache)
     {
         if (caches.containsKey(type)) {
             LOG.error("Overwriting buffer cache for type \"" + type + "\"");
@@ -131,7 +131,7 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine input engine
      */
-    public void addEngine(String type, PayloadInputEngine engine)
+    public final void addEngine(String type, PayloadInputEngine engine)
     {
         engines.add(new DAQInputConnector(type, engine));
         enginesSorted = false;
@@ -143,7 +143,7 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine output engine
      */
-    public void addEngine(String type, PayloadOutputEngine engine)
+    public final void addEngine(String type, PayloadOutputEngine engine)
     {
         engines.add(new DAQOutputConnector(type, engine));
         enginesSorted = false;
@@ -154,7 +154,7 @@ public abstract class DAQComponent
      *
      * @param splicer splicer
      */
-    public void addSplicer(Splicer splicer)
+    public final void addSplicer(Splicer splicer)
     {
         addSplicer(splicer, true);
     }
@@ -165,16 +165,19 @@ public abstract class DAQComponent
      * @param splicer splicer
      * @param needStart <tt>true</tt> if splicer should be started
      */
-    public void addSplicer(Splicer splicer, boolean needStart)
+    public final void addSplicer(Splicer splicer, boolean needStart)
     {
         engines.add(new DAQSplicer(splicer, needStart));
         enginesSorted = false;
     }
 
     /**
-     * XXX - This method is a HACK; it should be replaced by an internal thread!
+     * TODO: This method is a HACK; it should be replaced by an internal thread!
+     *
+     * @throws DAQCompException if there is a problem stopping the component
      */
-    public void checkRunState()
+    public final void checkRunState()
+        throws DAQCompException
     {
         if (state == STATE_RUNNING) {
             if (!isRunning()) {
@@ -189,22 +192,11 @@ public abstract class DAQComponent
     }
 
     /**
-     * Tell trigger or other component where top level XML configuration tree
-     * lives.
-     *
-     * @param dirName directory name
-     */
-    public void setGlobalConfigurationDir(String dirName)
-    {
-        // Override me!
-    }
-
-    /**
      * Configure a component.
      *
      * @throws DAQCompException if the component is not in the correct state
      */
-    public void configure()
+    public final void configure()
         throws DAQCompException
     {
         if (state != STATE_CONNECTED && state != STATE_READY) {
@@ -223,7 +215,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem configuring
      */
-    public void configure(String configName)
+    public final void configure(String configName)
         throws DAQCompException
     {
         if (state != STATE_CONNECTED && state != STATE_READY) {
@@ -240,7 +232,8 @@ public abstract class DAQComponent
     }
 
     /**
-     * Configure a component using the specified configuration name.
+     * Override this method to configure a component using the specified
+     * configuration name.
      *
      * @param configName configuration name
      *
@@ -249,6 +242,7 @@ public abstract class DAQComponent
     public void configuring(String configName)
         throws DAQCompException
     {
+        // Override me!
     }
 
     /**
@@ -257,7 +251,7 @@ public abstract class DAQComponent
      * @throws DAQCompException if the component is not in the correct state
      * @throws IOException if the connection failed
      */
-    public void connect()
+    public final void connect()
         throws DAQCompException, IOException
     {
         if (state != STATE_IDLE) {
@@ -290,7 +284,7 @@ public abstract class DAQComponent
      * @throws DAQCompException if there is a problem finding a connection
      * @throws IOException if connection cannot be made
      */
-    public void connect(Connection[] list)
+    public final void connect(Connection[] list)
         throws DAQCompException, IOException
     {
         if (state != STATE_IDLE) {
@@ -347,7 +341,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
-    public void destroy()
+    public final void destroy()
         throws DAQCompException
     {
         DAQCompException compEx = null;
@@ -376,7 +370,7 @@ public abstract class DAQComponent
      * @throws DAQCompException if the component is in the wrong state
      * @throws IOException if there is a problem disconnecting
      */
-    public void disconnect()
+    public final void disconnect()
         throws DAQCompException, IOException
     {
         if (state != STATE_CONNECTING && state != STATE_CONNECTED &&
@@ -405,7 +399,20 @@ public abstract class DAQComponent
             throw ioEx;
         }
 
+        disconnected();
+
         state = STATE_IDLE;
+    }
+
+    /**
+     * Override this method to perform any actions after all output engines
+     * have been disconnected.
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public void disconnected()
+        throws DAQCompException
+    {
     }
 
     /**
@@ -413,7 +420,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
-    public void emergencyStop()
+    public final void emergencyStop()
         throws DAQCompException
     {
         DAQCompException compEx = null;
@@ -445,7 +452,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if the cache could not be found
      */
-    public IByteBufferCache getByteBufferCache(String type)
+    public final IByteBufferCache getByteBufferCache(String type)
         throws DAQCompException
     {
         IByteBufferCache genericCache = null;
@@ -475,7 +482,7 @@ public abstract class DAQComponent
      *
      * @return ID
      */
-    public int getId()
+    public final int getId()
     {
         return id;
     }
@@ -487,7 +494,7 @@ public abstract class DAQComponent
      *
      * @return <tt>null</tt> if no matching engine was found
      */
-    public PayloadInputEngine getInputEngine(String type)
+    public final PayloadInputEngine getInputEngine(String type)
     {
         for (Iterator iter = engines.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
@@ -506,7 +513,7 @@ public abstract class DAQComponent
      *
      * @return standard component name
      */
-    public String getName()
+    public final String getName()
     {
         return name;
     }
@@ -516,7 +523,7 @@ public abstract class DAQComponent
      *
      * @return standard component number
      */
-    public int getNumber()
+    public final int getNumber()
     {
         return num;
     }
@@ -528,7 +535,7 @@ public abstract class DAQComponent
      *
      * @return <tt>null</tt> if no matching engine was found
      */
-    public PayloadOutputEngine getOutputEngine(String type)
+    public final PayloadOutputEngine getOutputEngine(String type)
     {
         for (Iterator iter = engines.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
@@ -549,7 +556,7 @@ public abstract class DAQComponent
      *
      * @return <tt>null</tt> if no matching splicer was found
      */
-    public Splicer getSplicer(String type)
+    public final Splicer getSplicer(String type)
     {
         for (Iterator iter = engines.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
@@ -568,7 +575,7 @@ public abstract class DAQComponent
      *
      * @return current state
      */
-    public int getState()
+    public final int getState()
     {
         return state;
     }
@@ -578,7 +585,7 @@ public abstract class DAQComponent
      *
      * @return current state string
      */
-    public String getStateString()
+    public final String getStateString()
     {
         return STATE_NAMES[state];
     }
@@ -626,7 +633,7 @@ public abstract class DAQComponent
      *
      * @return connection iterator
      */
-    public Iterator listConnectors()
+    public final Iterator listConnectors()
     {
         return engines.iterator();
     }
@@ -636,7 +643,7 @@ public abstract class DAQComponent
      *
      * @param outputHack output engine observer
      */
-    public void registerOutputHack(DAQOutputHack outputHack)
+    public final void registerOutputHack(DAQOutputHack outputHack)
     {
         this.outputHack = outputHack;
     }
@@ -647,7 +654,7 @@ public abstract class DAQComponent
      * @throws DAQCompException if the component cannot be reset
      * @throws IOException if there is a problem disconnecting anything
      */
-    void reset()
+    final void reset()
         throws DAQCompException, IOException
     {
         if (state == STATE_RUNNING || state == STATE_STOPPING) {
@@ -685,7 +692,7 @@ public abstract class DAQComponent
      *
      * @return <tt>true</tt> if the component has destroyed itself
      */
-    public boolean serverDied()
+    public final boolean serverDied()
     {
         boolean needDestroy = false;
         try {
@@ -710,11 +717,22 @@ public abstract class DAQComponent
     }
 
     /**
+     * Override this method to receive the name of the directory holding the
+     * XML configuration tree.
+     *
+     * @param dirName directory name
+     */
+    public void setGlobalConfigurationDir(String dirName)
+    {
+        // Override me!
+    }
+
+    /**
      * Set the component ID assigned by the server.
      *
      * @param id assigned ID
      */
-    public void setId(int id)
+    public final void setId(int id)
     {
         this.id = id;
     }
@@ -726,7 +744,7 @@ public abstract class DAQComponent
      */
     public void setRunNumber(int runNumber)
     {
-        // do nothing
+        // Override me!
     }
 
     /**
@@ -734,7 +752,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if input server cannot be started
      */
-    public void start()
+    public final void start()
         throws DAQCompException
     {
         DAQCompException compEx = null;
@@ -789,7 +807,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
-    public void startEngines()
+    public final void startEngines()
         throws DAQCompException
     {
         DAQCompException compEx = null;
@@ -819,7 +837,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
-    public void startRun(int runNumber)
+    public final void startRun(int runNumber)
         throws DAQCompException
     {
         if (state != STATE_READY) {
@@ -830,20 +848,36 @@ public abstract class DAQComponent
 
         setRunNumber(runNumber);
 
+        starting();
+
         state = STATE_RUNNING;
 
         startEngines();
+
+        started();
     }
 
     /**
-     * Method to override for actions which happen when a run is starting.
+     * Override this method for actions which happen after a run has started.
+     *
+     * @throws DAQCompException if there is a problem starting the component
+     */
+    public void started()
+        throws DAQCompException
+    {
+        // Override me!
+    }
+
+    /**
+     * Override this method for actions which happen just before a run is
+     * started.
      *
      * @throws DAQCompException if there is a problem starting the component
      */
     public void starting()
         throws DAQCompException
     {
-        // do nothing
+        // Override me!
     }
 
     /**
@@ -851,7 +885,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
-    public void stopRun()
+    public final void stopRun()
         throws DAQCompException
     {
         if (state != STATE_READY) {
@@ -882,19 +916,27 @@ public abstract class DAQComponent
     }
 
     /**
-     * All I/O engines have stopped, so reset internal state.
+     * Override this method to perform any clean-up after all I/O engines
+     * have stopped.
+     *
+     * @throws DAQCompException if there is a problem stopping the component
      */
     public void stopped()
+        throws DAQCompException
     {
-        // do nothing
+        // Override me!
     }
 
     /**
-     * All I/O engines have stopped, so reset internal state.
+     * Override this method to perform any clean-up before I/O engines
+     * are stopped.
+     *
+     * @throws DAQCompException if there is a problem stopping the component
      */
     public void stopping()
+        throws DAQCompException
     {
-        // do nothing
+        // Override me!
     }
 
     /**

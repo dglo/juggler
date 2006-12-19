@@ -335,13 +335,10 @@ public class EBHarness
      * Clear cached transmit engine.
      *
      * @throws DAQCompException if the transmit channel was not properly closed
-     * @throws IOException if there is a problem disconnecting
      */
-    public void disconnect()
-        throws DAQCompException, IOException
+    public void disconnected()
+        throws DAQCompException
     {
-        super.disconnect();
-
         final String trigState = trigChan.presentState();
         final String rdoutState = rdoutChan.presentState();
 
@@ -360,28 +357,13 @@ public class EBHarness
     }
 
     /**
-     * Emergency stop of component.
+     * Start background thread.
      *
      * @throws DAQCompException if there is a problem
      */
-    public void emergencyStop()
+    public void started()
         throws DAQCompException
     {
-        super.emergencyStop();
-
-        stopThread = true;
-    }
-
-    /**
-     * Start engines.
-     *
-     * @throws DAQCompException if there is a problem
-     */
-    public void startEngines()
-        throws DAQCompException
-    {
-        super.startEngines();
-
         stopThread = false;
 
         Thread task = new Thread(new EBGenTask());

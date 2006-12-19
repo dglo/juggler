@@ -67,19 +67,6 @@ public class Zero
         super("zero", 0);
     }
 
-    /**
-     * Emergency stop of component.
-     *
-     * @throws DAQCompException if there is a problem
-     */
-    public void emergencyStop()
-        throws DAQCompException
-    {
-        endRun();
-
-        super.emergencyStop();
-    }
-
     void endRun()
     {
         running = false;
@@ -106,11 +93,11 @@ public class Zero
     }
 
     /**
-     * Start engines.
+     * Start timer.
      *
      * @throws DAQCompException if there is a problem
      */
-    public void startEngines()
+    public void started()
         throws DAQCompException
     {
         running = true;
@@ -118,5 +105,13 @@ public class Zero
         Thread timerTask = new Thread(new TimerTask(this, delay));
         timerTask.setName("zeroTimer");
         timerTask.start();
+    }
+
+    /**
+     * Stop component.
+     */
+    public void stopping()
+    {
+        endRun();
     }
 }

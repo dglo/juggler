@@ -12,8 +12,6 @@ import icecube.daq.juggler.component.DAQOutputHack;
 import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
 
-import java.io.IOException;
-
 import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;
@@ -177,13 +175,10 @@ public class HitSource
      * Clear cached transmit engine.
      *
      * @throws DAQCompException if the transmit channel was not properly closed
-     * @throws IOException if there is a problem disconnecting
      */
-    public void disconnect()
-        throws DAQCompException, IOException
+    public void disconnected()
+        throws DAQCompException
     {
-        super.disconnect();
-
         final String xmitState = xmitChan.presentState();
 
         xmitChan = null;
@@ -193,19 +188,6 @@ public class HitSource
             throw new DAQCompException("Transmit channel should be closed" +
                                        ", not " + xmitState);
         }
-    }
-
-    /**
-     * Emergency stop of component.
-     *
-     * @throws DAQCompException if there is a problem
-     */
-    public void emergencyStop()
-        throws DAQCompException
-    {
-        super.emergencyStop();
-
-        gen.stop();
     }
 
     /**
@@ -245,11 +227,9 @@ public class HitSource
      *
      * @throws DAQCompException if there is a problem
      */
-    public void startEngines()
+    public void started()
         throws DAQCompException
     {
-        super.startEngines();
-
         gen.reset();
 
         task = new GenTask(getName() + "#" + getNumber(), gen, hitSrc,
@@ -261,11 +241,12 @@ public class HitSource
     }
 
     /**
-     * All I/O engines have stopped, so reset internal state.
+     * Stop sending data to output engine.
      */
     public void stopping()
     {
         LOG.error("Stopping");
         task.stopRun();
+        gen.stop();
     }
 }
