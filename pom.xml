@@ -1,0 +1,75 @@
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <parent>
+    <artifactId>pDAQ</artifactId>
+    <groupId>edu.wisc.icecube</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>juggler</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0.0-SNAPSHOT</version>
+  <name>juggler</name>
+
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+    <testSourceDirectory>test/java</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>resources/jar</directory>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>resources/test/jar</directory>
+      </testResource>
+    </testResources>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>edu.wisc.icecube</groupId>
+      <artifactId>daq-io</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.wisc.icecube</groupId>
+      <artifactId>daq-log</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.wisc.icecube</groupId>
+      <artifactId>new-dispatch</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.wisc.icecube</groupId>
+      <artifactId>payload</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.wisc.icecube</groupId>
+      <artifactId>payload-generator</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.sun.jmdk</groupId>
+      <artifactId>jmxtools</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.xmlrpc</groupId>
+      <artifactId>xmlrpc-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.xmlrpc</groupId>
+      <artifactId>xmlrpc-server</artifactId>
+    </dependency>
+  </dependencies>
+
+</project>
