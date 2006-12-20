@@ -7,7 +7,6 @@
 	    daqLog.jar
             daq-common.jar
             daq-io.jar
-            obsolete.jar
             payload.jar
             payload-generator.jar
             new-dispatch.jar
