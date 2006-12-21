@@ -205,8 +205,6 @@ public abstract class DAQComponent
                                        getStateString());
         }
 
-        LOG.info("Configuring " + name + "#" + num + " without a name");
-
         state = STATE_READY;
     }
 
@@ -227,9 +225,6 @@ public abstract class DAQComponent
         }
 
         state = STATE_CONFIGURING;
-
-        LOG.info("Configuring " + name + "#" + num + " with '" + configName +
-                 "'");
 
         configuring(configName);
 
