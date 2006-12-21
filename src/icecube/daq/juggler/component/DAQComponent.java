@@ -205,6 +205,8 @@ public abstract class DAQComponent
                                        getStateString());
         }
 
+        LOG.info("Configuring " + name + "#" + num + " without a name");
+
         state = STATE_READY;
     }
 
