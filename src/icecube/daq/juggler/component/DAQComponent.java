@@ -226,6 +226,9 @@ public abstract class DAQComponent
 
         state = STATE_CONFIGURING;
 
+        LOG.info("Configuring " + name + "#" + num + " with '" + configName +
+                 "'");
+
         configuring(configName);
 
         state = STATE_READY;
