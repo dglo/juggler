@@ -10,6 +10,7 @@
             payload.jar
             payload-generator.jar
             new-dispatch.jar
+            eventBuilder-prod.jar
         </libs>
         <tools>
             commons-logging.jar
