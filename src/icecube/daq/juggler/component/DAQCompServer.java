@@ -331,73 +331,6 @@ public class DAQCompServer
     }
 
     /**
-     * Check that the server is still alive.
-     *
-     * @param client object used to communicate with config server
-     * @param comp component to notify if server dies
-     *
-     * @return <tt>false</tt> if component was destroyed
-     */
-    private boolean monitorServer(XmlRpcClient client, DAQComponent comp)
-    {
-        Spinner spinner = new Spinner("-\\|/");
-
-        int numFails = 0;
-        boolean compDestroyed = false;
-
-        // wait for the end of time
-        while (true) {
-            try {
-                Thread.sleep(PING_FREQUENCY);
-            } catch (InterruptedException ex) {
-                // ignore interrupts
-            }
-
-            if (pingServer(client)) {
-                numFails = 0;
-            } else if (++numFails >= 3) {
-                compDestroyed = comp.serverDied();
-                break;
-            }
-
-            spinner.print();
-        }
-
-        return !compDestroyed;
-    }
-
-    /**
-     * XML-RPC method to tell a component where to log
-     *
-     * @param id component ID
-     * @param address log host address
-     * @param port log host port
-     * @param levelStr log level string
-     *
-     * @return <tt>"OK"</tt>
-     *
-     * @throws DAQCompException if no component matches the specified ID
-     * @throws IOException if new appender could not be created
-     */
-    public String logTo(int id, String address, int port, String levelStr)
-        throws DAQCompException, IOException
-    {
-        DAQComponent comp = getComponent(id);
-        if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
-        }
-
-        Level level = getLogLevel(levelStr);
-        if (level == null) {
-            throw new DAQCompException("Bad log level '" + levelStr + "'");
-        }
-
-        setLogAppender(new DAQLogAppender(level, address, port));
-
-        return "OK";
-    }
-
-    /**
      * XML-RPC method to connect the component using the specified
      * connection descriptions.
      *
@@ -511,6 +444,73 @@ public class DAQCompServer
         }
 
         return comp.getStateString();
+    }
+
+    /**
+     * XML-RPC method to tell a component where to log
+     *
+     * @param id component ID
+     * @param address log host address
+     * @param port log host port
+     * @param levelStr log level string
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if no component matches the specified ID
+     * @throws IOException if new appender could not be created
+     */
+    public String logTo(int id, String address, int port, String levelStr)
+        throws DAQCompException, IOException
+    {
+        DAQComponent comp = getComponent(id);
+        if (comp == null) {
+            throw new DAQCompException("Component#" + id + " not found");
+        }
+
+        Level level = getLogLevel(levelStr);
+        if (level == null) {
+            throw new DAQCompException("Bad log level '" + levelStr + "'");
+        }
+
+        setLogAppender(new DAQLogAppender(level, address, port));
+
+        return "OK";
+    }
+
+    /**
+     * Check that the server is still alive.
+     *
+     * @param client object used to communicate with config server
+     * @param comp component to notify if server dies
+     *
+     * @return <tt>false</tt> if component was destroyed
+     */
+    private boolean monitorServer(XmlRpcClient client, DAQComponent comp)
+    {
+        Spinner spinner = new Spinner("-\\|/");
+
+        int numFails = 0;
+        boolean compDestroyed = false;
+
+        // wait for the end of time
+        while (true) {
+            try {
+                Thread.sleep(PING_FREQUENCY);
+            } catch (InterruptedException ex) {
+                // ignore interrupts
+            }
+
+            if (pingServer(client)) {
+                numFails = 0;
+            } else if (++numFails >= 3) {
+                compDestroyed = comp.serverDied();
+                break;
+            }
+
+            spinner.print();
+        }
+
+        return !compDestroyed;
     }
 
     /**

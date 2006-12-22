@@ -101,6 +101,13 @@ public abstract class DAQConnector
     }
 
     /**
+     * Is this connector running?
+     *
+     * @return <tt>true</tt> if this connector is running
+     */
+    public abstract boolean isRunning();
+
+    /**
      * Is this a splicer?
      *
      * @return <tt>false</tt>
@@ -109,13 +116,6 @@ public abstract class DAQConnector
     {
         return false;
     }
-
-    /**
-     * Is this connector running?
-     *
-     * @return <tt>true</tt> if this connector is running
-     */
-    public abstract boolean isRunning();
 
     /**
      * Is this connector stopped?

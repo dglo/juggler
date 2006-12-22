@@ -63,17 +63,6 @@ public class DAQOutputConnector
     }
 
     /**
-     * Disconnect output engine from remote input server(s).
-     *
-     * @throws IOException if there is a problem
-     */
-    public void disconnect()
-        throws IOException
-    {
-        engine.disconnect();
-    }
-
-    /**
      * Destroy this connector.
      *
      * @throws Exception if there was a problem
@@ -88,6 +77,17 @@ public class DAQOutputConnector
 
             engine.destroyProcessor();
         }
+    }
+
+    /**
+     * Disconnect output engine from remote input server(s).
+     *
+     * @throws IOException if there is a problem
+     */
+    public void disconnect()
+        throws IOException
+    {
+        engine.disconnect();
     }
 
     /**

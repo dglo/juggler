@@ -13,16 +13,16 @@ public interface DAQCompConfig
     int getGranularity();
 
     /**
-     * Get maximum number of bytes allocated for this cache
-     *
-     * @return maximum number of cached bytes
-     */
-    long getMaxCacheBytes();
-
-    /**
      * Get maximum numer of bytes acquired by this cache.
      *
      * @return maximum acquired bytes
      */
     long getMaxAcquireBytes();
+
+    /**
+     * Get maximum number of bytes allocated for this cache
+     *
+     * @return maximum number of cached bytes
+     */
+    long getMaxCacheBytes();
 }
