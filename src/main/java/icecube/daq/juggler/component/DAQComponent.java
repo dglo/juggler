@@ -650,7 +650,7 @@ public abstract class DAQComponent
         return engines.iterator();
     }
 
-    public void monitorHack()
+    public String monitorHack()
     {
         Iterator keyIter = mbeans.keySet().iterator();
         while (keyIter.hasNext()) {
@@ -658,6 +658,8 @@ public abstract class DAQComponent
 
             LOG.info("MBean \"" + key + "\" => " + mbeans.get(key));
         }
+
+        return "OK";
     }
 
     /**
