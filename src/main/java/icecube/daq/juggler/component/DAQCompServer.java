@@ -490,6 +490,7 @@ public class DAQCompServer
     public String monitorHack(int id)
         throws DAQCompException, IOException
     {
+        LOG.debug("Inside DAQCompServer.monitorHack");
         DAQComponent comp = getComponent(id);
         if (comp == null) {
             throw new DAQCompException("Component#" + id + " not found");
@@ -497,6 +498,7 @@ public class DAQCompServer
 
         comp.monitorHack();
 
+        LOG.debug("Leaving DAQCompServer.monitorHack");
         return "OK";
     }
 

@@ -652,19 +652,13 @@ public abstract class DAQComponent
 
     public String monitorHack()
     {
+LOG.debug("Inside DAQComponent.monitorHack");
 /*
         Iterator keyIter = mbeans.keySet().iterator();
         while (keyIter.hasNext()) {
             String key = (String) keyIter.next();
-            Object obj = mbeans.get(key);
 
-            if (obj instanceof icecube.daq.eventBuilder.monitoring.MonitoringMBean) {
-                icecube.daq.eventBuilder.monitoring.MonitoringMBean ebBean =
-                    (icecube.daq.eventBuilder.monitoring.MonitoringMBean) obj;
-
-                LOG.info("MBean \"" + key + "\" => " +
-                         ebBean.getNumReadoutsReceived());
-            }
+            LOG.info("MBean \"" + key + "\" => " + mbeans.get(key));
         }
 */
 
