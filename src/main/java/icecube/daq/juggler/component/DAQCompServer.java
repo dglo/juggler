@@ -478,6 +478,29 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to log MBean data
+     *
+     * @param id component ID
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if no component matches the specified ID
+     * @throws IOException if new appender could not be created
+     */
+    public String monitorHack(int id)
+        throws DAQCompException, IOException
+    {
+        DAQComponent comp = getComponent(id);
+        if (comp == null) {
+            throw new DAQCompException("Component#" + id + " not found");
+        }
+
+        comp.monitorHack();
+
+        return "OK";
+    }
+
+    /**
      * Check that the server is still alive.
      *
      * @param client object used to communicate with config server
