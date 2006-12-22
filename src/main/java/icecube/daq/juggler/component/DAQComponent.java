@@ -61,6 +61,9 @@ public abstract class DAQComponent
 
     private static final Log LOG = LogFactory.getLog(DAQComponent.class);
 
+    /** Enable debugging hack until monitoring is implemented */
+    private static final boolean DEBUG_HACK = true;
+
     /** component type */
     private String name;
     /** component instance number */
@@ -599,6 +602,15 @@ public abstract class DAQComponent
      */
     public final String getStateString()
     {
+        if (DEBUG_HACK) {
+            Iterator keyIter = mbeans.keySet().iterator();
+            while (keyIter.hasNext()) {
+                String key = (String) keyIter.next();
+
+                LOG.debug("MBean \"" + key + "\" => " + mbeans.get(key));
+            }
+        }
+
         return STATE_NAMES[state];
     }
 
