@@ -652,15 +652,12 @@ public abstract class DAQComponent
 
     public String monitorHack()
     {
-LOG.debug("Inside DAQComponent.monitorHack");
-/*
         Iterator keyIter = mbeans.keySet().iterator();
         while (keyIter.hasNext()) {
             String key = (String) keyIter.next();
 
             LOG.info("MBean \"" + key + "\" => " + mbeans.get(key));
         }
-*/
 
         return "OK";
     }
