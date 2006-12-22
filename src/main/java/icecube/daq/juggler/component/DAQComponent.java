@@ -77,8 +77,11 @@ public abstract class DAQComponent
     /** has list of engines been sorted? */
     private boolean enginesSorted;
 
-    /** list of byte buffer caches */
+    /** hash table of byte buffer caches */
     private HashMap caches = new HashMap();
+
+    /** hash table of MBeans */
+    private HashMap mbeans = new HashMap();
 
     /** Port and address to log to */
     private String logAddress;
@@ -147,6 +150,15 @@ public abstract class DAQComponent
     {
         engines.add(new DAQOutputConnector(type, engine));
         enginesSorted = false;
+    }
+
+    public final void addMBean(String name, Object mbean)
+    {
+        if (mbeans.containsKey(name)) {
+            LOG.error("Overwriting MBean \"" + name + "\"");
+        }
+
+        mbeans.put(name, mbean);
     }
 
     /**
