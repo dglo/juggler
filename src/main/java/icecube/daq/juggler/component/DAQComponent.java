@@ -652,6 +652,7 @@ public abstract class DAQComponent
 
     public String monitorHack()
     {
+/*
         Iterator keyIter = mbeans.keySet().iterator();
         while (keyIter.hasNext()) {
             String key = (String) keyIter.next();
@@ -665,6 +666,7 @@ public abstract class DAQComponent
                          ebBean.getNumReadoutsReceived());
             }
         }
+*/
 
         return "OK";
     }
