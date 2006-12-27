@@ -21,13 +21,15 @@ import junit.framework.TestSuite;
 public class MBeanAgentTest
     extends TestCase
 {
+    private MBeanAgent agent;
+
     private boolean findBeanInHtml(MBeanAgent agent, String name)
         throws IOException, MBeanAgentException
     {
         boolean found = false;
 
         final String target = "name=" + name;
-        final String urlStr = "http://localhost:" + agent.getPort();
+        final String urlStr = "http://localhost:" + agent.getHtmlPort();
 
         URL url;
         try {
@@ -56,16 +58,28 @@ public class MBeanAgentTest
         return found;
     }
 
+    protected void setUp()
+    {
+        agent = new MBeanAgent();
+    }
+
     public static Test suite()
     {
         return new TestSuite(MBeanAgentTest.class);
     }
 
+    protected void tearDown()
+    {
+        try {
+            agent.stop();
+        } catch (Exception ex) {
+            // ignore teardown errors
+        }
+    }
+
     public void testSimple()
         throws MBeanAgentException
     {
-        MBeanAgent agent = new MBeanAgent();
-
         assertFalse("Agent should not be running", agent.isRunning());
 
         final String beanName = "hello";
@@ -89,8 +103,6 @@ public class MBeanAgentTest
     public void testHtml()
         throws IOException, JMException, MBeanAgentException
     {
-        MBeanAgent agent = new MBeanAgent();
-
         final String beanName = "hello";
 
         Hello bean = new Hello();
@@ -100,16 +112,12 @@ public class MBeanAgentTest
 
         assertTrue("Couldn't find entry for \"" + beanName +
                    "\" in MBean HTML page", findBeanInHtml(agent, beanName));
-
-        agent.stop();
     }
 
     public void testMultiHtml()
         throws IOException, JMException, MBeanAgentException
     {
-        MBeanAgent agent = new MBeanAgent();
-
-        final String beanName = "hello";
+        final String beanName = "hello1";
 
         Hello bean = new Hello();
         agent.addBean(beanName, bean);
@@ -124,19 +132,29 @@ public class MBeanAgentTest
         final String beanName2 = "hello2";
 
         Hello bean2 = new Hello();
-        agent2.addBean(beanName2, bean2);
+        try {
+            agent2.addBean(beanName2, bean2);
 
-        agent2.start();
+            agent2.start();
 
-        assertTrue("Couldn't find entry for \"" + beanName2 +
-                   "\" in MBean HTML page", findBeanInHtml(agent2, beanName2));
+            assertTrue("Couldn't find entry for \"" + beanName2 +
+                       "\" in second MBean HTML page",
+                       findBeanInHtml(agent2, beanName2));
 
-        assertTrue("Couldn't find entry for \"" + beanName +
-                   "\" in MBean HTML page", findBeanInHtml(agent, beanName));
+            assertTrue("Couldn't find entry for \"" + beanName +
+                       "\" in second MBean HTML page",
+                       findBeanInHtml(agent2, beanName));
 
-        agent2.stop();
+            assertTrue("Couldn't find entry for \"" + beanName +
+                       "\" in first MBean HTML page",
+                       findBeanInHtml(agent, beanName));
 
-        agent.stop();
+            assertTrue("Couldn't find entry for \"" + beanName2 +
+                       "\" in first MBean HTML page",
+                       findBeanInHtml(agent, beanName2));
+        } finally {
+            agent2.stop();
+        }
     }
 
     public void testHtmlOverlap()
@@ -144,8 +162,6 @@ public class MBeanAgentTest
     {
         ServerSocket ss = new ServerSocket(MBeanAgent.DEFAULT_PORT);
         ServerSocket ss2 = new ServerSocket(MBeanAgent.DEFAULT_PORT + 1);
-
-        MBeanAgent agent = new MBeanAgent();
 
         final String beanName = "hello";
 
@@ -156,8 +172,6 @@ public class MBeanAgentTest
 
         assertTrue("Couldn't find entry for \"" + beanName +
                    "\" in MBean HTML page", findBeanInHtml(agent, beanName));
-
-        agent.stop();
 
         ss.close();
     }

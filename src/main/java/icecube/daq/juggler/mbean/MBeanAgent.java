@@ -23,7 +23,6 @@ class BeanBin
     private String name;
     private Object bean;
     private ObjectName beanName;
-    private ObjectName htmlName;
 
     BeanBin(String name, Object bean)
     {
@@ -46,24 +45,6 @@ class BeanBin
         return beanName;
     }
 
-    ObjectName getHtmlName(MBeanAgent agent)
-        throws JMException
-    {
-        int port;
-        try {
-            port = agent.getPort();
-        } catch (MBeanAgentException mbe) {
-            throw new JMException(mbe.getMessage());
-        }
-
-        if (htmlName == null) {
-            htmlName = new ObjectName(agent.getDomain() + ":name=" + name +
-                                      ",port=" + port);
-        }
-
-        return htmlName;
-    }
-
     public String toString()
     {
         return name + ":" + bean;
@@ -76,10 +57,10 @@ public class MBeanAgent
 
     private static final Log LOG = LogFactory.getLog(MBeanAgent.class);
 
-    private int port = Integer.MIN_VALUE;
     private HashMap beans = new HashMap();
 
-    private HtmlAdaptorServer adapter;
+    private int htmlPort = Integer.MIN_VALUE;
+    private HtmlAdaptorServer htmlAdapter;
 
     public MBeanAgent()
     {
@@ -101,24 +82,50 @@ public class MBeanAgent
         beans.put(name, new BeanBin(name, bean));
     }
 
-    String getDomain()
-    {
-        return getClass().getName();
-    }
-
-    public int getPort()
+    private static final int findUnusedPort()
         throws MBeanAgentException
     {
-        if (port == Integer.MIN_VALUE) {
-            throw new MBeanAgentException("Port has not been set");
+        int port;
+
+        ServerSocket ss;
+        try {
+            ss = new ServerSocket();
+            ss.setReuseAddress(true);
+            ss.bind(null);
+            port = ss.getLocalPort();
+            ss.close();
+        } catch (Exception ex) {
+            throw new MBeanAgentException("Couldn't search for port", ex);
         }
 
         return port;
     }
 
+    String getDomain()
+    {
+        return getClass().getName();
+    }
+
+    private ObjectName getHtmlName()
+        throws JMException
+    {
+        return new ObjectName(getDomain() + ":name=htmlAdapter,port=" +
+                              htmlPort);
+    }
+
+    public int getHtmlPort()
+        throws MBeanAgentException
+    {
+        if (htmlPort == Integer.MIN_VALUE) {
+            throw new MBeanAgentException("HTML port has not been set");
+        }
+
+        return htmlPort;
+    }
+
     public boolean isRunning()
     {
-        return (adapter != null);
+        return htmlAdapter != null;
     }
 
     private void registerBeans()
@@ -129,12 +136,9 @@ public class MBeanAgent
         for (Iterator iter = beans.values().iterator(); iter.hasNext();) {
             BeanBin bin = (BeanBin) iter.next();
 
+            // register MBean with the platform MBeanServer
             try {
-                // register MBean with the platform MBeanServer
                 mbs.registerMBean(bin.getBean(), bin.getBeanName(this));
-
-                // Associate MBean with the HTML adapter
-                mbs.registerMBean(adapter, bin.getHtmlName(this));
             } catch (JMException jme) {
                 LOG.error("Couldn't register bean \"" + bin + "\"", jme);
             }
@@ -161,53 +165,52 @@ public class MBeanAgent
     /**
      * Start agent.
      *
-     * @throws JMException if there is a probleam registering the mbeans
+     * @throws JMException if there is a problem registering the mbeans
      * @throws MBeanAgentException if the agent is already running
      */
     public void start()
         throws JMException, MBeanAgentException
     {
-        if (adapter != null) {
+        if (htmlAdapter != null) {
             throw new MBeanAgentException("Agent is already running");
         }
 
-        adapter = new HtmlAdaptorServer();
+        // Get the platform MBeanServer
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        ServerSocket ss;
+        htmlAdapter = new HtmlAdaptorServer();
+        htmlPort = findUnusedPort();
+        htmlAdapter.setPort(htmlPort);
+
+        // Register the HTML adapter
         try {
-            ss = new ServerSocket();
-            ss.setReuseAddress(true);
-            ss.bind(null);
-            port = ss.getLocalPort();
-            ss.close();
-        } catch (Exception ex) {
-            throw new MBeanAgentException("Couldn't search for port", ex);
+            mbs.registerMBean(htmlAdapter, getHtmlName());
+        } catch (JMException jme) {
+            LOG.error("Couldn't register HTML adapter", jme);
         }
-
-        adapter.setPort(port);
 
         registerBeans();
 
-        adapter.start();
+        htmlAdapter.start();
     }
 
     /**
      * Stop agent.
      *
-     * @throws JMException if there is a probleam unregistering the mbeans
+     * @throws JMException if there is a problem unregistering the mbeans
      * @throws MBeanAgentException if the agent is not running
      */
     public void stop()
         throws JMException, MBeanAgentException
     {
-        if (adapter == null) {
+        if (htmlAdapter == null) {
             throw new MBeanAgentException("Agent has not been started");
         }
 
-        adapter.stop();
+        htmlAdapter.stop();
 
         int num = 0;
-        while (adapter.getState() == adapter.STOPPING) {
+        while (htmlAdapter.getState() == htmlAdapter.STOPPING) {
             try {
                 Thread.sleep(200);
             } catch (Exception ex) {
@@ -218,7 +221,7 @@ public class MBeanAgent
 
         unregisterBeans();
 
-        adapter = null;
+        htmlAdapter = null;
     }
 
     private void unregisterBeans()
@@ -226,15 +229,19 @@ public class MBeanAgent
         // Get the platform MBeanServer
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
+        // unregister HTML MBean
+        try {
+            mbs.unregisterMBean(getHtmlName());
+        } catch (JMException jme) {
+                LOG.error("Couldn't unregister HTML bean", jme);
+        }
+
         for (Iterator iter = beans.values().iterator(); iter.hasNext();) {
             BeanBin bin = (BeanBin) iter.next();
 
             try {
                 // unregister basic MBean
                 mbs.unregisterMBean(bin.getBeanName(this));
-
-                // unregister HTML MBean
-                mbs.unregisterMBean(bin.getHtmlName(this));
             } catch (JMException jme) {
                 LOG.error("Couldn't unregister bean \"" + bin + "\"", jme);
             }
