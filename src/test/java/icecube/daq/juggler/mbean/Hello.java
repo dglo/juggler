@@ -1,4 +1,4 @@
-package icecube.daq.juggler.mbean.test;
+package icecube.daq.juggler.mbean;
 
 public class Hello
     implements HelloMBean

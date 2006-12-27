@@ -1,4 +1,4 @@
-package icecube.daq.juggler.mbean.test;
+package icecube.daq.juggler.mbean;
 
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
