@@ -2,10 +2,10 @@ package icecube.daq.juggler.mbean;
 
 import com.sun.jdmk.comm.HtmlAdaptorServer;
 
+import java.io.IOException;
+
 import java.lang.management.ManagementFactory;
 
-import java.net.BindException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
 import java.util.HashMap;
@@ -53,8 +53,6 @@ class BeanBin
 
 public class MBeanAgent
 {
-    public static final int DEFAULT_PORT = 8000;
-
     private static final Log LOG = LogFactory.getLog(MBeanAgent.class);
 
     private HashMap beans = new HashMap();
@@ -82,7 +80,7 @@ public class MBeanAgent
         beans.put(name, new BeanBin(name, bean));
     }
 
-    private static final int findUnusedPort()
+    private static int findUnusedPort()
         throws MBeanAgentException
     {
         int port;
@@ -94,8 +92,8 @@ public class MBeanAgent
             ss.bind(null);
             port = ss.getLocalPort();
             ss.close();
-        } catch (Exception ex) {
-            throw new MBeanAgentException("Couldn't search for port", ex);
+        } catch (IOException ioe) {
+            throw new MBeanAgentException("Couldn't search for port", ioe);
         }
 
         return port;
@@ -213,7 +211,7 @@ public class MBeanAgent
         while (htmlAdapter.getState() == htmlAdapter.STOPPING) {
             try {
                 Thread.sleep(200);
-            } catch (Exception ex) {
+            } catch (InterruptedException ie) {
                 // ignore interrupts
             }
             num++;
@@ -229,13 +227,6 @@ public class MBeanAgent
         // Get the platform MBeanServer
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        // unregister HTML MBean
-        try {
-            mbs.unregisterMBean(getHtmlName());
-        } catch (JMException jme) {
-                LOG.error("Couldn't unregister HTML bean", jme);
-        }
-
         for (Iterator iter = beans.values().iterator(); iter.hasNext();) {
             BeanBin bin = (BeanBin) iter.next();
 
@@ -245,6 +236,13 @@ public class MBeanAgent
             } catch (JMException jme) {
                 LOG.error("Couldn't unregister bean \"" + bin + "\"", jme);
             }
+        }
+
+        // unregister HTML MBean
+        try {
+            mbs.unregisterMBean(getHtmlName());
+        } catch (JMException jme) {
+            LOG.error("Couldn't unregister HTML bean", jme);
         }
     }
 }
