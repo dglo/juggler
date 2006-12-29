@@ -18,6 +18,11 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.apache.xmlrpc.XmlRpcException;
+
+import org.apache.xmlrpc.client.XmlRpcClient;
+import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+
 public class MBeanAgentTest
     extends TestCase
 {
@@ -56,6 +61,39 @@ public class MBeanAgentTest
         urlStream.close();
 
         return found;
+    }
+
+    private boolean findBeanInXmlRpc(MBeanAgent agent, String name)
+        throws MBeanAgentException, XmlRpcException
+    {
+        boolean found = false;
+
+        final String target = "name=" + name;
+        final String urlStr = "http://localhost:" + agent.getXmlRpcPort();
+
+        URL url;
+        try {
+            url = new URL(urlStr);
+        } catch (MalformedURLException mue) {
+            throw new XmlRpcException("Couldn't build URL <" + urlStr + ">");
+        }
+
+        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+        config.setServerURL(url);
+
+        XmlRpcClient client = new XmlRpcClient();
+        client.setConfig(config);
+
+        Object[] params = new Object[] { name };
+        Object reply = client.execute("mbean.listGetters", params);
+        assertNotNull("No response from mbean.listGetters", reply);
+        assertTrue("Expected array, got " + reply.getClass().getName(),
+                   reply.getClass().isArray());
+
+        Object[] results = (Object[]) reply;
+        assertEquals("Unexpected array length", 1, results.length);
+
+        return true;
     }
 
     protected void setUp()
@@ -114,55 +152,9 @@ public class MBeanAgentTest
                    "\" in MBean HTML page", findBeanInHtml(agent, beanName));
     }
 
-    public void testMultiHtml()
-        throws IOException, JMException, MBeanAgentException
+    public void testXmlRpc()
+        throws IOException, JMException, MBeanAgentException, XmlRpcException
     {
-        final String beanName = "hello1";
-
-        Hello bean = new Hello();
-        agent.addBean(beanName, bean);
-
-        agent.start();
-
-        assertTrue("Couldn't find entry for \"" + beanName +
-                   "\" in MBean HTML page", findBeanInHtml(agent, beanName));
-
-        MBeanAgent agent2 = new MBeanAgent();
-
-        final String beanName2 = "hello2";
-
-        Hello bean2 = new Hello();
-        try {
-            agent2.addBean(beanName2, bean2);
-
-            agent2.start();
-
-            assertTrue("Couldn't find entry for \"" + beanName2 +
-                       "\" in second MBean HTML page",
-                       findBeanInHtml(agent2, beanName2));
-
-            assertTrue("Couldn't find entry for \"" + beanName +
-                       "\" in second MBean HTML page",
-                       findBeanInHtml(agent2, beanName));
-
-            assertTrue("Couldn't find entry for \"" + beanName +
-                       "\" in first MBean HTML page",
-                       findBeanInHtml(agent, beanName));
-
-            assertTrue("Couldn't find entry for \"" + beanName2 +
-                       "\" in first MBean HTML page",
-                       findBeanInHtml(agent, beanName2));
-        } finally {
-            agent2.stop();
-        }
-    }
-
-    public void testHtmlOverlap()
-        throws IOException, JMException, MBeanAgentException
-    {
-        ServerSocket ss = new ServerSocket(MBeanAgent.DEFAULT_PORT);
-        ServerSocket ss2 = new ServerSocket(MBeanAgent.DEFAULT_PORT + 1);
-
         final String beanName = "hello";
 
         Hello bean = new Hello();
@@ -170,10 +162,7 @@ public class MBeanAgentTest
 
         agent.start();
 
-        assertTrue("Couldn't find entry for \"" + beanName +
-                   "\" in MBean HTML page", findBeanInHtml(agent, beanName));
-
-        ss.close();
+        findBeanInXmlRpc(agent, beanName);
     }
 
     public static void main(String argv[])
