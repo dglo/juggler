@@ -60,6 +60,9 @@ public class MBeanAgent
     private int htmlPort = Integer.MIN_VALUE;
     private HtmlAdaptorServer htmlAdapter;
 
+    private int xmlRpcPort = Integer.MIN_VALUE;
+    private XMLRPCServer xmlRpcAdapter;
+
     public MBeanAgent()
     {
     }
@@ -121,9 +124,26 @@ public class MBeanAgent
         return htmlPort;
     }
 
+    private ObjectName getXmlRpcName()
+        throws JMException
+    {
+        return new ObjectName(getDomain() + ":name=xmlRpcAdapter,port=" +
+                              xmlRpcPort);
+    }
+
+    public int getXmlRpcPort()
+        throws MBeanAgentException
+    {
+        if (xmlRpcPort == Integer.MIN_VALUE) {
+            throw new MBeanAgentException("XML-RPC port has not been set");
+        }
+
+        return xmlRpcPort;
+    }
+
     public boolean isRunning()
     {
-        return htmlAdapter != null;
+        return (htmlAdapter != null && xmlRpcAdapter != null);
     }
 
     private void registerBeans()
@@ -169,7 +189,7 @@ public class MBeanAgent
     public void start()
         throws JMException, MBeanAgentException
     {
-        if (htmlAdapter != null) {
+        if (htmlAdapter != null || xmlRpcAdapter != null) {
             throw new MBeanAgentException("Agent is already running");
         }
 
@@ -187,9 +207,21 @@ public class MBeanAgent
             LOG.error("Couldn't register HTML adapter", jme);
         }
 
+        xmlRpcAdapter = new XMLRPCServer();
+        xmlRpcPort = findUnusedPort();
+        xmlRpcAdapter.setPort(xmlRpcPort);
+
+        // Register the XML-RPC adapter
+        try {
+            mbs.registerMBean(xmlRpcAdapter, getXmlRpcName());
+        } catch (JMException jme) {
+            LOG.error("Couldn't register XML-RPC adapter", jme);
+        }
+
         registerBeans();
 
         htmlAdapter.start();
+        xmlRpcAdapter.start();
     }
 
     /**
@@ -201,14 +233,17 @@ public class MBeanAgent
     public void stop()
         throws JMException, MBeanAgentException
     {
-        if (htmlAdapter == null) {
+        if (htmlAdapter == null && xmlRpcAdapter == null) {
             throw new MBeanAgentException("Agent has not been started");
         }
 
         htmlAdapter.stop();
+        xmlRpcAdapter.stop();
 
         int num = 0;
-        while (htmlAdapter.getState() == htmlAdapter.STOPPING) {
+        while (htmlAdapter.getState() == htmlAdapter.STOPPING &&
+               !xmlRpcAdapter.isStopped())
+        {
             try {
                 Thread.sleep(200);
             } catch (InterruptedException ie) {
@@ -220,6 +255,7 @@ public class MBeanAgent
         unregisterBeans();
 
         htmlAdapter = null;
+        xmlRpcAdapter = null;
     }
 
     private void unregisterBeans()
@@ -236,6 +272,13 @@ public class MBeanAgent
             } catch (JMException jme) {
                 LOG.error("Couldn't unregister bean \"" + bin + "\"", jme);
             }
+        }
+
+        // unregister XML-RPC MBean
+        try {
+            mbs.unregisterMBean(getXmlRpcName());
+        } catch (JMException jme) {
+            LOG.error("Couldn't unregister XML-RPC bean", jme);
         }
 
         // unregister HTML MBean
