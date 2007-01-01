@@ -48,6 +48,48 @@ class XMLRPCServer
     {
     }
 
+    private static Object fixAttribute(Object obj)
+    {
+        String attrName;
+        Object attrVal;
+
+        if (obj != null && obj instanceof Attribute) {
+            Attribute attr = (Attribute) obj;
+
+            attrName = attr.getName();
+            attrVal = attr.getValue();
+        } else {
+            attrName = "?unnamed?";
+            attrVal = obj;
+        }
+
+        if (attrVal == null) {
+            return null;
+        }
+
+        if (attrVal instanceof Byte) {
+            return new Integer(((Byte) attrVal).intValue());
+        } else if (attrVal instanceof Character) {
+            char[] array = new char[] { ((Character) attrVal).charValue() };
+            return new String(array);
+        } else if (attrVal instanceof Short) {
+            return new Integer(((Short) attrVal).intValue());
+        } else if (attrVal instanceof Long) {
+            long lVal = ((Long) attrVal).longValue();
+            if (lVal < (long) Integer.MIN_VALUE ||
+                lVal > (long) Integer.MAX_VALUE)
+            {
+                return attrVal.toString() + "L";
+            }
+
+            return new Integer((int) lVal);
+        } else if (attrVal instanceof Float) {
+            return new Double(((Float) attrVal).doubleValue());
+        }
+
+        return attrVal;
+    }
+
     Object get(String mbeanName, String attrName)
         throws MBeanAgentException
     {
@@ -59,7 +101,7 @@ class XMLRPCServer
         ObjectName objName = (ObjectName) beans.get(mbeanName);
 
         try {
-            return server.getAttribute(objName, attrName);
+            return fixAttribute(server.getAttribute(objName, attrName));
         } catch (JMException jme) {
             throw new MBeanAgentException("Couldn't get MBean \"" + mbeanName +
                                           "\" attribute \"" + attrName + "\"",
@@ -100,7 +142,7 @@ class XMLRPCServer
 
             for (int i = 0; i < attrNames.length; i++) {
                 if (attrNames[i].equals(attr.getName())) {
-                    vals[i] = attr.getValue();
+                    vals[i] = fixAttribute(attr);
                     break;
                 }
             }

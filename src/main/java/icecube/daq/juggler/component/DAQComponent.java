@@ -4,6 +4,9 @@ import icecube.daq.io.PayloadInputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
 
+import icecube.daq.juggler.mbean.MBeanAgent;
+import icecube.daq.juggler.mbean.MBeanAgentException;
+
 import icecube.daq.payload.IByteBufferCache;
 
 import icecube.daq.splicer.Splicer;
@@ -80,8 +83,8 @@ public abstract class DAQComponent
     /** hash table of byte buffer caches */
     private HashMap caches = new HashMap();
 
-    /** hash table of MBeans */
-    private HashMap mbeans = new HashMap();
+    /** MBean manager */
+    private MBeanAgent mbeanAgent;
 
     /** Port and address to log to */
     private String logAddress;
@@ -154,11 +157,15 @@ public abstract class DAQComponent
 
     public final void addMBean(String name, Object mbean)
     {
-        if (mbeans.containsKey(name)) {
-            LOG.error("Overwriting MBean \"" + name + "\"");
+        if (mbeanAgent == null) {
+            mbeanAgent = new MBeanAgent();
         }
 
-        mbeans.put(name, mbean);
+        try {
+            mbeanAgent.addBean(name, mbean);
+        } catch (MBeanAgentException mae) {
+            LOG.error("Couldn't add MBean \"" + name + "\"", mae);
+        }
     }
 
     /**
@@ -368,6 +375,15 @@ public abstract class DAQComponent
                 compEx = new DAQCompException("Couldn't destroy " + name +
                                               "#" + num + ":" + conn.getType(),
                                               ex);
+            }
+        }
+
+        if (mbeanAgent != null) {
+            try {
+                mbeanAgent.stop();
+            } catch (MBeanAgentException mae) {
+                compEx = new DAQCompException("Couldn't stop MBean agent",
+                                              mae);
             }
         }
 
@@ -785,6 +801,15 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         DAQCompException compEx = null;
+
+        if (mbeanAgent != null) {
+            try {
+                mbeanAgent.start();
+            } catch (MBeanAgentException mae) {
+                compEx = new DAQCompException("Couldn't start MBean agent",
+                                              mae);
+            }
+        }
 
         // sort engines so they are started in the correct order
         if (!enginesSorted) {
