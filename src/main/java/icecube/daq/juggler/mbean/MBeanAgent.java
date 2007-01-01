@@ -183,11 +183,10 @@ public class MBeanAgent
     /**
      * Start agent.
      *
-     * @throws JMException if there is a problem registering the mbeans
      * @throws MBeanAgentException if the agent is already running
      */
     public void start()
-        throws JMException, MBeanAgentException
+        throws MBeanAgentException
     {
         if (htmlAdapter != null || xmlRpcAdapter != null) {
             throw new MBeanAgentException("Agent is already running");
@@ -204,7 +203,8 @@ public class MBeanAgent
         try {
             mbs.registerMBean(htmlAdapter, getHtmlName());
         } catch (JMException jme) {
-            LOG.error("Couldn't register HTML adapter", jme);
+            throw new MBeanAgentException("Couldn't register HTML adapter",
+                                          jme);
         }
 
         xmlRpcAdapter = new XMLRPCServer();
@@ -215,23 +215,26 @@ public class MBeanAgent
         try {
             mbs.registerMBean(xmlRpcAdapter, getXmlRpcName());
         } catch (JMException jme) {
-            LOG.error("Couldn't register XML-RPC adapter", jme);
+            throw new MBeanAgentException("Couldn't register XML-RPC adapter",
+                                          jme);
         }
 
         registerBeans();
 
         htmlAdapter.start();
         xmlRpcAdapter.start();
+
+        LOG.info("Started MBean agent: HTML port " + htmlPort +
+                 ", XML-RPC port " + xmlRpcPort);
     }
 
     /**
      * Stop agent.
      *
-     * @throws JMException if there is a problem unregistering the mbeans
      * @throws MBeanAgentException if the agent is not running
      */
     public void stop()
-        throws JMException, MBeanAgentException
+        throws MBeanAgentException
     {
         if (htmlAdapter == null && xmlRpcAdapter == null) {
             throw new MBeanAgentException("Agent has not been started");
