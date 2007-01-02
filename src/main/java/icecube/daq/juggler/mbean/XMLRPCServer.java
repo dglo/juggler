@@ -27,6 +27,9 @@ import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 
 import org.apache.xmlrpc.webserver.WebServer;
 
+/**
+ * XML-RPC adapter for JMX MBeans.
+ */
 class XMLRPCServer
     implements MBeanRegistration, NotificationListener, XMLRPCServerMBean
 {

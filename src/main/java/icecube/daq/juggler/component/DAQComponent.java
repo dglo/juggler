@@ -155,6 +155,12 @@ public abstract class DAQComponent
         enginesSorted = false;
     }
 
+    /**
+     * Add an MBean.
+     *
+     * @param name short MBean name
+     * @param mbean MBean object
+     */
     public final void addMBean(String name, Object mbean)
     {
         if (mbeanAgent == null) {

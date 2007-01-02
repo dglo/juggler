@@ -18,23 +18,49 @@ import javax.management.ObjectName;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * MBean container.
+ */
 class BeanBin
 {
+    /** MBean name */
     private String name;
+    /** MBean object */
     private Object bean;
+    /** JMX MBean name */
     private ObjectName beanName;
 
+    /**
+     * Create an MBean container
+     *
+     * @param name short MBean name
+     * @param bean MBean object
+     */
     BeanBin(String name, Object bean)
     {
         this.name = name;
         this.bean = bean;
     }
 
+    /**
+     * Get the MBean object.
+     *
+     * @return MBean
+     */
     Object getBean()
     {
         return bean;
     }
 
+    /**
+     * Get the JMX name for this MBean.
+     *
+     * @param agent MBean agent
+     *
+     * @return JMX name
+     *
+     * @throws JMException if there is a problem creating the name
+     */
     ObjectName getBeanName(MBeanAgent agent)
         throws JMException
     {
@@ -45,28 +71,54 @@ class BeanBin
         return beanName;
     }
 
+    /**
+     * Debugging representation of MBean container data.
+     *
+     * @return debugging string
+     */
     public String toString()
     {
         return name + ":" + bean;
     }
 }
 
+/**
+ * Agent which handles all MBeans for a component.
+ */
 public class MBeanAgent
 {
     private static final Log LOG = LogFactory.getLog(MBeanAgent.class);
 
+    /** Mapping from short name to MBean object */
     private HashMap beans = new HashMap();
 
+    /** HTML port */
     private int htmlPort = Integer.MIN_VALUE;
+    /** HTML JMX name */
+    private ObjectName htmlName;
+    /** HTML server */
     private HtmlAdaptorServer htmlAdapter;
 
+    /** XML-RPC port */
     private int xmlRpcPort = Integer.MIN_VALUE;
+    /** XML-RPC JMX name */
+    private ObjectName xmlRpcName;
+    /** XML-RPC server */
     private XMLRPCServer xmlRpcAdapter;
 
+    /**
+     * Create an MBean agent.
+     */
     public MBeanAgent()
     {
     }
 
+    /**
+     * Add an MBean
+     *
+     * @param name short MBean name
+     * @param bean MBean object
+     */
     public void addBean(String name, Object bean)
         throws MBeanAgentException
     {
@@ -83,6 +135,11 @@ public class MBeanAgent
         beans.put(name, new BeanBin(name, bean));
     }
 
+    /**
+     * Find an unused IP port to be used by a new server.
+     *
+     * @return unused IP port
+     */
     private static int findUnusedPort()
         throws MBeanAgentException
     {
@@ -102,18 +159,43 @@ public class MBeanAgent
         return port;
     }
 
+    /**
+     * Get the MBean domain.
+     *
+     * @return MBean domain
+     */
     String getDomain()
     {
         return getClass().getName();
     }
 
+    /**
+     * Get the JMX name used to refer to the HTML server MBean.
+     *
+     * @return HTML server name
+     */
     private ObjectName getHtmlName()
-        throws JMException
+        throws MBeanAgentException
     {
-        return new ObjectName(getDomain() + ":name=htmlAdapter,port=" +
-                              htmlPort);
+        if (htmlName == null) {
+            try {
+                htmlName = new ObjectName(getDomain() +
+                                          ":name=htmlAdapter,port=" +
+                                          getHtmlPort());
+            } catch (JMException jme) {
+                throw new MBeanAgentException("Could not create" +
+                                              " HTML MBean name", jme);
+            }
+        }
+
+        return htmlName;
     }
 
+    /**
+     * Get the IP port on which the HTML server is listening.
+     *
+     * @return HTML port
+     */
     public int getHtmlPort()
         throws MBeanAgentException
     {
@@ -124,13 +206,33 @@ public class MBeanAgent
         return htmlPort;
     }
 
+    /**
+     * Get the JMX name used to refer to the XML-RPC server MBean.
+     *
+     * @return XML-RPC server name
+     */
     private ObjectName getXmlRpcName()
-        throws JMException
+        throws MBeanAgentException
     {
-        return new ObjectName(getDomain() + ":name=xmlRpcAdapter,port=" +
-                              xmlRpcPort);
+        if (xmlRpcName == null) {
+            try {
+                xmlRpcName = new ObjectName(getDomain() +
+                                            ":name=xmlRpcAdapter,port=" +
+                                            getXmlRpcPort());
+            } catch (JMException jme) {
+                throw new MBeanAgentException("Could not create" +
+                                              " XML-RPC MBean name", jme);
+            }
+        }
+
+        return xmlRpcName;
     }
 
+    /**
+     * Get the IP port on which the XML-RPC server is listening.
+     *
+     * @return XML-RPC port
+     */
     public int getXmlRpcPort()
         throws MBeanAgentException
     {
@@ -141,11 +243,19 @@ public class MBeanAgent
         return xmlRpcPort;
     }
 
+    /**
+     * Is an HTML or XML-RPC server running?
+     *
+     * @return <tt>true</tt> if either server is running
+     */
     public boolean isRunning()
     {
         return (htmlAdapter != null && xmlRpcAdapter != null);
     }
 
+    /**
+     * Register all known MBeans with the MBean server.
+     */
     private void registerBeans()
     {
         // Get the platform MBeanServer
@@ -163,6 +273,15 @@ public class MBeanAgent
         }
     }
 
+    /**
+     * Remove an MBean.
+     *
+     * @param name short MBean name
+     *
+     * @return removed MBean object
+     *
+     * @throws MBeanAgentException if there is a problem
+     */
     public Object removeBean(String name)
         throws MBeanAgentException
     {
@@ -183,7 +302,7 @@ public class MBeanAgent
     /**
      * Start agent.
      *
-     * @throws MBeanAgentException if the agent is already running
+     * @throws MBeanAgentException if there is a problem
      */
     public void start()
         throws MBeanAgentException
@@ -261,6 +380,9 @@ public class MBeanAgent
         xmlRpcAdapter = null;
     }
 
+    /**
+     * Unregister all known MBeans with the MBean server.
+     */
     private void unregisterBeans()
     {
         // Get the platform MBeanServer
@@ -282,13 +404,25 @@ public class MBeanAgent
             mbs.unregisterMBean(getXmlRpcName());
         } catch (JMException jme) {
             LOG.error("Couldn't unregister XML-RPC bean", jme);
+        } catch (MBeanAgentException mae) {
+            LOG.error("Couldn't unregister XML-RPC bean", mae);
         }
+
+        // clear cached XML-RPC data
+        xmlRpcName = null;
+        xmlRpcPort = Integer.MIN_VALUE;
 
         // unregister HTML MBean
         try {
             mbs.unregisterMBean(getHtmlName());
         } catch (JMException jme) {
             LOG.error("Couldn't unregister HTML bean", jme);
+        } catch (MBeanAgentException mae) {
+            LOG.error("Couldn't unregister HTML bean", mae);
         }
+
+        // clear cached HTML data
+        htmlName = null;
+        htmlPort = Integer.MIN_VALUE;
     }
 }
