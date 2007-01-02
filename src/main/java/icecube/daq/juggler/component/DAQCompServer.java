@@ -181,7 +181,8 @@ public class DAQCompServer
 
         Object[] params = new Object[] {
             comp.getName(), new Integer(comp.getNumber()),
-            host, new Integer(port), connList.toArray(),
+            host, new Integer(port), new Integer(comp.getMBeanXmlRpcPort()),
+            connList.toArray(),
         };
 
         Object rtnObj = client.execute("rpc_register_component", params);
