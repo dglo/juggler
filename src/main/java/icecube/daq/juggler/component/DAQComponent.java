@@ -543,6 +543,29 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get MBean XML-RPC server port for this component.
+     *
+     * @return <tt>0</tt> if there is no MBean server for this component
+     */
+    public final int getMBeanXmlRpcPort()
+    {
+        int port;
+        if (mbeanAgent == null) {
+            port = 0;
+        } else {
+            try {
+                port = mbeanAgent.getXmlRpcPort();
+            } catch (MBeanAgentException mbe) {
+                LOG.error("Couldn't get MBean server XML-RPC port", mbe);
+                port = Integer.MIN_VALUE;
+            }
+        }
+
+
+        return port;
+    }
+
+    /**
      * Get component name.
      *
      * @return standard component name
