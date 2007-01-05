@@ -35,6 +35,8 @@ public final class DAQCompApp
     private static final int COMP_ZERO = 4;
     /** event builder harness component */
     private static final int COMP_EBHARNESS = 5;
+    /** string hub harness component */
+    private static final int COMP_SHHARNESS = 6;
 
     /** Logger for most output */
     private static final Log LOG = LogFactory.getLog(DAQCompServer.class);
@@ -120,6 +122,13 @@ public final class DAQCompApp
 
             comp = new EBHarness(numGenerated, hitsPerTrigger);
             break;
+        case COMP_SHHARNESS:
+            if (inputType != null || outputType != null) {
+                LOG.warn("Input/output type ignored");
+            }
+
+            comp = new SHHarness(hitsPerTrigger);
+            break;
         default:
             comp = null;
             break;
@@ -154,6 +163,10 @@ public final class DAQCompApp
         case'p':
         case 'P':
             compType = COMP_PASSTHRU;
+            break;
+        case's':
+        case 'S':
+            compType = COMP_SHHARNESS;
             break;
         case'z':
         case 'Z':
