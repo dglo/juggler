@@ -92,6 +92,11 @@ public class DAQCompServer
     /** List of components */
     private static ArrayList list = new ArrayList();
 
+    /** Server ID (used for rpc_ping) */
+    private static int serverId;
+    /** <tt>true</tt> if server ID has been set */
+    private static boolean serverIdSet;
+
     /** default log appender. */
     private static Appender defaultAppender;
 
@@ -195,8 +200,8 @@ public class DAQCompServer
         }
 
         Object[] rtnArray = (Object[]) rtnObj;
-        if (rtnArray.length != 4) {
-            throw new XmlRpcException("Expected 4-element array, got " +
+        if (rtnArray.length != 5) {
+            throw new XmlRpcException("Expected 5-element array, got " +
                                       rtnArray.length + " elements");
         }
 
@@ -204,6 +209,14 @@ public class DAQCompServer
         final String logIP = (String) rtnArray[1];
         final int logPort = ((Integer) rtnArray[2]).intValue();
         final String levelStr = (String) rtnArray[3];
+        final int tmpServerId =  ((Integer) rtnArray[4]).intValue();
+
+        if (serverIdSet) {
+            LOG.error("Overwriting server ID");
+        }
+
+        serverId = tmpServerId;
+        serverIdSet = true;
 
         final Level logLevel = getLogLevel(levelStr);
         if (logLevel == null) {
@@ -533,19 +546,25 @@ public class DAQCompServer
      */
     private static boolean pingServer(XmlRpcClient client)
     {
-        boolean success;
+        boolean sawServer;
         try {
-            client.execute("rpc_ping", NO_PARAMS);
-            success = true;
+            Object obj = client.execute("rpc_ping", NO_PARAMS);
+
+            int val = ((Integer) obj).intValue();
+
+            sawServer = (val == serverId);
+            if (!sawServer) {
+                serverIdSet = false;
+            }
         } catch (XmlRpcException xre) {
             if (!(xre.linkedException instanceof ConnectException)) {
                 xre.printStackTrace();
             }
 
-            success = false;
+            sawServer = false;
         }
 
-        return success;
+        return sawServer;
     }
 
     /**
@@ -732,12 +751,16 @@ public class DAQCompServer
             XmlRpcClient client = buildClient(cfgServerURL);
 
             while (true) {
-                sendAnnouncement(client, comp, webServer.getPort());
+                try {
+                    sendAnnouncement(client, comp, webServer.getPort());
 
-                list.add(comp);
+                    list.add(comp);
 
-                if (!monitorServer(client, comp)) {
-                    break;
+                    if (!monitorServer(client, comp)) {
+                        break;
+                    }
+                } catch (Exception ex) {
+                    LOG.error("Couldn't announce " + comp, ex);
                 }
             }
         } finally {
