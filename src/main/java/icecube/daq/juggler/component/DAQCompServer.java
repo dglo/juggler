@@ -680,6 +680,29 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to reset the specified component's logging back to
+     * the default logger.
+     *
+     * @param id component ID
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public String resetLogging(int id)
+        throws DAQCompException, IOException
+    {
+        DAQComponent comp = getComponent(id);
+        if (comp == null) {
+            throw new DAQCompException("Component#" + id + " not found");
+        }
+
+        resetLogAppender();
+
+        return "OK";
+    }
+
+    /**
      * Reset Log4J to the default appender.
      */
     private static void resetLogAppender()
