@@ -197,17 +197,16 @@ public class EBHarness
          *
          * @param buf newly-read byte buffer
          *
-         * @throws IOException if ther eis a problem
+         * @throws IOException if there is a problem
          */
         public void pushBuffer(ByteBuffer buf)
             throws IOException
         {
             final int len = buf.getInt(0);
             if (len == 4) {
-                System.err.println("Saw STOP");
+                LOG.error("Saw unexpected STOP");
             } else {
                 final int type = buf.getInt(4);
-                //final long time = buf.getLong(8);
 
                 if (type != PayloadRegistry.PAYLOAD_ID_READOUT_REQUEST) {
                     LOG.error("Expected payload#" +
