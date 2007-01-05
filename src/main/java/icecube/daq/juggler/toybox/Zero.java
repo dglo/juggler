@@ -30,11 +30,11 @@ class TimerTask
     }
 
     /**
-     * Delay for the specified number of seconds, then end the 'run'
+     * Delay for the specified number of milliseconds, then end the 'run'
      */
     public void run()
     {
-        LOG.info("ZERO start");
+        LOG.info("ZERO start (delaying " + delay + " milliseconds)");
 
         try {
             Thread.sleep(delay);
