@@ -110,16 +110,6 @@ public class DAQSplicer
     }
 
     /**
-     * Start processing data.
-     */
-    public void startProcessing()
-    {
-        if (needStart) {
-            splicer.start();
-        }
-    }
-
-    /**
      * String representation.
      *
      * @return debugging string
