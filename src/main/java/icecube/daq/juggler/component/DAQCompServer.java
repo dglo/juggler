@@ -654,11 +654,10 @@ public class DAQCompServer
         }
 
         if (configURL == null) {
-            final String urlStr = "http://localhost:8080";
             try {
-                configURL = new URL(urlStr);
+                configURL = new URL("http", "localhost", 8080, "");
             } catch (MalformedURLException mue) {
-                System.err.println("Bad configuration URL \"" + urlStr + "\"");
+                System.err.println("Couldn't build local configuration URL");
                 usage = true;
             }
         }
