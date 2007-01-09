@@ -110,6 +110,17 @@ public class DAQSplicer
     }
 
     /**
+     * Start processing data.
+     *
+     * @throws Exception if there is a problem
+     */
+    public void startProcessing()
+        throws Exception
+    {
+        // do nothing
+    }
+
+    /**
      * String representation.
      *
      * @return debugging string
