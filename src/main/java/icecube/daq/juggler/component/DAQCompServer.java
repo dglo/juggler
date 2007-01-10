@@ -283,6 +283,8 @@ public class DAQCompServer
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if no component matches the specified ID
+     *
+     * @deprecated this should no longer happen!
      */
     public String configure(int id)
         throws DAQCompException

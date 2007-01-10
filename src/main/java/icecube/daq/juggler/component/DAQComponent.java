@@ -24,6 +24,15 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * Generic DAQ component methods.
+ *
+ * The correct order for running a component is:<br>
+ * <br>
+ * <ol>
+ * <li>connect()
+ * <li>configure()
+ * <li>startRun()
+ * <li>stopRun()
+ * </ol>
  */
 public abstract class DAQComponent
 {
@@ -85,10 +94,6 @@ public abstract class DAQComponent
 
     /** MBean manager */
     private MBeanAgent mbeanAgent;
-
-    /** Port and address to log to */
-    private String logAddress;
-    private int logPort = 9001;
 
     private DAQOutputHack outputHack;
 
@@ -220,6 +225,8 @@ public abstract class DAQComponent
      * Configure a component.
      *
      * @throws DAQCompException if the component is not in the correct state
+     *
+     * @deprecated this should no longer happen!
      */
     public final void configure()
         throws DAQCompException
@@ -407,6 +414,11 @@ public abstract class DAQComponent
     public final void disconnect()
         throws DAQCompException, IOException
     {
+        if (state == STATE_IDLE) {
+            // allow idle component to be 'disconnected'
+            return;
+        }
+
         if (state != STATE_CONNECTING && state != STATE_CONNECTED &&
             state != STATE_CONFIGURING && state != STATE_READY)
         {
@@ -447,6 +459,7 @@ public abstract class DAQComponent
     public void disconnected()
         throws DAQCompException
     {
+        // Override me!
     }
 
     /**
@@ -741,12 +754,10 @@ public abstract class DAQComponent
             disconnect();
         }
 
-        if (state == STATE_IDLE) {
-            return;
+        if (state != STATE_IDLE) {
+            throw new DAQCompException("Reset from " + getStateString() +
+                                       " is not implemented");
         }
-
-        throw new DAQCompException("Reset from " + getStateString() +
-                                   " is not implemented");
     }
 
     /**
@@ -803,10 +814,11 @@ public abstract class DAQComponent
 
     /**
      * Set the component ID assigned by the server.
+     * This should only be called by DAQCompServer.
      *
      * @param id assigned ID
      */
-    public final void setId(int id)
+    final void setId(int id)
     {
         this.id = id;
     }
@@ -981,10 +993,12 @@ public abstract class DAQComponent
             state = STATE_STOPPING;
         }
 
-        stopping();
+        if (state == STATE_STOPPING) {
+            stopping();
+        }
 
         int attempts = 0;
-        while (state == STATE_STOPPING && attempts < 5) {
+        while (state != STATE_READY && attempts < 5) {
             if (isStopped()) {
                 stopped();
                 state = STATE_READY;
