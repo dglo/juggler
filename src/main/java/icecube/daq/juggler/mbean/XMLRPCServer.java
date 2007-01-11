@@ -35,8 +35,6 @@ class XMLRPCServer
 {
     private static final Log LOG = LogFactory.getLog(XMLRPCServer.class);
 
-    private static Object mbean;
-
     private static ObjectName delegateName;
 
     private ObjectName name;
@@ -265,7 +263,6 @@ class XMLRPCServer
 
     public void preDeregister()
     {
-        Object context = null;
         try {
             server.removeNotificationListener(delegateName, this);
         } catch (JMException jme) {
