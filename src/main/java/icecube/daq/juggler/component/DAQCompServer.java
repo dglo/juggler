@@ -257,25 +257,6 @@ public class DAQCompServer
     }
 
     /**
-     * Create a URL from the specified string.
-     *
-     * @param urlStr string to convert to URL
-     *
-     * @return URL
-     *
-     * @throws DAQCompException if the URL is invalid
-     */
-    private static URL buildURL(String urlStr)
-        throws DAQCompException
-    {
-        try {
-            return new URL(urlStr);
-        } catch (MalformedURLException mue) {
-            throw new DAQCompException("Bad URL \"" + urlStr + "\"", mue);
-        }
-    }
-
-    /**
      * XML-RPC method to 'configure' a component which needs no configuration.
      *
      * @param id component ID
