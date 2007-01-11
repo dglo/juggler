@@ -466,7 +466,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
-    public final void emergencyStop()
+    public final void forcedStop()
         throws DAQCompException
     {
         DAQCompException compEx = null;
@@ -731,7 +731,7 @@ public abstract class DAQComponent
         if (state == STATE_RUNNING || state == STATE_STOPPING) {
             stopping();
 
-            emergencyStop();
+            forcedStop();
 
             for (int numTries = 0; numTries < 3 && !isStopped(); numTries++) {
                 try {
