@@ -53,7 +53,15 @@ public class DAQOutputConnector
         InetSocketAddress addr =
             new InetSocketAddress(conn.getHost(), conn.getPort());
 
-        SocketChannel chan = SocketChannel.open(addr);
+        SocketChannel chan;
+        try {
+            chan = SocketChannel.open(addr);
+        } catch (UnresolvedAddressException uae) {
+            throw new IllegalArgumentException("Unresolved address " +
+                                               conn.getHost() + ":" +
+                                               conn.getPort(), uae);
+        }
+
         chan.configureBlocking(false);
 
         final String name = conn.getComponentName();
