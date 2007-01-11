@@ -22,6 +22,8 @@ public class DAQOutputConnector
 {
     /** output engine. */
     private DAQComponentOutputProcess engine;
+    /** <tt>true</tt> if allowed to connect to multiple input engines */
+    private boolean allowMulti;
 
     /**
      * Create a DAQ output connector.
@@ -31,9 +33,24 @@ public class DAQOutputConnector
      */
     DAQOutputConnector(String type, DAQComponentOutputProcess engine)
     {
+        this(type, engine, false);
+    }
+
+    /**
+     * Create a DAQ output connector.
+     *
+     * @param type connector type
+     * @param engine output engine
+     * @param allowMultipleConnections <tt>true</tt> if this output connector
+     *                                 can connect to multiple input engines
+     */
+    DAQOutputConnector(String type, DAQComponentOutputProcess engine,
+                       boolean allowMultipleConnections)
+    {
         super(type);
 
         this.engine = engine;
+        this.allowMulti = allowMultipleConnections;
     }
 
     /**
@@ -70,6 +87,17 @@ public class DAQOutputConnector
         final int srcId =
             SourceIdRegistry.getSourceIDFromNameAndId(name, num);
         return engine.connect(bufMgr, chan, srcId);
+    }
+
+    /**
+     * Are multiple connections from this engine allowed?
+     *
+     * @return <tt>true</tt> if this output engine can connect to multiple
+     *         input engines
+     */
+    public boolean allowMultipleConnections()
+    {
+        return allowMulti;
     }
 
     /**

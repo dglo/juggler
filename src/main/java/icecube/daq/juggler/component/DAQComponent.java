@@ -155,6 +155,22 @@ public abstract class DAQComponent
      *
      * @param type engine type
      * @param engine output engine
+     * @param allowMultipleConnections <tt>true</tt> if this output connector
+     *                                 can connect to multiple input engines
+     */
+    public final void addEngine(String type, DAQComponentOutputProcess engine,
+                                boolean allowMultipleConnections)
+    {
+        engines.add(new DAQOutputConnector(type, engine,
+                                           allowMultipleConnections));
+        enginesSorted = false;
+    }
+
+    /**
+     * Add an output engine with the specified type.
+     *
+     * @param type engine type
+     * @param engine output engine
      */
     public final void addEngine(String type, DAQComponentOutputProcess engine)
     {
@@ -340,7 +356,9 @@ public abstract class DAQComponent
                     }
 
                     conn = (DAQOutputConnector) dc;
-                    if (conn.isConnected()) {
+                    if (conn.isConnected() &&
+                        !conn.allowMultipleConnections())
+                    {
                         final String errMsg = "Component " + name + "#" + num +
                             " output " + list[i].getType() +
                             " is already connected";
