@@ -211,15 +211,12 @@ public abstract class DAQComponent
     public final void checkRunState()
         throws DAQCompException
     {
-        if (state == STATE_RUNNING) {
-            if (!isRunning()) {
-                state = STATE_STOPPING;
-            }
-        } else if (state == STATE_STOPPING) {
-            if (isStopped()) {
-                stopped();
-                state = STATE_READY;
-            }
+        if (state == STATE_RUNNING && !isRunning()) {
+            state = STATE_STOPPING;
+        }
+        if (state == STATE_STOPPING && isStopped()) {
+            stopped();
+            state = STATE_READY;
         }
     }
 
