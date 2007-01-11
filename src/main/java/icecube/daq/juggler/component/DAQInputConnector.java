@@ -1,5 +1,6 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.PayloadInputEngine;
 
 import icecube.daq.payload.IByteBufferCache;
@@ -13,7 +14,7 @@ public class DAQInputConnector
     extends DAQConnector
 {
     /** input engine. */
-    private PayloadInputEngine engine;
+    private DAQComponentInputProcessor engine;
 
     /**
      * Create a DAQ input connector.
@@ -21,7 +22,7 @@ public class DAQInputConnector
      * @param type connector type
      * @param engine input engine
      */
-    DAQInputConnector(String type, PayloadInputEngine engine)
+    DAQInputConnector(String type, DAQComponentInputProcessor engine)
     {
         super(type);
 
@@ -63,7 +64,7 @@ public class DAQInputConnector
      */
     public PayloadInputEngine getInputEngine()
     {
-        return engine;
+        return (PayloadInputEngine) engine;
     }
 
     /**

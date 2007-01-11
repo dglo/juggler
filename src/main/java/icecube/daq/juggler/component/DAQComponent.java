@@ -1,5 +1,7 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.io.DAQComponentInputProcessor;
+import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.PayloadInputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
@@ -142,7 +144,7 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine input engine
      */
-    public final void addEngine(String type, PayloadInputEngine engine)
+    public final void addEngine(String type, DAQComponentInputProcessor engine)
     {
         engines.add(new DAQInputConnector(type, engine));
         enginesSorted = false;
@@ -154,7 +156,7 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine output engine
      */
-    public final void addEngine(String type, PayloadOutputEngine engine)
+    public final void addEngine(String type, DAQComponentOutputProcess engine)
     {
         engines.add(new DAQOutputConnector(type, engine));
         enginesSorted = false;

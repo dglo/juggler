@@ -1,5 +1,6 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
 
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
 
 /***
  * DAQ output connector.
@@ -19,7 +21,7 @@ public class DAQOutputConnector
     extends DAQConnector
 {
     /** output engine. */
-    private PayloadOutputEngine engine;
+    private DAQComponentOutputProcess engine;
 
     /**
      * Create a DAQ output connector.
@@ -27,7 +29,7 @@ public class DAQOutputConnector
      * @param type connector type
      * @param engine output engine
      */
-    DAQOutputConnector(String type, PayloadOutputEngine engine)
+    DAQOutputConnector(String type, DAQComponentOutputProcess engine)
     {
         super(type);
 
@@ -108,7 +110,7 @@ public class DAQOutputConnector
      */
     public PayloadOutputEngine getOutputEngine()
     {
-        return engine;
+        return (PayloadOutputEngine) engine;
     }
 
     /**
