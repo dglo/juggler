@@ -1,7 +1,5 @@
 package icecube.daq.juggler.component;
 
-import java.util.HashMap;
-
 /**
  * DAQ connection description.
  */
@@ -23,13 +21,14 @@ public class Connection
      *
      * @param map map of arrtibute names to attribute values
      */
-    Connection(HashMap map)
+    Connection(String type, String compName, int compNum,
+               String host, int port)
     {
-        type = (String) map.get("type");
-        compName = (String) map.get("compName");
-        compNum = ((Integer) map.get("compNum")).intValue();
-        host = (String) map.get("host");
-        port = ((Integer) map.get("port")).intValue();
+        this.type = type;
+        this.compName = compName;
+        this.compNum = compNum;
+        this.host = host;
+        this.port = port;
     }
 
     /**

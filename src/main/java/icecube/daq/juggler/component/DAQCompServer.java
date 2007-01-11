@@ -359,7 +359,15 @@ public class DAQCompServer
                                            objList[i].getClass().getName());
             }
 
-            connList[i] = new Connection((HashMap) objList[i]);
+            HashMap map = (HashMap) objList[i];
+
+            String type = (String) map.get("type");
+            String compName = (String) map.get("compName");
+            int compNum = ((Integer) map.get("compNum")).intValue();
+            String host = (String) map.get("host");
+            int port = ((Integer) map.get("port")).intValue();
+
+            connList[i] = new Connection(type, compName, compNum, host, port);
         }
 
         comp.connect(connList);
