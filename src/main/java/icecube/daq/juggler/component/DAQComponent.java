@@ -484,6 +484,8 @@ public abstract class DAQComponent
             }
         }
 
+        checkRunState();
+
         if (compEx != null) {
             throw compEx;
         }
