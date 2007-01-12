@@ -1608,6 +1608,22 @@ public class DAQComponentTest
                      DAQComponent.STATE_DESTROYED, mockComp.getState());
     }
 
+    public void testResetDestroyed()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        mockComp.destroy();
+
+        try {
+            mockComp.reset();
+            fail("Resetting destroyed component should fail");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+    }
+
     public static void main(String argv[])
     {
         junit.textui.TestRunner.run(suite());
