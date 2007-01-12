@@ -422,6 +422,10 @@ public abstract class DAQComponent
     public final void destroy()
         throws DAQCompException
     {
+        if (state == STATE_DESTROYED) {
+            return;
+        }
+
         DAQCompException compEx = null;
 
         Iterator iter = engines.iterator();
