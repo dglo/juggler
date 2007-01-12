@@ -314,6 +314,7 @@ public abstract class DAQComponent
             if (!dc.isInput() && !dc.isSplicer() &&
                 !((DAQOutputConnector) dc).isConnected())
             {
+                state = STATE_IDLE;
                 throw new DAQCompException("Component " + name + "#" + num +
                                            " has unconnected " +
                                            dc.getType() + " output");
@@ -332,7 +333,7 @@ public abstract class DAQComponent
      * @throws IOException if connection cannot be made
      */
     public final void connect(Connection[] list)
-        throws DAQCompException, IOException
+        throws DAQCompException
     {
         if (state != STATE_IDLE) {
             throw new DAQCompException("Cannot connect component " + name +
@@ -342,7 +343,8 @@ public abstract class DAQComponent
 
         state = STATE_CONNECTING;
 
-        for (int i = 0; i < list.length; i++) {
+        DAQCompException compEx = null;
+        for (int i = 0; compEx == null && i < list.length; i++) {
             DAQOutputConnector conn = null;
 
             for (Iterator iter = engines.iterator(); iter.hasNext();) {
@@ -352,7 +354,8 @@ public abstract class DAQComponent
                         final String errMsg = "Component " + name + "#" + num +
                             " has multiple " + list[i].getType() + " outputs";
 
-                        throw new DAQCompException(errMsg);
+                        compEx = new DAQCompException(errMsg);
+                        break;
                     }
 
                     conn = (DAQOutputConnector) dc;
@@ -363,23 +366,46 @@ public abstract class DAQComponent
                             " output " + list[i].getType() +
                             " is already connected";
 
-                        throw new DAQCompException(errMsg);
+                        compEx = new DAQCompException(errMsg);
+                        break;
                     }
                 }
             }
 
             if (conn == null) {
-                throw new DAQCompException("Component " + name + "#" + num +
-                                           " does not contain " +
-                                           list[i].getType() + " output");
+                compEx = new DAQCompException("Component " + name + "#" + num +
+                                              " does not contain " +
+                                              list[i].getType() + " output");
+                break;
             }
 
-            PayloadTransmitChannel xmitChan =
-                conn.connect(getByteBufferCache(conn.getType()), list[i]);
+            PayloadTransmitChannel xmitChan;
+            try {
+                xmitChan =
+                    conn.connect(getByteBufferCache(conn.getType()), list[i]);
+            } catch (IOException ioe) {
+                compEx = new DAQCompException("Cannot connect " + conn +
+                                              " to connection #" + i + ": " +
+                                              list[i], ioe);
+                break;
+            }
+
             if (outputHack != null) {
                 outputHack.createdTransmitChannel(conn.getOutputEngine(),
                                                   xmitChan);
             }
+        }
+
+        if (compEx != null) {
+            try {
+                disconnect();
+            } catch (Throwable thr) {
+                LOG.warn("Couldn't disconnect after failed connect", thr);
+            }
+
+            state = STATE_IDLE;
+
+            throw compEx;
         }
 
         state = STATE_CONNECTED;
@@ -487,6 +513,18 @@ public abstract class DAQComponent
     public final void forcedStop()
         throws DAQCompException
     {
+        if (state == STATE_READY) {
+            return;
+        }
+
+        if (state != STATE_RUNNING && state != STATE_STOPPING) {
+            throw new DAQCompException("Cannot force-stop component " +
+                                       name + "#" + num + " from state " +
+                                       getStateString());
+        }
+
+        state = STATE_STOPPING;
+
         DAQCompException compEx = null;
 
         Iterator iter = engines.iterator();
@@ -940,6 +978,14 @@ public abstract class DAQComponent
         }
 
         if (compEx != null) {
+            try {
+                forcedStop();
+            } catch (Throwable thr) {
+                LOG.warn("Couldn't force stop after failed startEngines", thr);
+            }
+
+            state = STATE_READY;
+
             throw compEx;
         }
     }
