@@ -58,6 +58,8 @@ public abstract class DAQComponent
     public static final int STATE_STOPPING = 8;
     /** Component is disconnecting from other components. */
     public static final int STATE_DISCONNECTING = 9;
+    /** Component has been destroyed. */
+    public static final int STATE_DESTROYED = 10;
 
     /** state names */
     private static final String[] STATE_NAMES = {
@@ -71,6 +73,7 @@ public abstract class DAQComponent
         "running",
         "stopping",
         "disconnecting",
+        "destroyed",
     };
 
     private static final Log LOG = LogFactory.getLog(DAQComponent.class);
@@ -442,6 +445,8 @@ public abstract class DAQComponent
                                               mae);
             }
         }
+
+        state = STATE_DESTROYED;
 
         if (compEx != null) {
             throw compEx;
@@ -840,10 +845,10 @@ public abstract class DAQComponent
         try {
             reset();
         } catch (DAQCompException dce) {
-            dce.printStackTrace();
+            LOG.error("Had to destroy " + this, dce);
             needDestroy = true;
         } catch (IOException io) {
-            io.printStackTrace();
+            LOG.error("Had to destroy " + this, io);
             needDestroy = true;
         }
 
@@ -851,7 +856,7 @@ public abstract class DAQComponent
             try {
                 destroy();
             } catch (DAQCompException dce) {
-                dce.printStackTrace();
+                LOG.error("Could not destroy " + this, dce);
             }
         }
 
