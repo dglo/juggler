@@ -472,7 +472,8 @@ public abstract class DAQComponent
         }
 
         if (state != STATE_CONNECTING && state != STATE_CONNECTED &&
-            state != STATE_CONFIGURING && state != STATE_READY)
+            state != STATE_CONFIGURING && state != STATE_READY &&
+            state != STATE_DISCONNECTING)
         {
             throw new DAQCompException("Cannot disconnect component " + name +
                                        "#" + num + " from state " +
@@ -793,7 +794,9 @@ public abstract class DAQComponent
     final void reset()
         throws DAQCompException, IOException
     {
-        if (state == STATE_RUNNING || state == STATE_STOPPING) {
+        if (state == STATE_STARTING || state == STATE_RUNNING ||
+            state == STATE_STOPPING)
+        {
             stopping();
 
             forcedStop();
@@ -815,7 +818,8 @@ public abstract class DAQComponent
         resetting();
 
         if (state == STATE_CONNECTING || state == STATE_CONNECTED ||
-            state == STATE_CONFIGURING || state == STATE_READY)
+            state == STATE_CONFIGURING || state == STATE_READY ||
+            state == STATE_DISCONNECTING)
         {
             disconnect();
         }
