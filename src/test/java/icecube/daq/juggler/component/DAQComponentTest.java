@@ -364,6 +364,7 @@ class BadOutputEngine
     private IOException connEx;
     private RuntimeException startEx;
     private RuntimeException forcedEx;
+    private RuntimeException destroyEx;
 
     BadOutputEngine()
     {
@@ -381,6 +382,17 @@ class BadOutputEngine
         }
 
         return super.connect(cache, chan,srcId);
+    }
+
+    public void destroyProcessor()
+    {
+        if (destroyEx != null) {
+            RuntimeException tmpEx = destroyEx;
+            destroyEx = null;
+            throw tmpEx;
+        }
+
+        super.destroyProcessor();
     }
 
     public void forcedStopProcessing()
@@ -408,6 +420,11 @@ class BadOutputEngine
     void setConnectException(IOException ex)
     {
         connEx = ex;
+    }
+
+    void setDestroyProcessorException(RuntimeException ex)
+    {
+        destroyEx = ex;
     }
 
     void setForcedStopException(RuntimeException ex)
@@ -601,7 +618,7 @@ public class DAQComponentTest
             testComp.getByteBufferCache("BOGUS");
             fail("BOGUS cache request should fail without generic cache");
         } catch (DAQCompException dce) {
-            //expect failure
+            // expect failure
         }
 
         MockCache genCache = new MockCache("generic");
@@ -1551,6 +1568,30 @@ public class DAQComponentTest
 
         mockComp.serverDied();
         assertEquals("Bad state",
+                     DAQComponent.STATE_DESTROYED, mockComp.getState());
+    }
+
+    public void testDestroyException()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        BadOutputEngine badOut = new BadOutputEngine();
+        badOut.setDestroyProcessorException(new RuntimeException("Test"));
+
+        mockComp.addEngine("gunk", badOut);
+
+        try {
+            mockComp.destroy();
+            fail("Expected destroy exception");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+        assertEquals("Bad state after failed destroy",
                      DAQComponent.STATE_DESTROYED, mockComp.getState());
     }
 
