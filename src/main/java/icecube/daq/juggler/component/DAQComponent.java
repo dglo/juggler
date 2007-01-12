@@ -1109,6 +1109,47 @@ public abstract class DAQComponent
         // Override me!
     }
 
+
+    public String toString()
+    {
+        StringBuffer buf = new StringBuffer(name);
+        buf.append('#').append(num);
+
+        if (caches.size() > 0) {
+            buf.append(" [");
+
+            boolean first = true;
+            for (Iterator iter = caches.keySet().iterator(); iter.hasNext(); ) {
+                if (first) {
+                    first = false;
+                } else {
+                    buf.append(',');
+                }
+
+                buf.append(iter.next());
+            }
+            buf.append(']');
+        }
+
+        if (engines.size() > 0) {
+            buf.append(" [");
+
+            boolean first = true;
+            for (Iterator iter = engines.iterator(); iter.hasNext(); ) {
+                if (first) {
+                    first = false;
+                } else {
+                    buf.append(',');
+                }
+
+                buf.append(iter.next());
+            }
+            buf.append(']');
+        }
+
+        return buf.toString();
+    }
+
     /**
      * DAQConnector comparator.
      */
