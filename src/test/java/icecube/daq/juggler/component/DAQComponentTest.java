@@ -276,6 +276,7 @@ class MockOutputEngine
 
     private boolean connected;
     private boolean running;
+    private boolean destroyed;
 
     public MockOutputEngine()
     {
@@ -297,7 +298,7 @@ class MockOutputEngine
 
     public void destroyProcessor()
     {
-        throw new Error("Unimplemented");
+        destroyed = true;
     }
 
     public void disconnect()
@@ -323,7 +324,7 @@ class MockOutputEngine
 
     public boolean isDestroyed()
     {
-        throw new Error("Unimplemented");
+        return destroyed;
     }
 
     public boolean isRunning()
@@ -354,6 +355,69 @@ class MockOutputEngine
     public void startProcessing()
     {
         running = true;
+    }
+}
+
+class BadOutputEngine
+    extends MockOutputEngine
+{
+    private IOException connEx;
+    private RuntimeException startEx;
+    private RuntimeException forcedEx;
+
+    BadOutputEngine()
+    {
+        super();
+    }
+
+    public PayloadTransmitChannel connect(IByteBufferCache cache,
+                                          WritableByteChannel chan, int srcId)
+        throws IOException
+    {
+        if (connEx != null) {
+            IOException tmpEx = connEx;
+            connEx = null;
+            throw tmpEx;
+        }
+
+        return super.connect(cache, chan,srcId);
+    }
+
+    public void forcedStopProcessing()
+    {
+        if (forcedEx != null) {
+            RuntimeException tmpEx = forcedEx;
+            forcedEx = null;
+            throw tmpEx;
+        }
+
+        super.forcedStopProcessing();
+    }
+
+    public void startProcessing()
+    {
+        if (startEx != null) {
+            RuntimeException tmpEx = startEx;
+            startEx = null;
+            throw tmpEx;
+        }
+
+        super.startProcessing();
+    }
+
+    void setConnectException(IOException ex)
+    {
+        connEx = ex;
+    }
+
+    void setForcedStopException(RuntimeException ex)
+    {
+        forcedEx = ex;
+    }
+
+    void setStartProcessingException(RuntimeException ex)
+    {
+        startEx = ex;
     }
 }
 
@@ -866,22 +930,14 @@ public class DAQComponentTest
                      DAQComponent.STATE_IDLE, mockComp.getState());
     }
 
-    public void testInput()
+    public void testUnconnectedInput()
         throws DAQCompException, IOException
     {
         MockComponent mockComp = new MockComponent("tst", 0);
         testComp = mockComp;
 
-        MockCache genCache = new MockCache("generic");
-        mockComp.addCache(genCache);
-
-        MockInputEngine mockIn = new MockInputEngine();
-        mockComp.addEngine("stuff", mockIn);
-
         MockOutputEngine mockOut = new MockOutputEngine();
         mockComp.addEngine("gunk", mockOut);
-
-        mockComp.setGlobalConfigurationDir("bogus");
 
         mockComp.start();
 
@@ -892,11 +948,223 @@ public class DAQComponentTest
             // expect failure
         }
 
-        mockComp.disconnect();
+        assertEquals("Bad state after failed connect",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+    }
+
+    public void testUnknownConnect()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut);
+
+        mockComp.start();
+
+        Connection[] badList = new Connection[] {
+            new Connection("bleh", "unused", 0, "localhost", 123),
+        };
+
+        try {
+            mockComp.connect(badList);
+            fail("Expect failure due to unconnected output");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+
+        assertEquals("Bad state after failed connect",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+    }
+
+    public void testBadMultiConnect()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut);
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] badList = new Connection[] {
+            new Connection("gunk", "unused", 0, "localhost",
+                           outTarget.getServerPort()),
+            new Connection("gunk", "unused", 1, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        try {
+            mockComp.connect(badList);
+            fail("Expect failure due to multiple output targets");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+
+        assertEquals("Bad state after failed connect",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+    }
+
+    public void testMultiConnect()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut, true);
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] badList = new Connection[] {
+            new Connection("gunk", "unused", 0, "localhost",
+                           outTarget.getServerPort()),
+            new Connection("gunk", "unused", 1, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        mockComp.connect(badList);
+        assertEquals("Bad state after multi-connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+    }
+
+    public void testMultiOutput()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut);
+        mockComp.addEngine("gunk", mockOut);
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] badList = new Connection[] {
+            new Connection("gunk", "unused", 0, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        try {
+            mockComp.connect(badList);
+            fail("Expect failure due to multiple output targets");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+
+        assertEquals("Bad state after failed connect",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+    }
+
+    public void testConnectException()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        BadOutputEngine badOut = new BadOutputEngine();
+        badOut.setConnectException(new IOException("Test"));
+
+        mockComp.addEngine("gunk", badOut);
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] badList = new Connection[] {
+            new Connection("gunk", "unused", 0, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        try {
+            mockComp.connect(badList);
+            fail("Expect failure due to unconnected output");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+
+        assertEquals("Bad state after failed connect",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+    }
+
+    public void testBadRealConnect()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut);
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] connList = new Connection[] {
+            new Connection("gunk", "unused", 0, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        mockComp.connect(connList);
+
+        assertEquals("Bad state after failed connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+
+        try {
+            mockComp.connect(connList);
+            fail("Expect second connect to fail");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+
+        assertEquals("Bad state after failed connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+    }
+
+    public void testOutput()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut);
+
+        mockComp.setGlobalConfigurationDir("bogus");
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] connList = new Connection[] {
             new Connection("gunk", "someComp", 0, "localhost",
-                           mockIn.getServerPort()),
+                           outTarget.getServerPort()),
         };
 
         mockComp.connect(connList);
@@ -918,10 +1186,14 @@ public class DAQComponentTest
         assertTrue("started() was not called",
                    mockComp.wasStartedCalled());
 
+        assertTrue("Not really running?!?!", mockComp.isRunning());
+
         mockComp.stopRun();
         if (mockComp.getState() != DAQComponent.STATE_READY) {
             mockComp.forcedStop();
         }
+
+        assertTrue("Not really stopped?!?!", mockComp.isStopped());
 
         assertEquals("Bad state after stopRun",
                      DAQComponent.STATE_READY, mockComp.getState());
@@ -929,6 +1201,195 @@ public class DAQComponentTest
         mockComp.disconnect();
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, mockComp.getState());
+
+        mockComp.destroy();
+    }
+
+    public void testBadForcedStop()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        try {
+            mockComp.forcedStop();
+            fail("Shouldn't be able to top newly created component");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+
+        assertEquals("Bad state",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+
+        mockComp.connect();
+        try {
+            mockComp.forcedStop();
+            fail("Shouldn't be able to stop unconfigured component");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+
+        assertEquals("Bad state after connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+
+        mockComp.configure("xxx");
+
+        assertEquals("Bad state after configure",
+                     DAQComponent.STATE_READY, mockComp.getState());
+
+        // forcedStop should succeed even if run has not been started
+        mockComp.forcedStop();
+
+        assertEquals("Bad state after premature forcedStop",
+                     DAQComponent.STATE_READY, mockComp.getState());
+
+        mockComp.startRun(1);
+        assertEquals("Bad state after startRun",
+                     DAQComponent.STATE_RUNNING, mockComp.getState());
+    }
+
+    public void testForcedStopException()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        BadOutputEngine badOut = new BadOutputEngine();
+        badOut.setForcedStopException(new RuntimeException("Test"));
+
+        mockComp.addEngine("gunk", badOut);
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] badList = new Connection[] {
+            new Connection("gunk", "unused", 0, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        mockComp.connect(badList);
+        mockComp.configure("xxx");
+
+        mockComp.startRun(1);
+        assertEquals("Bad state after startRun",
+                     DAQComponent.STATE_RUNNING, mockComp.getState());
+
+        try {
+            mockComp.forcedStop();
+            fail("Expected exception from forcedStop()");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+        assertEquals("Bad state after forcedStop",
+                     DAQComponent.STATE_STOPPING, mockComp.getState());
+
+        mockComp.reset();
+        assertEquals("Bad state after reset",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+    }
+
+    public void testStartProcessingException()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        BadOutputEngine badOut = new BadOutputEngine();
+        badOut.setStartProcessingException(new RuntimeException("Test"));
+
+        mockComp.addEngine("gunk", badOut);
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] badList = new Connection[] {
+            new Connection("gunk", "unused", 0, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        mockComp.connect(badList);
+        mockComp.configure("xxx");
+
+        try {
+            mockComp.startRun(1);
+            fail("Expected exception from startRun()");
+        } catch (DAQCompException dce) {
+            // expect failure
+        }
+        assertEquals("Bad state after startRun",
+                     DAQComponent.STATE_READY, mockComp.getState());
+    }
+
+    public void testAll()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        MockInputEngine mockIn = new MockInputEngine();
+        mockComp.addEngine("garbage", mockIn);
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut);
+
+        mockComp.setGlobalConfigurationDir("bogus");
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] connList = new Connection[] {
+            new Connection("gunk", "someComp", 0, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        mockComp.connect(connList);
+
+        assertEquals("Bad state after connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+
+        mockComp.configure("foo");
+        assertEquals("Bad state after configure",
+                     DAQComponent.STATE_READY, mockComp.getState());
+        assertTrue("configuring() was not called",
+                   mockComp.wasConfiguringCalled());
+
+        mockComp.startRun(1);
+        assertEquals("Bad state after startRun",
+                     DAQComponent.STATE_RUNNING, mockComp.getState());
+        assertTrue("starting() was not called",
+                   mockComp.wasStartingCalled());
+        assertTrue("started() was not called",
+                   mockComp.wasStartedCalled());
+
+        assertTrue("Not really running?!?!", mockComp.isRunning());
+
+        mockComp.stopRun();
+        if (mockComp.getState() != DAQComponent.STATE_READY) {
+            mockComp.forcedStop();
+        }
+
+        assertTrue("Not really stopped?!?!", mockComp.isStopped());
+
+        assertEquals("Bad state after stopRun",
+                     DAQComponent.STATE_READY, mockComp.getState());
+
+        mockComp.disconnect();
+        assertEquals("Bad state",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+
+        mockComp.destroy();
     }
 
     public static void main(String argv[])
