@@ -433,12 +433,15 @@ class MiniComponent
 class MockComponent
     extends DAQComponent
 {
-    boolean calledConfiguring;
-    boolean calledDisconnected;
-    boolean calledStarted;
-    boolean calledStarting;
-    boolean calledStopped;
-    boolean calledStopping;
+    private final Log LOG = LogFactory.getLog(MockComponent.class);
+
+    private boolean calledConfiguring;
+    private boolean calledDisconnected;
+    private boolean calledStarted;
+    private boolean calledStarting;
+    private boolean calledStopped;
+    private boolean calledStopping;
+    private boolean stopEngines;
 
     MockComponent(String name, int num)
     {
@@ -465,6 +468,11 @@ class MockComponent
         calledDisconnected = true;
     }
 
+    public void stopEnginesWhenStopping()
+    {
+        stopEngines = true;
+    }
+
     public void started()
     {
         calledStarted = true;
@@ -483,6 +491,17 @@ class MockComponent
     public void stopping()
     {
         calledStopping = true;
+
+        if (stopEngines) {
+            for (Iterator iter = listConnectors(); iter.hasNext(); ) {
+                DAQConnector conn = (DAQConnector) iter.next();
+                try {
+                    conn.forcedStopProcessing();
+                } catch (Exception ex) {
+                    LOG.error("Couldn't stop " + conn, ex);
+                }
+            }
+        }
     }
 
     boolean wasConfiguringCalled()
@@ -1201,8 +1220,6 @@ public class DAQComponentTest
         mockComp.disconnect();
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, mockComp.getState());
-
-        mockComp.destroy();
     }
 
     public void testBadForcedStop()
@@ -1326,6 +1343,110 @@ public class DAQComponentTest
         }
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_READY, mockComp.getState());
+    }
+
+    public void testListConnectors()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        MockInputEngine mockIn = new MockInputEngine();
+        mockComp.addEngine("garbage", mockIn);
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut);
+
+        int numFound = 0;
+        for (Iterator iter = mockComp.listConnectors(); iter.hasNext(); ) {
+            iter.next();
+            numFound++;
+        }
+        assertEquals("Bad number of connectors", 2, numFound);
+    }
+
+    public void testDestroy()
+        throws DAQCompException, IOException
+    {
+        boolean checkedAll = false;
+        for (int i = 0; i < 6; i++) {
+            MockComponent mockComp = new MockComponent("tst", 0);
+            testComp = mockComp;
+
+            mockComp.stopEnginesWhenStopping();
+
+            MockCache genCache = new MockCache("generic");
+            mockComp.addCache(genCache);
+
+            MockInputEngine mockIn = new MockInputEngine();
+            mockComp.addEngine("garbage", mockIn);
+
+            MockOutputEngine mockOut = new MockOutputEngine();
+            mockComp.addEngine("gunk", mockOut);
+
+            mockComp.setGlobalConfigurationDir("bogus");
+
+            mockComp.start();
+
+            if (i > 0) {
+                MockInputEngine outTarget = new MockInputEngine();
+
+                Connection[] connList = new Connection[] {
+                    new Connection("gunk", "someComp", 0, "localhost",
+                                   outTarget.getServerPort()),
+                };
+
+                mockComp.connect(connList);
+                assertEquals("Bad state after connect#" + i,
+                             DAQComponent.STATE_CONNECTED, mockComp.getState());
+
+                if (i > 1) {
+                    mockComp.configure("foo");
+                    assertEquals("Bad state after configure#" + i,
+                                 DAQComponent.STATE_READY, mockComp.getState());
+
+                    if (i > 2) {
+                        mockComp.startRun(1);
+                        assertEquals("Bad state after startRun#" + i,
+                                     DAQComponent.STATE_RUNNING,
+                                     mockComp.getState());
+
+                        assertTrue("Not really running?!?! (#" + i + ")",
+                                   mockComp.isRunning());
+
+                        if (i > 3) {
+                            mockComp.stopRun();
+                            assertEquals("Bad state after stopRun#" + i,
+                                         DAQComponent.STATE_READY,
+                                         mockComp.getState());
+
+                            assertTrue("Not really stopped?!?! (#" + i + ")",
+                                       mockComp.isStopped());
+
+                            if (i > 4) {
+                                mockComp.disconnect();
+                                assertEquals("Bad state after disconnect#" + i,
+                                             DAQComponent.STATE_IDLE,
+                                             mockComp.getState());
+
+                                if (i > 5) {
+                                    throw new Error("Unknown value " + i);
+                                }
+
+                                checkedAll = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            mockComp.destroy();
+        }
+
+        assertTrue("Not all cases were checked", checkedAll);
     }
 
     public void testAll()
