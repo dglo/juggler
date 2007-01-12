@@ -1511,6 +1511,47 @@ public class DAQComponentTest
                      DAQComponent.STATE_IDLE, mockComp.getState());
 
         mockComp.destroy();
+        assertEquals("Bad state",
+                     DAQComponent.STATE_DESTROYED, mockComp.getState());
+    }
+
+    public void testServerDied()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        mockComp.serverDied();
+        assertEquals("Bad state",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        BadOutputEngine badOut = new BadOutputEngine();
+        badOut.setForcedStopException(new RuntimeException("Test"));
+
+        mockComp.addEngine("gunk", badOut);
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] badList = new Connection[] {
+            new Connection("gunk", "unused", 0, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        mockComp.connect(badList);
+        mockComp.configure("xxx");
+
+        mockComp.startRun(1);
+        assertEquals("Bad state after startRun",
+                     DAQComponent.STATE_RUNNING, mockComp.getState());
+
+        mockComp.serverDied();
+        assertEquals("Bad state",
+                     DAQComponent.STATE_DESTROYED, mockComp.getState());
     }
 
     public static void main(String argv[])
