@@ -106,7 +106,7 @@ public class DAQSplicer
     public void start()
         throws Exception
     {
-        splicer.start();
+        // do nothing
     }
 
     /**
