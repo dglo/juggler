@@ -883,6 +883,25 @@ public abstract class DAQComponent
     }
 
     /**
+     * Override this method to set the destination directory where the
+     * dispatch files will be saved.
+     *
+     * @param dirName The absolute path of directory where the dispatch files will be stored.
+     */
+    public void setDispatchDestStorage(String dirName) {
+        // Override me!
+    }
+
+    /**
+     * Override this method to set the maximum size of the dispatch file.
+     *
+     * @param maxFileSize the maximum size of the dispatch file.
+     */
+    public void setMaxFileSize(long maxFileSize) {
+        // Override me!
+    }
+
+    /**
      * Set the component ID assigned by the server.
      * This should only be called by DAQCompServer.
      *

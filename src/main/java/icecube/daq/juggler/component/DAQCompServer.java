@@ -380,7 +380,7 @@ public class DAQCompServer
      *
      * @param id component ID
      *
-     * @returns <tt>null</tt> if component was not found
+     * @return <tt>null</tt> if component was not found
      */
     private static DAQComponent getComponent(int id)
     {
@@ -560,8 +560,6 @@ public class DAQCompServer
 
     /**
      * Process command-line arguments.
-     *
-     * @return requested DAQ component
      */
     private void processArgs(DAQComponent comp, String[] args)
     {
@@ -629,7 +627,22 @@ public class DAQCompServer
                                            "'");
                         usage = true;
                     }
-
+                    break;
+                case 'd':
+                    i++;
+                    comp.setDispatchDestStorage(args[i]);
+                    break;
+                case 's':
+                    i++;
+                    long maxFileSize = 0;
+                    try {
+                        maxFileSize = Long.parseLong(args[i]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Bad file size = " + args[i]);
+                        usage = true;
+                        break;
+                    }
+                    comp.setMaxFileSize(maxFileSize);
                     break;
                 default:
                     System.err.println("Unknown option '" + args[i] + "'");
@@ -658,6 +671,8 @@ public class DAQCompServer
                                " [-c configServerURL]" +
                                " [-g globalConfigPath]" +
                                " [-l logAddress:logPort]" +
+                               " [-d dispatchDestPath]" +
+                               " [-s maxDispatchFileSize]" +
                                "");
             System.exit(1);
         }
