@@ -562,8 +562,13 @@ public class DAQComponentTest
         if (testComp != null) {
             try {
                 testComp.destroy();
+                testComp.waitForStateChange(DAQComponent.STATE_DESTROYING);
             } catch (Throwable thr) {
                 // ignore teardown errors
+            }
+
+            if (testComp.getState() != DAQComponent.STATE_DESTROYED) {
+                System.err.println("Could not destroy component!");
             }
         }
     }
@@ -635,8 +640,10 @@ public class DAQComponentTest
         assertEquals("Bad state", DAQComponent.STATE_IDLE, testComp.getState());
 
         testComp.connect();
+        testComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
         assertEquals("Bad state after connect",
                      DAQComponent.STATE_CONNECTED, testComp.getState());
+        assertFalse("Unexpected error after connect", testComp.isError());
     }
 
     public void testBadConnect()
@@ -646,7 +653,12 @@ public class DAQComponentTest
         testComp = mockComp;
 
         mockComp.connect();
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
+
         mockComp.configure("foo");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        assertFalse("Unexpected error after configure", mockComp.isError());
 
         try {
             mockComp.connect();
@@ -654,6 +666,7 @@ public class DAQComponentTest
         } catch (DAQCompException dce) {
             // expect this
         }
+        assertFalse("Unexpected error after bad connect", mockComp.isError());
     }
 
     public void testSimpleDisconnect()
@@ -663,11 +676,14 @@ public class DAQComponentTest
         testComp = mockComp;
 
         mockComp.connect();
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
         assertEquals("Bad state after connect",
                      DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after connect", mockComp.isError());
 
         mockComp.disconnect();
-        assertEquals("Bad state after connect",
+        mockComp.waitForStateChange(DAQComponent.STATE_DISCONNECTING);
+        assertEquals("Bad state after disconnect",
                      DAQComponent.STATE_IDLE, mockComp.getState());
 
         assertTrue("disconnected() was not called",
@@ -689,22 +705,29 @@ public class DAQComponentTest
 
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, mockComp.getState());
+        assertFalse("Unexpected error after bogus configure",
+                    mockComp.isError());
 
         mockComp.connect();
-        mockComp.configure("xxx");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertEquals("Bad state " + mockComp.getStateString() +
+                     " after connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after connect", mockComp.isError());
 
-        try {
-            mockComp.configure("abc");
-        } catch (DAQCompException dce) {
-            fail("Should be able to configure a configured component");
-        }
-
-        assertEquals("Bad state after configure",
+        mockComp.configure("abc");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        assertEquals("Bad state " + mockComp.getStateString() +
+                     " after configure",
                      DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after configure", mockComp.isError());
 
         mockComp.startRun(1);
-        assertEquals("Bad state after startRun",
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
+        assertEquals("Bad state " + mockComp.getStateString() +
+                     " after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
 
         try {
             mockComp.configure("abc");
@@ -712,16 +735,17 @@ public class DAQComponentTest
         } catch (DAQCompException dce) {
             // expect failure
         }
+        assertFalse("Unexpected error after bogus configure",
+                    mockComp.isError());
 
         mockComp.stopRun();
+        mockComp.waitForStateChange(DAQComponent.STATE_STOPPING);
         assertEquals("Bad state after stopRun",
                      DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after stopRun", mockComp.isError());
 
-        try {
-            mockComp.configure("abc");
-        } catch (DAQCompException dce) {
-            fail("Should be able to configure stopped component");
-        }
+        mockComp.configure("abc");
+        assertFalse("Unexpected error after configure", mockComp.isError());
     }
 
     public void testConfigure()
@@ -734,14 +758,18 @@ public class DAQComponentTest
                      DAQComponent.STATE_IDLE, mockComp.getState());
 
         mockComp.connect();
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
         assertEquals("Bad state after connect",
                      DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after connect", mockComp.isError());
 
         mockComp.configure("foo");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
         assertEquals("Bad state after connect",
                      DAQComponent.STATE_READY, mockComp.getState());
         assertTrue("configuring() was not called",
                    mockComp.wasConfiguringCalled());
+        assertFalse("Unexpected error after configure", mockComp.isError());
     }
 
     public void testBadStart()
@@ -759,8 +787,12 @@ public class DAQComponentTest
 
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, mockComp.getState());
+        assertFalse("Unexpected error after bad startRun", mockComp.isError());
 
         mockComp.connect();
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
+
         try {
             mockComp.startRun(123);
             fail("Shouldn't be able to start unconfigured component");
@@ -768,13 +800,22 @@ public class DAQComponentTest
             // expect failure
         }
 
-        assertEquals("Bad state after connect",
+        assertEquals("Bad state after bogus startRun",
                      DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after bogus startRun",
+                    mockComp.isError());
 
         mockComp.configure("xxx");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        assertEquals("Bad state after configure",
+                     DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after configure", mockComp.isError());
+
         mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
 
         try {
             mockComp.startRun(2);
@@ -782,6 +823,7 @@ public class DAQComponentTest
         } catch (DAQCompException dce) {
             // expect failure
         }
+        assertFalse("Unexpected error after bad startRun", mockComp.isError());
     }
 
     public void testBadStop()
@@ -792,39 +834,48 @@ public class DAQComponentTest
 
         try {
             mockComp.stopRun();
-            fail("Shouldn't be able to top newly created component");
+            fail("Shouldn't be able to stop newly created component");
         } catch (DAQCompException dce) {
             // expect failure
         }
-
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, mockComp.getState());
+        assertFalse("Unexpected error after stopRun", mockComp.isError());
 
         mockComp.connect();
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertEquals("Bad state after connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after connect", mockComp.isError());
+
         try {
             mockComp.stopRun();
             fail("Shouldn't be able to stop unconfigured component");
         } catch (DAQCompException dce) {
             // expect failure
         }
-
-        assertEquals("Bad state after connect",
+        assertEquals("Bad state after bad stopRun",
                      DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after bad stopRun", mockComp.isError());
 
         mockComp.configure("xxx");
-
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
         assertEquals("Bad state after configure",
                      DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after configure", mockComp.isError());
 
         // stopRun should succeed even if run has not been started
         mockComp.stopRun();
-
+        mockComp.waitForStateChange(DAQComponent.STATE_STOPPING);
         assertEquals("Bad state after premature stopRun",
                      DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after stopRun", mockComp.isError());
 
         mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
     }
 
     public void testBadDisconnect()
@@ -835,16 +886,31 @@ public class DAQComponentTest
 
         // should be able to diconnect idle component
         mockComp.disconnect();
+        mockComp.waitForStateChange(DAQComponent.STATE_DISCONNECTING);
+        assertEquals("Bad state after idle disconnect",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
 
         mockComp.connect();
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertEquals("Bad state after connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after connect", mockComp.isError());
+
         mockComp.configure("xxx");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        assertEquals("Bad state after configure",
+                     DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after configure", mockComp.isError());
+
         mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
 
         try {
             mockComp.disconnect();
-            fail("Shouldn't be able to diconnect running component");
+            fail("Shouldn't be able to disconnect running component");
         } catch (DAQCompException dce) {
             // expect failure
         }
@@ -860,34 +926,42 @@ public class DAQComponentTest
         testComp.setGlobalConfigurationDir("bogus");
 
         testComp.connect();
-        assertEquals("Bad state after connect",
-                     DAQComponent.STATE_CONNECTED, testComp.getState());
+        testComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
         assertFalse("Bad isRunning() value", testComp.isRunning());
         assertTrue("Bad isStopped() value", testComp.isStopped());
+        assertFalse("Unexpected error after connect", testComp.isError());
 
         testComp.configure("foo");
+        testComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
         assertEquals("Bad state after configure",
                      DAQComponent.STATE_READY, testComp.getState());
         assertFalse("Bad isRunning() value", testComp.isRunning());
         assertTrue("Bad isStopped() value", testComp.isStopped());
+        assertFalse("Unexpected error after configure", testComp.isError());
 
         testComp.startRun(1);
+        testComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, testComp.getState());
         assertFalse("Bad isRunning() value", testComp.isRunning());
         assertTrue("Bad isStopped() value", testComp.isStopped());
+        assertFalse("Unexpected error after startRun", testComp.isError());
 
         testComp.stopRun();
+        testComp.waitForStateChange(DAQComponent.STATE_STOPPING);
         assertEquals("Bad state after stopRun",
                      DAQComponent.STATE_READY, testComp.getState());
         assertFalse("Bad isRunning() value", testComp.isRunning());
         assertTrue("Bad isStopped() value", testComp.isStopped());
+        assertFalse("Unexpected error after stopRun", testComp.isError());
 
         testComp.reset();
+        testComp.waitForStateChange(DAQComponent.STATE_RESETTING);
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, testComp.getState());
         assertFalse("Bad isRunning() value", testComp.isRunning());
         assertTrue("Bad isStopped() value", testComp.isStopped());
+        assertFalse("Unexpected error after reset", testComp.isError());
     }
 
     public void testRunStop()
@@ -902,32 +976,40 @@ public class DAQComponentTest
         mockComp.setGlobalConfigurationDir("bogus");
 
         mockComp.connect();
-        assertEquals("Bad state after connect",
-                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
 
         mockComp.configure("foo");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
         assertEquals("Bad state after configure",
                      DAQComponent.STATE_READY, mockComp.getState());
         assertTrue("configuring() was not called",
                    mockComp.wasConfiguringCalled());
+        assertFalse("Unexpected error after configure", mockComp.isError());
 
         mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
         assertTrue("starting() was not called",
                    mockComp.wasStartingCalled());
         assertTrue("started() was not called",
                    mockComp.wasStartedCalled());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
 
         mockComp.stopRun();
+        mockComp.waitForStateChange(DAQComponent.STATE_STOPPING);
         assertEquals("Bad state after stopRun",
                      DAQComponent.STATE_READY, mockComp.getState());
         assertTrue("stopped() was not called",
                    mockComp.wasStoppedCalled());
+        assertFalse("Unexpected error after stopRun", mockComp.isError());
 
         mockComp.reset();
+        testComp.waitForStateChange(DAQComponent.STATE_RESETTING);
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, mockComp.getState());
+        assertFalse("Unexpected error after reset", mockComp.isError());
     }
 
     public void testRunReset()
@@ -944,26 +1026,32 @@ public class DAQComponentTest
         mockComp.start();
 
         mockComp.connect();
-        assertEquals("Bad state after connect",
-                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
 
         mockComp.configure("foo");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
         assertEquals("Bad state after configure",
                      DAQComponent.STATE_READY, mockComp.getState());
         assertTrue("configuring() was not called",
                    mockComp.wasConfiguringCalled());
+        assertFalse("Unexpected error after configure", mockComp.isError());
 
         mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
         assertTrue("starting() was not called",
                    mockComp.wasStartingCalled());
         assertTrue("started() was not called",
                    mockComp.wasStartedCalled());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
 
         mockComp.reset();
+        testComp.waitForStateChange(DAQComponent.STATE_RESETTING);
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, mockComp.getState());
+        assertFalse("Unexpected error after reset", mockComp.isError());
     }
 
     public void testUnconnectedInput()
@@ -977,12 +1065,9 @@ public class DAQComponentTest
 
         mockComp.start();
 
-        try {
-            mockComp.connect();
-            fail("Expect failure due to unconnected output");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
+        mockComp.connect();
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertTrue("Expected error", mockComp.isError());
 
         assertEquals("Bad state after failed connect",
                      DAQComponent.STATE_IDLE, mockComp.getState());
@@ -1003,12 +1088,9 @@ public class DAQComponentTest
             new Connection("bleh", "unused", 0, "localhost", 123),
         };
 
-        try {
-            mockComp.connect(badList);
-            fail("Expect failure due to unconnected output");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
+        mockComp.connect(badList);
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertTrue("Expected error", mockComp.isError());
 
         assertEquals("Bad state after failed connect",
                      DAQComponent.STATE_IDLE, mockComp.getState());
@@ -1037,12 +1119,9 @@ public class DAQComponentTest
                            outTarget.getServerPort()),
         };
 
-        try {
-            mockComp.connect(badList);
-            fail("Expect failure due to multiple output targets");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
+        mockComp.connect(badList);
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertTrue("Expected error", mockComp.isError());
 
         assertEquals("Bad state after failed connect",
                      DAQComponent.STATE_IDLE, mockComp.getState());
@@ -1072,8 +1151,8 @@ public class DAQComponentTest
         };
 
         mockComp.connect(badList);
-        assertEquals("Bad state after multi-connect",
-                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
     }
 
     public void testMultiOutput()
@@ -1098,12 +1177,9 @@ public class DAQComponentTest
                            outTarget.getServerPort()),
         };
 
-        try {
-            mockComp.connect(badList);
-            fail("Expect failure due to multiple output targets");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
+        mockComp.connect(badList);
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertTrue("Expected error", mockComp.isError());
 
         assertEquals("Bad state after failed connect",
                      DAQComponent.STATE_IDLE, mockComp.getState());
@@ -1132,12 +1208,9 @@ public class DAQComponentTest
                            outTarget.getServerPort()),
         };
 
-        try {
-            mockComp.connect(badList);
-            fail("Expect failure due to unconnected output");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
+        mockComp.connect(badList);
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertTrue("Expected error", mockComp.isError());
 
         assertEquals("Bad state after failed connect",
                      DAQComponent.STATE_IDLE, mockComp.getState());
@@ -1165,9 +1238,8 @@ public class DAQComponentTest
         };
 
         mockComp.connect(connList);
-
-        assertEquals("Bad state after failed connect",
-                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
 
         try {
             mockComp.connect(connList);
@@ -1178,65 +1250,7 @@ public class DAQComponentTest
 
         assertEquals("Bad state after failed connect",
                      DAQComponent.STATE_CONNECTED, mockComp.getState());
-    }
-
-    public void testOutput()
-        throws DAQCompException, IOException
-    {
-        MockComponent mockComp = new MockComponent("tst", 0);
-        testComp = mockComp;
-
-        MockCache genCache = new MockCache("generic");
-        mockComp.addCache(genCache);
-
-        MockOutputEngine mockOut = new MockOutputEngine();
-        mockComp.addEngine("gunk", mockOut);
-
-        mockComp.setGlobalConfigurationDir("bogus");
-
-        mockComp.start();
-
-        MockInputEngine outTarget = new MockInputEngine();
-
-        Connection[] connList = new Connection[] {
-            new Connection("gunk", "someComp", 0, "localhost",
-                           outTarget.getServerPort()),
-        };
-
-        mockComp.connect(connList);
-
-        assertEquals("Bad state after connect",
-                     DAQComponent.STATE_CONNECTED, mockComp.getState());
-
-        mockComp.configure("foo");
-        assertEquals("Bad state after configure",
-                     DAQComponent.STATE_READY, mockComp.getState());
-        assertTrue("configuring() was not called",
-                   mockComp.wasConfiguringCalled());
-
-        mockComp.startRun(1);
-        assertEquals("Bad state after startRun",
-                     DAQComponent.STATE_RUNNING, mockComp.getState());
-        assertTrue("starting() was not called",
-                   mockComp.wasStartingCalled());
-        assertTrue("started() was not called",
-                   mockComp.wasStartedCalled());
-
-        assertTrue("Not really running?!?!", mockComp.isRunning());
-
-        mockComp.stopRun();
-        if (mockComp.getState() != DAQComponent.STATE_READY) {
-            mockComp.forcedStop();
-        }
-
-        assertTrue("Not really stopped?!?!", mockComp.isStopped());
-
-        assertEquals("Bad state after stopRun",
-                     DAQComponent.STATE_READY, mockComp.getState());
-
-        mockComp.disconnect();
-        assertEquals("Bad state",
-                     DAQComponent.STATE_IDLE, mockComp.getState());
+        assertFalse("Unexpected error after bogus connect", mockComp.isError());
     }
 
     public void testBadForcedStop()
@@ -1247,7 +1261,7 @@ public class DAQComponentTest
 
         try {
             mockComp.forcedStop();
-            fail("Shouldn't be able to top newly created component");
+            fail("Shouldn't be able to stop newly created component");
         } catch (DAQCompException dce) {
             // expect failure
         }
@@ -1256,6 +1270,9 @@ public class DAQComponentTest
                      DAQComponent.STATE_IDLE, mockComp.getState());
 
         mockComp.connect();
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
+
         try {
             mockComp.forcedStop();
             fail("Shouldn't be able to stop unconfigured component");
@@ -1267,19 +1284,22 @@ public class DAQComponentTest
                      DAQComponent.STATE_CONNECTED, mockComp.getState());
 
         mockComp.configure("xxx");
-
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
         assertEquals("Bad state after configure",
                      DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after configure", mockComp.isError());
 
         // forcedStop should succeed even if run has not been started
         mockComp.forcedStop();
-
+        mockComp.waitForStateChange(DAQComponent.STATE_FORCING_STOP);
         assertEquals("Bad state after premature forcedStop",
                      DAQComponent.STATE_READY, mockComp.getState());
 
         mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
     }
 
     public void testForcedStopException()
@@ -1306,24 +1326,33 @@ public class DAQComponentTest
         };
 
         mockComp.connect(badList);
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertEquals("Bad state after connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after connect", mockComp.isError());
+
         mockComp.configure("xxx");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        assertEquals("Bad state after configure",
+                     DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after configure", mockComp.isError());
 
         mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
 
-        try {
-            mockComp.forcedStop();
-            fail("Expected exception from forcedStop()");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
+        mockComp.forcedStop();
+        mockComp.waitForStateChange(DAQComponent.STATE_FORCING_STOP);
         assertEquals("Bad state after forcedStop",
-                     DAQComponent.STATE_STOPPING, mockComp.getState());
+                     DAQComponent.STATE_RUNNING, mockComp.getState());
 
         mockComp.reset();
+        testComp.waitForStateChange(DAQComponent.STATE_RESETTING);
         assertEquals("Bad state after reset",
                      DAQComponent.STATE_IDLE, mockComp.getState());
+        assertFalse("Unexpected error after reset", mockComp.isError());
     }
 
     public void testStartProcessingException()
@@ -1350,16 +1379,22 @@ public class DAQComponentTest
         };
 
         mockComp.connect(badList);
-        mockComp.configure("xxx");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertEquals("Bad state after connect",
+                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        assertFalse("Unexpected error after connect", mockComp.isError());
 
-        try {
-            mockComp.startRun(1);
-            fail("Expected exception from startRun()");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
-        assertEquals("Bad state after startRun",
+        mockComp.configure("xxx");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        assertEquals("Bad state after configure",
                      DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after configure", mockComp.isError());
+
+        mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
+        assertEquals("Bad state after bad startRun",
+                     DAQComponent.STATE_READY, mockComp.getState());
+        assertTrue("Expected error after bad startRun", mockComp.isError());
     }
 
     public void testListConnectors()
@@ -1417,34 +1452,56 @@ public class DAQComponentTest
                 };
 
                 mockComp.connect(connList);
+                mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
                 assertEquals("Bad state after connect#" + i,
                              DAQComponent.STATE_CONNECTED, mockComp.getState());
+                assertFalse("Unexpected error after connect#" + i,
+                            mockComp.isError());
 
                 if (i > 1) {
                     mockComp.configure("foo");
+                    mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
                     assertEquals("Bad state after configure#" + i,
                                  DAQComponent.STATE_READY, mockComp.getState());
+                    assertFalse("Unexpected error after configure",
+                                mockComp.isError());
 
                     if (i > 2) {
+                        final int startState =
+                            DAQComponent.STATE_STARTING;
+
                         mockComp.startRun(1);
+                        mockComp.waitForStateChange(startState);
                         assertEquals("Bad state after startRun#" + i,
                                      DAQComponent.STATE_RUNNING,
                                      mockComp.getState());
+                        assertFalse("Unexpected error after startRun",
+                                    mockComp.isError());
 
                         assertTrue("Not really running?!?! (#" + i + ")",
                                    mockComp.isRunning());
 
                         if (i > 3) {
+                            final int stopState =
+                                DAQComponent.STATE_STOPPING;
+
                             mockComp.stopRun();
+                            mockComp.waitForStateChange(stopState);
                             assertEquals("Bad state after stopRun#" + i,
                                          DAQComponent.STATE_READY,
                                          mockComp.getState());
+                            assertFalse("Unexpected error after stopRun",
+                                        mockComp.isError());
 
                             assertTrue("Not really stopped?!?! (#" + i + ")",
                                        mockComp.isStopped());
 
                             if (i > 4) {
+                                final int curState =
+                                    DAQComponent.STATE_DISCONNECTING;
+
                                 mockComp.disconnect();
+                                mockComp.waitForStateChange(curState);
                                 assertEquals("Bad state after disconnect#" + i,
                                              DAQComponent.STATE_IDLE,
                                              mockComp.getState());
@@ -1461,9 +1518,78 @@ public class DAQComponentTest
             }
 
             mockComp.destroy();
+            mockComp.waitForStateChange(DAQComponent.STATE_DESTROYING);
         }
 
         assertTrue("Not all cases were checked", checkedAll);
+    }
+
+    public void testOutput()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+        testComp = mockComp;
+
+        MockCache genCache = new MockCache("generic");
+        mockComp.addCache(genCache);
+
+        MockOutputEngine mockOut = new MockOutputEngine();
+        mockComp.addEngine("gunk", mockOut);
+
+        mockComp.setGlobalConfigurationDir("bogus");
+
+        mockComp.start();
+
+        MockInputEngine outTarget = new MockInputEngine();
+
+        Connection[] connList = new Connection[] {
+            new Connection("gunk", "someComp", 0, "localhost",
+                           outTarget.getServerPort()),
+        };
+
+        mockComp.connect(connList);
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
+
+        mockComp.configure("foo");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        assertEquals("Bad state after configure",
+                     DAQComponent.STATE_READY, mockComp.getState());
+        assertTrue("configuring() was not called",
+                   mockComp.wasConfiguringCalled());
+        assertFalse("Unexpected error after configure", mockComp.isError());
+
+        mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
+        assertEquals("Bad state after startRun",
+                     DAQComponent.STATE_RUNNING, mockComp.getState());
+        assertTrue("starting() was not called",
+                   mockComp.wasStartingCalled());
+        assertTrue("started() was not called",
+                   mockComp.wasStartedCalled());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
+
+        assertTrue("Not really running?!?!", mockComp.isRunning());
+
+        mockComp.stopRun();
+        System.err.println("XXX Not checking for true stop");
+        assertFalse("Unexpected error after stopRun", mockComp.isError());
+
+        if (mockComp.getState() != DAQComponent.STATE_READY) {
+            mockComp.forcedStop();
+            mockComp.waitForStateChange(DAQComponent.STATE_FORCING_STOP);
+        }
+
+        assertTrue("Not really stopped?!?!", mockComp.isStopped());
+
+        assertEquals("Bad state after stopRun",
+                     DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after stopRun", mockComp.isError());
+
+        mockComp.disconnect();
+        mockComp.waitForStateChange(DAQComponent.STATE_DISCONNECTING);
+        assertEquals("Bad state",
+                     DAQComponent.STATE_IDLE, mockComp.getState());
     }
 
     public void testAll()
@@ -1493,41 +1619,51 @@ public class DAQComponentTest
         };
 
         mockComp.connect(connList);
-
-        assertEquals("Bad state after connect",
-                     DAQComponent.STATE_CONNECTED, mockComp.getState());
+        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        assertFalse("Unexpected error after connect", mockComp.isError());
 
         mockComp.configure("foo");
+        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
         assertEquals("Bad state after configure",
                      DAQComponent.STATE_READY, mockComp.getState());
         assertTrue("configuring() was not called",
                    mockComp.wasConfiguringCalled());
+        assertFalse("Unexpected error after configure", mockComp.isError());
 
         mockComp.startRun(1);
+        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
         assertEquals("Bad state after startRun",
                      DAQComponent.STATE_RUNNING, mockComp.getState());
         assertTrue("starting() was not called",
                    mockComp.wasStartingCalled());
         assertTrue("started() was not called",
                    mockComp.wasStartedCalled());
+        assertFalse("Unexpected error after startRun", mockComp.isError());
 
         assertTrue("Not really running?!?!", mockComp.isRunning());
 
         mockComp.stopRun();
+        System.err.println("XXX Not checking for true stop");
+        assertFalse("Unexpected error after stopRun", mockComp.isError());
+
         if (mockComp.getState() != DAQComponent.STATE_READY) {
             mockComp.forcedStop();
+            mockComp.waitForStateChange(DAQComponent.STATE_FORCING_STOP);
         }
 
         assertTrue("Not really stopped?!?!", mockComp.isStopped());
 
         assertEquals("Bad state after stopRun",
                      DAQComponent.STATE_READY, mockComp.getState());
+        assertFalse("Unexpected error after stopRun", mockComp.isError());
 
         mockComp.disconnect();
+        mockComp.waitForStateChange(DAQComponent.STATE_DISCONNECTING);
         assertEquals("Bad state",
                      DAQComponent.STATE_IDLE, mockComp.getState());
 
         mockComp.destroy();
+        mockComp.waitForStateChange(DAQComponent.STATE_DESTROYING);
         assertEquals("Bad state",
                      DAQComponent.STATE_DESTROYED, mockComp.getState());
     }
@@ -1572,11 +1708,22 @@ public class DAQComponentTest
             };
 
             mockComp.connect(badList);
+            mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+            assertEquals("Bad state after connect",
+                         DAQComponent.STATE_CONNECTED, mockComp.getState());
+            assertFalse("Unexpected error after connect", mockComp.isError());
+
             mockComp.configure("xxx");
+            mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+            assertEquals("Bad state after configure",
+                         DAQComponent.STATE_READY, mockComp.getState());
+            assertFalse("Unexpected error after configure", mockComp.isError());
 
             mockComp.startRun(1);
+            mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
             assertEquals("Bad state after startRun#" + i,
                          DAQComponent.STATE_RUNNING, mockComp.getState());
+            assertFalse("Unexpected error after startRun", mockComp.isError());
 
             mockComp.serverDied();
             assertEquals("Bad state for #" + i,
@@ -1598,12 +1745,8 @@ public class DAQComponentTest
 
         mockComp.addEngine("gunk", badOut);
 
-        try {
-            mockComp.destroy();
-            fail("Expected destroy exception");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
+        mockComp.destroy();
+        mockComp.waitForStateChange(DAQComponent.STATE_DESTROYING);
         assertEquals("Bad state after failed destroy",
                      DAQComponent.STATE_DESTROYED, mockComp.getState());
     }
@@ -1615,10 +1758,11 @@ public class DAQComponentTest
         testComp = mockComp;
 
         mockComp.destroy();
+        mockComp.waitForStateChange(DAQComponent.STATE_DESTROYING);
 
         try {
             mockComp.reset();
-            fail("Resetting destroyed component should fail");
+            fail("Shouldn't be able to reset destroyed component");
         } catch (DAQCompException dce) {
             // expect failure
         }

@@ -60,6 +60,12 @@ public abstract class DAQComponent
     public static final int STATE_DISCONNECTING = 9;
     /** Component has been destroyed. */
     public static final int STATE_DESTROYED = 10;
+    /** Component is being forced to stop. */
+    public static final int STATE_FORCING_STOP = 11;
+    /** Component is being destroyed. */
+    public static final int STATE_DESTROYING = 12;
+    /** Component is being destroyed. */
+    public static final int STATE_RESETTING = 13;
 
     /** state names */
     private static final String[] STATE_NAMES = {
@@ -74,6 +80,8 @@ public abstract class DAQComponent
         "stopping",
         "disconnecting",
         "destroyed",
+        "forcingStop",
+        "destroying",
     };
 
     private static final Log LOG = LogFactory.getLog(DAQComponent.class);
@@ -82,9 +90,6 @@ public abstract class DAQComponent
     private String name;
     /** component instance number */
     private int num;
-
-    /** current component state */
-    private int state;
 
     /** server-assigned ID */
     private int id = Integer.MIN_VALUE;
@@ -102,6 +107,692 @@ public abstract class DAQComponent
 
     private DAQOutputHack outputHack;
 
+    private StateTask stateTask;
+
+    class StateTask
+        implements Runnable
+    {
+        /** current component state */
+        private int state;
+
+        private boolean running;
+        private boolean caughtError;
+        private int prevState;
+        private boolean stateChanged;
+        private boolean calledStopping;
+
+        private Connection[] connectList;
+        private String configName;
+        private int startNumber;
+
+        StateTask()
+        {
+            state = STATE_IDLE;
+        }
+
+        private void changeState(int newState)
+        {
+            caughtError = false;
+            prevState = state;
+            state = newState;
+            stateChanged = true;
+            notify();
+        }
+
+        /**
+         * Configure a component using the specified configuration name.
+         *
+         * @param name configuration name
+         *
+         * @throws DAQCompException if the component is not in the correct state
+         */
+        void configure(String name)
+            throws DAQCompException
+        {
+            if (state != STATE_CONNECTED && state != STATE_READY) {
+                throw new DAQCompException("Cannot configure component " +
+                                           name + "#" + num + " from state " +
+                                           getStateString());
+            }
+
+            synchronized (this) {
+                configName = name;
+                changeState(STATE_CONFIGURING);
+            }
+        }
+
+        /**
+         * Connect a component which has no output channels.
+         *
+         * @throws DAQCompException if the component is not in the correct state
+         */
+        void connect(Connection[] list)
+            throws DAQCompException
+        {
+            if (state != STATE_IDLE) {
+                throw new DAQCompException("Cannot connect component " + name +
+                                           "#" + num + " from state " +
+                                           getStateString());
+            }
+
+            synchronized (this) {
+                connectList = list;
+                changeState(STATE_CONNECTING);
+            }
+        }
+
+        /**
+         * Destroy all connections and threads.
+         *
+         * @throws DAQCompException if there is a problem
+         */
+        void destroy()
+            throws DAQCompException
+        {
+            if (state == STATE_DESTROYED) {
+                return;
+            }
+
+            synchronized (this) {
+                changeState(STATE_DESTROYING);
+            }
+        }
+
+        /**
+         * Disconnect all connections and return to idle state.
+         *
+         * @throws DAQCompException if the component is in the wrong state
+         */
+        void disconnect()
+            throws DAQCompException
+        {
+            if (state == STATE_IDLE) {
+                // allow idle component to be 'disconnected'
+                return;
+            }
+
+            if (state != STATE_CONNECTING && state != STATE_CONNECTED &&
+                state != STATE_CONFIGURING && state != STATE_READY &&
+                state != STATE_DISCONNECTING)
+            {
+                throw new DAQCompException("Cannot disconnect component " +
+                                           name + "#" + num + " from state " +
+                                           getStateString());
+            }
+
+            synchronized (this) {
+                changeState(STATE_DISCONNECTING);
+            }
+        }
+
+        private synchronized void doConfigure()
+            throws DAQCompException
+        {
+            if (configName != null) {
+                configuring(configName);
+            }
+
+            state = STATE_READY;
+        }
+
+        private synchronized void doConnect()
+            throws DAQCompException
+        {
+            for (Iterator iter = engines.iterator(); iter.hasNext();) {
+                DAQConnector dc = (DAQConnector) iter.next();
+                if (!dc.isInput() && !dc.isSplicer() &&
+                    !((DAQOutputConnector) dc).isConnected())
+                {
+                    state = STATE_IDLE;
+                    throw new DAQCompException("Component " + name + "#" + num +
+                                               " has unconnected " +
+                                               dc.getType() + " output");
+                }
+            }
+
+            state = STATE_CONNECTED;
+        }
+
+        private synchronized void doConnect(Connection[] list)
+            throws DAQCompException, IOException
+        {
+            DAQCompException compEx = null;
+            for (int i = 0; compEx == null && i < list.length; i++) {
+                DAQOutputConnector conn = null;
+
+                for (Iterator iter = engines.iterator(); iter.hasNext();) {
+                    DAQConnector dc = (DAQConnector) iter.next();
+                    if (!dc.isInput() && list[i].matches(dc.getType())) {
+                        if (conn != null) {
+                            final String errMsg = "Component " + name + "#" +
+                                num + " has multiple " + list[i].getType() +
+                                " outputs";
+
+                            compEx = new DAQCompException(errMsg);
+                            break;
+                        }
+
+                        conn = (DAQOutputConnector) dc;
+                        if (conn.isConnected() &&
+                            !conn.allowMultipleConnections())
+                        {
+                            final String errMsg = "Component " + name + "#" +
+                                num + " output " + list[i].getType() +
+                                " is already connected";
+
+                            compEx = new DAQCompException(errMsg);
+                            break;
+                        }
+                    }
+                }
+
+                if (conn == null) {
+                    compEx = new DAQCompException("Component " + name + "#" +
+                                                  num + " does not contain " +
+                                                  list[i].getType() +
+                                                  " output");
+                    break;
+                }
+
+                PayloadTransmitChannel xmitChan;
+                try {
+                    xmitChan =
+                        conn.connect(getByteBufferCache(conn.getType()),
+                                     list[i]);
+                } catch (IOException ioe) {
+                    compEx = new DAQCompException("Cannot connect " + conn +
+                                                  " to connection #" + i +
+                                                  ": " + list[i], ioe);
+                    break;
+                }
+
+                if (outputHack != null) {
+                    outputHack.createdTransmitChannel(conn.getOutputEngine(),
+                                                      xmitChan);
+                }
+            }
+
+            if (compEx != null) {
+                try {
+                    doDisconnect();
+                } catch (Throwable thr) {
+                    LOG.warn("Couldn't disconnect after failed connect", thr);
+                }
+
+                state = STATE_IDLE;
+
+                throw compEx;
+            }
+
+            state = STATE_CONNECTED;
+        }
+
+        private void doDestroy()
+            throws DAQCompException
+        {
+            DAQCompException compEx = null;
+
+            Iterator iter = engines.iterator();
+            while (iter.hasNext()) {
+                DAQConnector conn = (DAQConnector) iter.next();
+
+                try {
+                    conn.destroy();
+                } catch (Exception ex) {
+                    compEx = new DAQCompException("Couldn't destroy " + name +
+                                                  "#" + num + ":" +
+                                                  conn.getType(), ex);
+                }
+            }
+
+            if (mbeanAgent != null) {
+                try {
+                    mbeanAgent.stop();
+                } catch (MBeanAgentException mae) {
+                    compEx = new DAQCompException("Couldn't stop MBean agent",
+                                                  mae);
+                }
+            }
+
+            if (stateTask != null) {
+                stateTask.stop();
+                stateTask = null;
+            }
+
+            state = STATE_DESTROYED;
+
+            if (compEx != null) {
+                throw compEx;
+            }
+        }
+
+        private void doDisconnect()
+            throws DAQCompException, IOException
+        {
+            IOException ioEx = null;
+            for (Iterator iter = engines.iterator(); iter.hasNext();) {
+                DAQConnector dc = (DAQConnector) iter.next();
+                if (!dc.isInput() && !dc.isSplicer()) {
+                    try {
+                        ((DAQOutputConnector) dc).disconnect();
+                    } catch (IOException ioe) {
+                        ioEx = ioe;
+                    }
+                }
+            }
+
+            if (ioEx != null) {
+                throw ioEx;
+            }
+
+            disconnected();
+        }
+
+        /**
+         * Emergency stop of component.
+         *
+         * @return <tt>true</tt> if all engines have stopped
+         *
+         * @throws DAQCompException if there is a problem
+         */
+        private boolean doForcedStop()
+            throws DAQCompException
+        {
+
+            DAQCompException compEx = null;
+
+            Iterator iter = engines.iterator();
+            while (iter.hasNext()) {
+                DAQConnector conn = (DAQConnector) iter.next();
+
+                try {
+                    conn.forcedStopProcessing();
+                } catch (Exception ex) {
+                    compEx = new DAQCompException("Couldn't force stop " +
+                                                  name + "#" + num + ":" +
+                                                  conn.getType(), ex);
+                }
+            }
+
+            if (compEx != null) {
+                throw compEx;
+            }
+
+            return isStopped();
+        }
+
+        private void doReset()
+            throws DAQCompException, IOException
+        {
+            if (prevState == STATE_STARTING || prevState == STATE_RUNNING ||
+                prevState == STATE_STOPPING || prevState == STATE_FORCING_STOP)
+            {
+                if (!calledStopping) {
+                    stopping();
+                }
+
+                if (doForcedStop()) {
+                    stopped();
+                    prevState = STATE_READY;
+                }
+            }
+
+            resetting();
+
+            if (prevState == STATE_CONNECTING || prevState == STATE_CONNECTED ||
+                prevState == STATE_CONFIGURING || prevState == STATE_READY ||
+                prevState == STATE_DISCONNECTING)
+            {
+                doDisconnect();
+
+                state = STATE_IDLE;
+            } else {
+                state = prevState;
+            }
+
+            if (state != STATE_IDLE) {
+                throw new DAQCompException("Reset from " + getStateString() +
+                                           " is not implemented");
+            }
+        }
+
+        private void doStartRun()
+            throws DAQCompException
+        {
+            // haven't yet called stopping() for this run
+            calledStopping = false;
+
+            setRunNumber(startNumber);
+
+            starting();
+
+            startEngines();
+
+            started();
+
+            state = STATE_RUNNING;
+        }
+
+        private void doStopRun()
+            throws DAQCompException
+        {
+            if (!calledStopping) {
+                stopping();
+                calledStopping = true;
+            }
+
+            if (state == STATE_STOPPING && isStopped()) {
+                stopped();
+                state = STATE_READY;
+            }
+        }
+
+        /**
+         * Emergency stop of component.
+         *
+         * @throws DAQCompException if there is a problem
+         */
+        void forcedStop()
+            throws DAQCompException
+        {
+            if (state == STATE_READY) {
+                return;
+            }
+
+            if (state != STATE_RUNNING && state != STATE_STOPPING &&
+                state != STATE_FORCING_STOP)
+            {
+                throw new DAQCompException("Cannot force-stop component " +
+                                           name + "#" + num + " from state " +
+                                           getStateString());
+            }
+
+            synchronized (this) {
+                changeState(STATE_FORCING_STOP);
+            }
+        }
+
+        /**
+         * Get current state.
+         *
+         * @return current state
+         */
+        int getState()
+        {
+            return state;
+        }
+
+        /**
+         * Get string description of current state.
+         *
+         * @return current state string
+         */
+        String getStateString()
+        {
+            return STATE_NAMES[state];
+        }
+
+        public boolean isError()
+        {
+            return caughtError;
+        }
+
+        public boolean isRunning()
+        {
+            return running;
+        }
+
+        /**
+         * Reset the component back to the idle state, doing any necessary
+         * cleanup.
+         *
+         * @throws DAQCompException if the component cannot be reset
+         * @throws IOException if there is a problem disconnecting anything
+         */
+        final void reset()
+            throws DAQCompException, IOException
+        {
+            synchronized (this) {
+                changeState(STATE_RESETTING);
+            }
+        }
+
+        public void run()
+        {
+            running = true;
+            while (running) {
+                synchronized (this) {
+                    if (stateChanged) {
+                        stateChanged = false;
+                    } else {
+                        try {
+                            if (state == STATE_STOPPING) {
+                                wait(100);
+                            } else {
+                                wait();
+                            }
+                        } catch (InterruptedException ie) {
+                            continue;
+                        }
+                    }
+                }
+
+                boolean success;
+                switch (state) {
+                case STATE_CONFIGURING:
+                    try {
+                        doConfigure();
+                        success = true;
+                    } catch (DAQCompException dce) {
+                        caughtError = true;
+                        LOG.error("Configure failed", dce);
+                        success = false;
+                    }
+
+                    if (!success) {
+                        // revert to the previous state if configure failed
+                        state = prevState;
+                    }
+
+                    break;
+                case STATE_CONNECTED:
+                    // nothing to be done
+                    break;
+                case STATE_CONNECTING:
+                    try {
+                        if (connectList == null) {
+                            doConnect();
+                        } else {
+                            doConnect(connectList);
+                        }
+                        success = true;
+                    } catch (DAQCompException dce) {
+                        caughtError = true;
+                        LOG.error("Connect failed", dce);
+                        success = false;
+                    } catch (IOException ioe) {
+                        caughtError = true;
+                        LOG.error("Connect failed", ioe);
+                        success = false;
+                    }
+
+                    if (!success) {
+                        try {
+                            doDisconnect();
+                            state = STATE_IDLE;
+                        } catch (DAQCompException dce) {
+                            LOG.error("Couldn't disconnect after" +
+                                      " failed connect", dce);
+                        } catch (IOException ioe) {
+                            LOG.error("Couldn't disconnect after" +
+                                      " failed connect", ioe);
+                        }
+                    }
+                    break;
+                case STATE_DESTROYING:
+                    try {
+                        doDestroy();
+                        success = true;
+                    } catch (DAQCompException dce) {
+                        caughtError = true;
+                        LOG.error("Destroy failed", dce);
+                        success = false;
+                    }
+
+                    if (!success) {
+                        // pretend we were destroyed
+                        state = STATE_DESTROYED;
+                    }
+
+                    break;
+                case STATE_DESTROYED:
+                    running = false;
+                    break;
+                case STATE_DISCONNECTING:
+                    try {
+                        doDisconnect();
+                        state = STATE_IDLE;
+                        success = true;
+                    } catch (DAQCompException dce) {
+                        caughtError = true;
+                        LOG.error("Disconnect failed", dce);
+                        success = false;
+                    } catch (IOException ioe) {
+                        caughtError = true;
+                        LOG.error("Disconnect failed", ioe);
+                        success = false;
+                    }
+
+                    if (!success) {
+                        // revert to the previous state if disconnect failed
+                        state = prevState;
+                    }
+
+                    break;
+                case STATE_FORCING_STOP:
+                    try {
+                        success = doForcedStop();
+                        if (success) {
+                            stopped();
+                            state = STATE_READY;
+                        }
+                    } catch (DAQCompException dce) {
+                        caughtError = true;
+                        LOG.error("Forced stop failed", dce);
+                        success = false;
+                    }
+
+                    if (!success) {
+                        // revert to the previous state if forced stop failed
+                        state = prevState;
+                    }
+
+                    break;
+                case STATE_IDLE:
+                    // nothing to be done
+                    break;
+                case STATE_READY:
+                    // nothing to be done
+                    break;
+                case STATE_RESETTING:
+                    try {
+                        doReset();
+                    } catch (DAQCompException dce) {
+                        caughtError = true;
+                        LOG.error("Reset failed", dce);
+                    } catch (IOException ioe) {
+                        caughtError = true;
+                        LOG.error("Reset failed", ioe);
+                    }
+
+                    break;
+                case STATE_RUNNING:
+                    // nothing to be done
+                    break;
+                case STATE_STARTING:
+                    try {
+                        doStartRun();
+                        success = true;
+                    } catch (DAQCompException dce) {
+                        caughtError = true;
+                        LOG.error("Start run failed", dce);
+                        success = false;
+                    }
+
+                    if (!success) {
+                        // revert to the previous state if startRun failed
+                        state = prevState;
+                    }
+
+                    break;
+                case STATE_STOPPING:
+                    try {
+                        doStopRun();
+                        success = true;
+                    } catch (DAQCompException dce) {
+                        caughtError = true;
+                        LOG.error("Stop run failed", dce);
+                        success = false;
+                    }
+
+                    if (!success) {
+                        // revert to the previous state if stopRun failed
+                        state = prevState;
+                    }
+
+                    break;
+                default:
+                    LOG.error("StateTask not handling " + getStateString());
+                    break;
+                }
+            }
+        }
+
+        void startRun(int runNumber)
+            throws DAQCompException
+        {
+            if (state != STATE_READY) {
+                throw new DAQCompException("Cannot start component " + name +
+                                           "#" + num + " from state " +
+                                           getStateString());
+            }
+
+            synchronized (this) {
+                startNumber = runNumber;
+                changeState(STATE_STARTING);
+            }
+        }
+
+        void stop()
+        {
+            running = false;
+            synchronized (this) {
+                this.notify();
+            }
+        }
+
+        /**
+         * Stop a run.
+         *
+         * @throws DAQCompException if there is a problem
+         */
+        void stopRun()
+            throws DAQCompException
+        {
+            if (state != STATE_READY) {
+                if (state != STATE_RUNNING) {
+                    throw new DAQCompException("Cannot stop component " + name +
+                                               "#" + num + " from state " +
+                                               getStateString());
+                }
+            }
+
+            synchronized (this) {
+                changeState(STATE_STOPPING);
+            }
+        }
+    }
+
     /**
      * Create a component.
      *
@@ -113,7 +804,19 @@ public abstract class DAQComponent
         this.name = name;
         this.num = num;
 
-        state = STATE_IDLE;
+        stateTask = new StateTask();
+
+        Thread thread = new Thread(stateTask);
+        thread.setName("StateTask");
+        thread.start();
+
+        while (!stateTask.isRunning()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ie) {
+                // ignore interrupts
+            }
+        }
     }
 
     /**
@@ -223,23 +926,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * TODO: This method is a HACK; it should be replaced by an internal thread!
-     *
-     * @throws DAQCompException if there is a problem stopping the component
-     */
-    public final void checkRunState()
-        throws DAQCompException
-    {
-        if (state == STATE_RUNNING && !isRunning()) {
-            state = STATE_STOPPING;
-        }
-        if (state == STATE_STOPPING && isStopped()) {
-            stopped();
-            state = STATE_READY;
-        }
-    }
-
-    /**
      * Configure a component.
      *
      * @throws DAQCompException if the component is not in the correct state
@@ -249,36 +935,30 @@ public abstract class DAQComponent
     public final void configure()
         throws DAQCompException
     {
-        if (state != STATE_CONNECTED && state != STATE_READY) {
-            throw new DAQCompException("Cannot configure component " + name +
-                                       "#" + num + " from state " +
-                                       getStateString());
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        state = STATE_READY;
+        stateTask.configure(null);
     }
 
     /**
      * Configure a component using the specified configuration name.
      *
-     * @param configName configuration name
+     * @param name configuration name
      *
-     * @throws DAQCompException if there is a problem configuring
+     * @throws DAQCompException if the component is not in the correct state
      */
-    public final void configure(String configName)
+    public final void configure(String name)
         throws DAQCompException
     {
-        if (state != STATE_CONNECTED && state != STATE_READY) {
-            throw new DAQCompException("Cannot configure component " + name +
-                                       "#" + num + " from state " +
-                                       getStateString());
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        state = STATE_CONFIGURING;
-
-        configuring(configName);
-
-        state = STATE_READY;
+        stateTask.configure(name);
     }
 
     /**
@@ -299,32 +979,16 @@ public abstract class DAQComponent
      * Connect a component which has no output channels.
      *
      * @throws DAQCompException if the component is not in the correct state
-     * @throws IOException if the connection failed
      */
     public final void connect()
-        throws DAQCompException, IOException
+        throws DAQCompException
     {
-        if (state != STATE_IDLE) {
-            throw new DAQCompException("Cannot connect component " + name +
-                                       "#" + num + " from state " +
-                                       getStateString());
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        state = STATE_CONNECTING;
-
-        for (Iterator iter = engines.iterator(); iter.hasNext();) {
-            DAQConnector dc = (DAQConnector) iter.next();
-            if (!dc.isInput() && !dc.isSplicer() &&
-                !((DAQOutputConnector) dc).isConnected())
-            {
-                state = STATE_IDLE;
-                throw new DAQCompException("Component " + name + "#" + num +
-                                           " has unconnected " +
-                                           dc.getType() + " output");
-            }
-        }
-
-        state = STATE_CONNECTED;
+        stateTask.connect(null);
     }
 
     /**
@@ -333,85 +997,16 @@ public abstract class DAQComponent
      * @param list list of connections
      *
      * @throws DAQCompException if there is a problem finding a connection
-     * @throws IOException if connection cannot be made
      */
     public final void connect(Connection[] list)
         throws DAQCompException
     {
-        if (state != STATE_IDLE) {
-            throw new DAQCompException("Cannot connect component " + name +
-                                       "#" + num + " from state " +
-                                       getStateString());
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        state = STATE_CONNECTING;
-
-        DAQCompException compEx = null;
-        for (int i = 0; compEx == null && i < list.length; i++) {
-            DAQOutputConnector conn = null;
-
-            for (Iterator iter = engines.iterator(); iter.hasNext();) {
-                DAQConnector dc = (DAQConnector) iter.next();
-                if (!dc.isInput() && list[i].matches(dc.getType())) {
-                    if (conn != null) {
-                        final String errMsg = "Component " + name + "#" + num +
-                            " has multiple " + list[i].getType() + " outputs";
-
-                        compEx = new DAQCompException(errMsg);
-                        break;
-                    }
-
-                    conn = (DAQOutputConnector) dc;
-                    if (conn.isConnected() &&
-                        !conn.allowMultipleConnections())
-                    {
-                        final String errMsg = "Component " + name + "#" + num +
-                            " output " + list[i].getType() +
-                            " is already connected";
-
-                        compEx = new DAQCompException(errMsg);
-                        break;
-                    }
-                }
-            }
-
-            if (conn == null) {
-                compEx = new DAQCompException("Component " + name + "#" + num +
-                                              " does not contain " +
-                                              list[i].getType() + " output");
-                break;
-            }
-
-            PayloadTransmitChannel xmitChan;
-            try {
-                xmitChan =
-                    conn.connect(getByteBufferCache(conn.getType()), list[i]);
-            } catch (IOException ioe) {
-                compEx = new DAQCompException("Cannot connect " + conn +
-                                              " to connection #" + i + ": " +
-                                              list[i], ioe);
-                break;
-            }
-
-            if (outputHack != null) {
-                outputHack.createdTransmitChannel(conn.getOutputEngine(),
-                                                  xmitChan);
-            }
-        }
-
-        if (compEx != null) {
-            try {
-                disconnect();
-            } catch (Throwable thr) {
-                LOG.warn("Couldn't disconnect after failed connect", thr);
-            }
-
-            state = STATE_IDLE;
-
-            throw compEx;
-        }
-
-        state = STATE_CONNECTED;
+        stateTask.connect(list);
     }
 
     /**
@@ -422,85 +1017,28 @@ public abstract class DAQComponent
     public final void destroy()
         throws DAQCompException
     {
-        if (state == STATE_DESTROYED) {
-            return;
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        DAQCompException compEx = null;
-
-        Iterator iter = engines.iterator();
-        while (iter.hasNext()) {
-            DAQConnector conn = (DAQConnector) iter.next();
-
-            try {
-                conn.destroy();
-            } catch (Exception ex) {
-                compEx = new DAQCompException("Couldn't destroy " + name +
-                                              "#" + num + ":" + conn.getType(),
-                                              ex);
-            }
-        }
-
-        if (mbeanAgent != null) {
-            try {
-                mbeanAgent.stop();
-            } catch (MBeanAgentException mae) {
-                compEx = new DAQCompException("Couldn't stop MBean agent",
-                                              mae);
-            }
-        }
-
-        state = STATE_DESTROYED;
-
-        if (compEx != null) {
-            throw compEx;
-        }
+        stateTask.destroy();
     }
 
     /**
      * Disconnect all connections and return to idle state.
      *
      * @throws DAQCompException if the component is in the wrong state
-     * @throws IOException if there is a problem disconnecting
      */
     public final void disconnect()
-        throws DAQCompException, IOException
+        throws DAQCompException
     {
-        if (state == STATE_IDLE) {
-            // allow idle component to be 'disconnected'
-            return;
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        if (state != STATE_CONNECTING && state != STATE_CONNECTED &&
-            state != STATE_CONFIGURING && state != STATE_READY &&
-            state != STATE_DISCONNECTING)
-        {
-            throw new DAQCompException("Cannot disconnect component " + name +
-                                       "#" + num + " from state " +
-                                       getStateString());
-        }
-
-        state = STATE_DISCONNECTING;
-
-        IOException ioEx = null;
-        for (Iterator iter = engines.iterator(); iter.hasNext();) {
-            DAQConnector dc = (DAQConnector) iter.next();
-            if (!dc.isInput() && !dc.isSplicer()) {
-                try {
-                    ((DAQOutputConnector) dc).disconnect();
-                } catch (IOException ioe) {
-                    ioEx = ioe;
-                }
-            }
-        }
-
-        if (ioEx != null) {
-            throw ioEx;
-        }
-
-        disconnected();
-
-        state = STATE_IDLE;
+        stateTask.disconnect();
     }
 
     /**
@@ -523,38 +1061,12 @@ public abstract class DAQComponent
     public final void forcedStop()
         throws DAQCompException
     {
-        if (state == STATE_READY) {
-            return;
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        if (state != STATE_RUNNING && state != STATE_STOPPING) {
-            throw new DAQCompException("Cannot force-stop component " +
-                                       name + "#" + num + " from state " +
-                                       getStateString());
-        }
-
-        state = STATE_STOPPING;
-
-        DAQCompException compEx = null;
-
-        Iterator iter = engines.iterator();
-        while (iter.hasNext()) {
-            DAQConnector conn = (DAQConnector) iter.next();
-
-            try {
-                conn.forcedStopProcessing();
-            } catch (Exception ex) {
-                compEx = new DAQCompException("Couldn't force stop " + name +
-                                              "#" + num + ":" + conn.getType(),
-                                              ex);
-            }
-        }
-
-        checkRunState();
-
-        if (compEx != null) {
-            throw compEx;
-        }
+        stateTask.forcedStop();
     }
 
     /**
@@ -714,7 +1226,11 @@ public abstract class DAQComponent
      */
     public final int getState()
     {
-        return state;
+        if (stateTask == null) {
+            return STATE_DESTROYED;
+        }
+
+        return stateTask.getState();
     }
 
     /**
@@ -724,7 +1240,21 @@ public abstract class DAQComponent
      */
     public final String getStateString()
     {
-        return STATE_NAMES[state];
+        if (stateTask == null) {
+            return STATE_NAMES[STATE_DESTROYED];
+        }
+
+        return stateTask.getStateString();
+    }
+
+    /**
+     * Is there an error from the last request?
+     *
+     * @return <tt>true</tt> if the last request generated an error
+     */
+    public boolean isError()
+    {
+        return stateTask != null && stateTask.isError();
     }
 
     /**
@@ -794,40 +1324,12 @@ public abstract class DAQComponent
     final void reset()
         throws DAQCompException, IOException
     {
-        if (state == STATE_STARTING || state == STATE_RUNNING ||
-            state == STATE_STOPPING)
-        {
-            stopping();
-
-            forcedStop();
-
-            for (int numTries = 0; numTries < 3 && !isStopped(); numTries++) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException ie) {
-                    // ignore interrupts
-                }
-            }
-
-            if (isStopped()) {
-                stopped();
-                state = STATE_READY;
-            }
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        resetting();
-
-        if (state == STATE_CONNECTING || state == STATE_CONNECTED ||
-            state == STATE_CONFIGURING || state == STATE_READY ||
-            state == STATE_DISCONNECTING)
-        {
-            disconnect();
-        }
-
-        if (state != STATE_IDLE) {
-            throw new DAQCompException("Reset from " + getStateString() +
-                                       " is not implemented");
-        }
+        stateTask.reset();
     }
 
     /**
@@ -852,6 +1354,7 @@ public abstract class DAQComponent
         boolean needDestroy = false;
         try {
             reset();
+            waitForStateChange(STATE_RESETTING);
         } catch (DAQCompException dce) {
             LOG.error("Had to destroy " + this, dce);
             needDestroy = true;
@@ -860,9 +1363,10 @@ public abstract class DAQComponent
             needDestroy = true;
         }
 
-        if (needDestroy) {
+        if (needDestroy || isError()) {
             try {
                 destroy();
+                waitForStateChange(STATE_DESTROYING);
             } catch (DAQCompException dce) {
                 LOG.error("Could not destroy " + this, dce);
             }
@@ -1010,14 +1514,8 @@ public abstract class DAQComponent
         }
 
         if (compEx != null) {
-            try {
-                forcedStop();
-            } catch (Throwable thr) {
-                LOG.warn("Couldn't force stop after failed startEngines", thr);
-            }
-
-            state = STATE_READY;
-
+            forcedStop();
+            waitForStateChange(STATE_FORCING_STOP);
             throw compEx;
         }
     }
@@ -1032,21 +1530,12 @@ public abstract class DAQComponent
     public final void startRun(int runNumber)
         throws DAQCompException
     {
-        if (state != STATE_READY) {
-            throw new DAQCompException("Cannot start component " + name +
-                                       "#" + num + " from state " +
-                                       getStateString());
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        setRunNumber(runNumber);
-
-        starting();
-
-        state = STATE_RUNNING;
-
-        startEngines();
-
-        started();
+        stateTask.startRun(runNumber);
     }
 
     /**
@@ -1080,36 +1569,12 @@ public abstract class DAQComponent
     public final void stopRun()
         throws DAQCompException
     {
-        if (state != STATE_READY) {
-            if (state != STATE_RUNNING) {
-                throw new DAQCompException("Cannot stop component " + name +
-                                           "#" + num + " from state " +
-                                           getStateString());
-            }
-
-            state = STATE_STOPPING;
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + name + "#" + num +
+                                       " has been destroyed");
         }
 
-        if (state == STATE_STOPPING) {
-            stopping();
-        }
-
-        int attempts = 0;
-        while (state != STATE_READY && attempts < 5) {
-            if (isStopped()) {
-                stopped();
-                state = STATE_READY;
-            } else {
-                // TODO: This should use Artur's Listener callback
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    // ignore interrupts
-                }
-
-                attempts++;
-            }
-        }
+        stateTask.stopRun();
     }
 
     /**
@@ -1136,6 +1601,25 @@ public abstract class DAQComponent
         // Override me!
     }
 
+    /**
+     * Wait for the component's state to change from the specified state.
+     *
+     * TODO: Fix this to be more efficient!!!
+     *
+     * @param curState the state from which the component is expected to change
+     */
+    public void waitForStateChange(int curState)
+    {
+        while (stateTask != null && stateTask.getState() == curState &&
+               !stateTask.isError())
+        {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ie) {
+                // ignore interrupts
+            }
+        }
+    }
 
     public String toString()
     {
