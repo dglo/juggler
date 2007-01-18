@@ -376,6 +376,28 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method forcing the specified component to stop current run.
+     *
+     * @param id component ID
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if no component matches the specified ID
+     * @throws IOException if there was a problem stopping the component
+     */
+    public String forcedStop(int id)
+        throws DAQCompException, IOException
+    {
+        DAQComponent comp = getComponent(id);
+        if (comp == null) {
+            throw new DAQCompException("Component#" + id + " not found");
+        }
+
+        comp.forcedStop();
+        return "OK";
+    }
+
+    /**
      * Get the specified component.
      *
      * @param id component ID
@@ -846,7 +868,7 @@ public class DAQCompServer
     }
 
     /**
-     * XML-RPC method telling the specified component to start a run.
+     * XML-RPC method requesting the specified component to start a run.
      *
      * @param id component ID
      * @param runNumber run number
@@ -924,14 +946,14 @@ public class DAQCompServer
     }
 
     /**
-     * XML-RPC method telling the specified component to stop current run.
+     * XML-RPC method requesting the specified component to stop current run.
      *
      * @param id component ID
      *
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if no component matches the specified ID
-     * @throws IOException if there was a problem starting the component
+     * @throws IOException if there was a problem stopping the component
      */
     public String stopRun(int id)
         throws DAQCompException, IOException
