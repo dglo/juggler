@@ -82,6 +82,7 @@ public abstract class DAQComponent
         "destroyed",
         "forcingStop",
         "destroying",
+        "resetting",
     };
 
     private static final Log LOG = LogFactory.getLog(DAQComponent.class);
