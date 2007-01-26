@@ -474,6 +474,43 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to list component states.
+     *
+     * @param id component ID
+     *
+     * @return <tt>list of component states</tt>
+     *
+     * @throws DAQCompException if no component matches the specified ID
+     */
+    public String[][] listConnectorStates(int id)
+        throws DAQCompException
+    {
+        DAQComponent comp = getComponent(id);
+        if (comp == null) {
+            throw new DAQCompException("Component#" + id + " not found");
+        }
+
+        ArrayList list = new ArrayList();
+
+        for (Iterator iter = comp.listConnectors(); iter.hasNext(); ) {
+            DAQConnector conn = (DAQConnector) iter.next();
+
+            list.add(new String[] {
+                    conn.getType(), conn.getState().toLowerCase(),
+                });
+        }
+
+        String[][] array = new String[list.size()][2];
+
+        int i = 0;
+        for (Iterator iter = list.iterator(); iter.hasNext(); ) {
+            array[i++] = (String[] )iter.next();
+        }
+
+        return array;
+    }
+
+    /**
      * XML-RPC method to tell a component where to log
      *
      * @param id component ID
