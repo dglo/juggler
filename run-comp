@@ -2,7 +2,7 @@
 
 TOPDIR=`cd .. && pwd`
 
-CLASSPATH=$TOPDIR/lib/juggler.jar:$TOPDIR/lib/juggler-test.jar:$TOPDIR/tools/lib/commons-logging.jar:$TOPDIR/tools/lib/junit.jar:$TOPDIR/tools/lib/log4j.jar:$TOPDIR/tools/lib/xmlrpc-common.jar:$TOPDIR/tools/lib/xmlrpc-client.jar:$TOPDIR/tools/lib/ws-commons-util.jar:$TOPDIR/tools/lib/concurrent.jar
+CLASSPATH=$TOPDIR/lib/juggler.jar:$TOPDIR/lib/juggler-test.jar:$TOPDIR/tools/lib/commons-logging.jar:$TOPDIR/tools/lib/junit.jar:$TOPDIR/tools/lib/log4j.jar:$TOPDIR/tools/lib/xmlrpc-common.jar:$TOPDIR/tools/lib/xmlrpc-client.jar:$TOPDIR/tools/lib/ws-commons-util.jar:$TOPDIR/tools/lib/concurrent.jar:$TOPDIR/tools/lib/jmxtools.jar
 export CLASSPATH
 
 java icecube.daq.juggler.toybox.DAQCompApp $@
