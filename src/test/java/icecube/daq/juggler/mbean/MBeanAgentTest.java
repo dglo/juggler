@@ -164,6 +164,39 @@ public class MBeanAgentTest
         findBeanInXmlRpc(agent, beanName);
     }
 
+    public void testDynamicMBean()
+        throws IOException, MBeanAgentException
+    {
+        assertFalse("Agent should not be running", agent.isRunning());
+
+        final String beanName = "hello";
+
+        try {
+            agent.removeBean(beanName);
+            fail("Should not be able to remove non-existent MBean");
+        } catch (MBeanAgentException mbe) {
+            // expect this to fail
+        }
+
+        Hello bean = new Hello();
+        String[] methods = new String[] { "Message" };
+
+        MBeanWrapper wrapper = new MBeanWrapper(bean, methods);
+        agent.addBean(beanName, wrapper);
+
+        agent.start();
+
+        assertTrue("Couldn't find entry for \"" + beanName +
+                   "\" in MBean HTML page", findBeanInHtml(agent, beanName));
+
+        agent.stop();
+
+        assertFalse("Agent should not be running", agent.isRunning());
+
+        Object removed = agent.removeBean(beanName);
+        assertEquals("Unexpected MBean removed", wrapper, removed);
+    }
+
     public static void main(String argv[])
         throws JMException, MBeanAgentException
     {
