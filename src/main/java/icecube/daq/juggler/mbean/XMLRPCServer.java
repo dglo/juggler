@@ -2,6 +2,8 @@ package icecube.daq.juggler.mbean;
 
 import java.io.IOException;
 
+import java.lang.reflect.Array;
+
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -49,46 +51,62 @@ class XMLRPCServer
     {
     }
 
-    private static Object fixAttribute(Object obj)
+    private static Object fixArray(Object array)
     {
-        String attrName;
-        Object attrVal;
+        Object newArray = null;
 
-        if (obj != null && obj instanceof Attribute) {
-            Attribute attr = (Attribute) obj;
+        final int len = Array.getLength(array);
+        for (int i = 0; i < len; i++) {
+            Object elem = fixValue(Array.get(array, i));
 
-            attrName = attr.getName();
-            attrVal = attr.getValue();
-        } else {
-            attrName = "?unnamed?";
-            attrVal = obj;
+            if (newArray == null) {
+                newArray = Array.newInstance(elem.getClass(), len);
+            }
+
+            Array.set(newArray, i, elem);
         }
 
-        if (attrVal == null) {
+        return newArray;
+    }
+
+    private static Object fixAttribute(Object obj)
+    {
+        if (obj == null || !(obj instanceof Attribute)) {
+            return fixValue(obj);
+        }
+
+        return fixValue(((Attribute) obj).getValue());
+    }
+
+    private static Object fixValue(Object val)
+    {
+        if (val == null) {
             return null;
         }
 
-        if (attrVal instanceof Byte) {
-            return new Integer(((Byte) attrVal).intValue());
-        } else if (attrVal instanceof Character) {
-            char[] array = new char[] { ((Character) attrVal).charValue() };
+        if (val.getClass().isArray()) {
+            return fixArray((Object )val);
+        } else if (val instanceof Byte) {
+            return new Integer(((Byte) val).intValue());
+        } else if (val instanceof Character) {
+            char[] array = new char[] { ((Character) val).charValue() };
             return new String(array);
-        } else if (attrVal instanceof Short) {
-            return new Integer(((Short) attrVal).intValue());
-        } else if (attrVal instanceof Long) {
-            long lVal = ((Long) attrVal).longValue();
+        } else if (val instanceof Short) {
+            return new Integer(((Short) val).intValue());
+        } else if (val instanceof Long) {
+            long lVal = ((Long) val).longValue();
             if (lVal < (long) Integer.MIN_VALUE ||
                 lVal > (long) Integer.MAX_VALUE)
             {
-                return attrVal.toString() + "L";
+                return val.toString() + "L";
             }
 
             return new Integer((int) lVal);
-        } else if (attrVal instanceof Float) {
-            return new Double(((Float) attrVal).doubleValue());
+        } else if (val instanceof Float) {
+            return new Double(((Float) val).doubleValue());
         }
 
-        return attrVal;
+        return val;
     }
 
     Object get(String mbeanName, String attrName)
