@@ -8,6 +8,7 @@ import icecube.daq.io.PayloadTransmitChannel;
 
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
+import icecube.daq.juggler.mbean.MBeanWrapper;
 
 import icecube.daq.payload.IByteBufferCache;
 
@@ -86,6 +87,17 @@ public abstract class DAQComponent
     };
 
     private static final Log LOG = LogFactory.getLog(DAQComponent.class);
+
+    /** Methods names for PayloadInputEngine MBean */
+    private static final String[] inputEngineMethods = new String[] {
+        "BufferCurrentAcquiredBuffers",
+        "BufferCurrentAcquiredBytes",
+        "BytesReceived",
+        "PresentChannelStates",
+        "PresentState",
+        "RecordsReceived",
+        "StopMessagesReceived",
+    };
 
     /** component type */
     private String name;
@@ -850,11 +862,41 @@ public abstract class DAQComponent
      *
      * @param type engine type
      * @param engine input engine
+     *
+     * @throws DAQCompException if 'enableMonitoring' is <tt>true</tt> but
+     *                          'engine' is not a PayloadInputEngine
      */
     public final void addEngine(String type, DAQComponentInputProcessor engine)
     {
+        addEngine(type, engine, false);
+    }
+
+    /**
+     * Add an input engine with the specified type.
+     *
+     * @param type engine type
+     * @param engine input engine
+     * @param enableMonitoring add an MBean for this input engine
+     *
+     * @throws DAQCompException if 'enableMonitoring' is <tt>true</tt> but
+     *                          'engine' is not a PayloadInputEngine
+     */
+    public final void addEngine(String type, DAQComponentInputProcessor engine,
+                                boolean enableMonitoring)
+    {
         engines.add(new DAQInputConnector(type, engine));
         enginesSorted = false;
+
+        boolean isInputEngine = engine instanceof PayloadInputEngine;
+
+        if (enableMonitoring) {
+            if (!isInputEngine) {
+                throw new DAQCompException("Engine is not a" +
+                                           " PayloadInputEngine");
+            }
+
+            addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
+        }
     }
 
     /**
