@@ -878,8 +878,8 @@ public abstract class DAQComponent
      * @param engine input engine
      * @param enableMonitoring add an MBean for this input engine
      *
-     * @throws DAQCompException if 'enableMonitoring' is <tt>true</tt> but
-     *                          'engine' is not a PayloadInputEngine
+     * @throws Error if 'enableMonitoring' is <tt>true</tt> but
+     *               'engine' is not a PayloadInputEngine
      */
     public final void addEngine(String type, DAQComponentInputProcessor engine,
                                 boolean enableMonitoring)
@@ -891,8 +891,7 @@ public abstract class DAQComponent
 
         if (enableMonitoring) {
             if (!isInputEngine) {
-                throw new DAQCompException("Engine is not a" +
-                                           " PayloadInputEngine");
+                throw new Error("Engine is not a PayloadInputEngine");
             }
 
             addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
