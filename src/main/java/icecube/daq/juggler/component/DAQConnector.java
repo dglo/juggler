@@ -101,6 +101,16 @@ public abstract class DAQConnector
     }
 
     /**
+     * Is this an output engine?
+     *
+     * @return <tt>false</tt>
+     */
+    public boolean isOutput()
+    {
+        return false;
+    }
+
+    /**
      * Is this connector running?
      *
      * @return <tt>true</tt> if this connector is running

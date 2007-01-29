@@ -170,6 +170,16 @@ public class DAQOutputConnector
     }
 
     /**
+     * Is this an output engine?
+     *
+     * @return <tt>true</tt>
+     */
+    public boolean isOutput()
+    {
+        return true;
+    }
+
+    /**
      * Is this connector running?
      *
      * @return <tt>true</tt> if this connector is running

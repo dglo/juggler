@@ -253,7 +253,7 @@ public abstract class DAQComponent
         {
             for (Iterator iter = connectors.iterator(); iter.hasNext();) {
                 DAQConnector dc = (DAQConnector) iter.next();
-                if (!dc.isInput() && !dc.isSplicer() &&
+                if (dc.isOutput() &&
                     !((DAQOutputConnector) dc).isConnected())
                 {
                     state = STATE_IDLE;
@@ -275,7 +275,7 @@ public abstract class DAQComponent
 
                 for (Iterator iter = connectors.iterator(); iter.hasNext();) {
                     DAQConnector dc = (DAQConnector) iter.next();
-                    if (!dc.isInput() && list[i].matches(dc.getType())) {
+                    if (dc.isOutput() && list[i].matches(dc.getType())) {
                         if (conn != null) {
                             final String errMsg = "Component " + name + "#" +
                                 num + " has multiple " + list[i].getType() +
@@ -385,7 +385,7 @@ public abstract class DAQComponent
             IOException ioEx = null;
             for (Iterator iter = connectors.iterator(); iter.hasNext();) {
                 DAQConnector dc = (DAQConnector) iter.next();
-                if (!dc.isInput() && !dc.isSplicer()) {
+                if (dc.isOutput()) {
                     try {
                         ((DAQOutputConnector) dc).disconnect();
                     } catch (IOException ioe) {
@@ -1177,6 +1177,8 @@ public abstract class DAQComponent
                 if (dc.getType().equals(type)) {
                     return ((DAQInputConnector) dc).getInputEngine();
                 }
+            } else if (dc.isInput() && dc.isSplicer()) {
+                throw new Error("Conn " + dc + " is both input and splicer!");
             }
         }
 
@@ -1237,7 +1239,7 @@ public abstract class DAQComponent
     {
         for (Iterator iter = connectors.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
-            if (!dc.isInput() && !dc.isSplicer()) {
+            if (dc.isOutput()) {
                 if (dc.getType().equals(type)) {
                     return ((DAQOutputConnector) dc).getOutputEngine();
                 }
@@ -1746,24 +1748,32 @@ public abstract class DAQComponent
             DAQConnector dc1 = (DAQConnector) o1;
             DAQConnector dc2 = (DAQConnector) o2;
 
-            // if 1st object is a splicer...
-            if (dc1.isSplicer()) {
-                if (!dc2.isSplicer()) {
-                    // if 2nd object is not a splicer, it goes before 1st
-                    return 1;
+            // if 1st object is an output engine...
+            if (dc1.isOutput()) {
+                if (!dc2.isOutput()) {
+                    // if 2nd object is not an output engine, it goes after 1st
+                    return -1;
                 }
-            } else if (dc2.isSplicer()) {
-                // if 2nd obj is a splicer, it goes after 1st
-                return -1;
+            } else if (dc2.isOutput()) {
+                // if 2nd obj is an output engine, it goes before 1st
+                return 1;
             } else if (dc1.isInput()) {
                 // 1st object is an input engine...
                 if (!dc2.isInput()) {
-                    // if 2nd object is not an input engine, it goes before 1st
-                    return 1;
+                    // if 2nd object is not an input engine, it goes after 1st
+                    return -1;
                 }
             } else if (dc2.isInput()) {
-                // if 2nd obj is an input engine, it goes after 1st
-                return -1;
+                // if 2nd obj is an input engine, it goes before 1st
+                return 1;
+            } else if (dc1.isSplicer()) {
+                if (!dc2.isSplicer()) {
+                    // if 2nd object is not a splicer, it goes after 1st
+                    return -1;
+                }
+            } else if (dc2.isSplicer()) {
+                // if 2nd obj is a splicer, it goes before 1st
+                return 1;
             }
 
             // otherwise, compare types

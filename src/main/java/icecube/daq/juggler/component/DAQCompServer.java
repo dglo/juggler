@@ -172,7 +172,7 @@ public class DAQCompServer
 
         for (Iterator iter = comp.listConnectors(); iter.hasNext();) {
             DAQConnector conn = (DAQConnector) iter.next();
-            if (conn.isSplicer()) {
+            if (!conn.isInput() && !conn.isOutput()) {
                 continue;
             }
 
