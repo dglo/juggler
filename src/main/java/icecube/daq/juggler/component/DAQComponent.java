@@ -107,10 +107,10 @@ public abstract class DAQComponent
     /** server-assigned ID */
     private int id = Integer.MIN_VALUE;
 
-    /** list of I/O engines */
-    private ArrayList engines = new ArrayList();
-    /** has list of engines been sorted? */
-    private boolean enginesSorted;
+    /** list of connectors */
+    private ArrayList connectors = new ArrayList();
+    /** has list of connectors been sorted? */
+    private boolean connSorted;
 
     /** hash table of byte buffer caches */
     private HashMap caches = new HashMap();
@@ -251,7 +251,7 @@ public abstract class DAQComponent
         private synchronized void doConnect()
             throws DAQCompException
         {
-            for (Iterator iter = engines.iterator(); iter.hasNext();) {
+            for (Iterator iter = connectors.iterator(); iter.hasNext();) {
                 DAQConnector dc = (DAQConnector) iter.next();
                 if (!dc.isInput() && !dc.isSplicer() &&
                     !((DAQOutputConnector) dc).isConnected())
@@ -273,7 +273,7 @@ public abstract class DAQComponent
             for (int i = 0; compEx == null && i < list.length; i++) {
                 DAQOutputConnector conn = null;
 
-                for (Iterator iter = engines.iterator(); iter.hasNext();) {
+                for (Iterator iter = connectors.iterator(); iter.hasNext();) {
                     DAQConnector dc = (DAQConnector) iter.next();
                     if (!dc.isInput() && list[i].matches(dc.getType())) {
                         if (conn != null) {
@@ -345,7 +345,7 @@ public abstract class DAQComponent
         {
             DAQCompException compEx = null;
 
-            Iterator iter = engines.iterator();
+            Iterator iter = connectors.iterator();
             while (iter.hasNext()) {
                 DAQConnector conn = (DAQConnector) iter.next();
 
@@ -383,7 +383,7 @@ public abstract class DAQComponent
             throws DAQCompException, IOException
         {
             IOException ioEx = null;
-            for (Iterator iter = engines.iterator(); iter.hasNext();) {
+            for (Iterator iter = connectors.iterator(); iter.hasNext();) {
                 DAQConnector dc = (DAQConnector) iter.next();
                 if (!dc.isInput() && !dc.isSplicer()) {
                     try {
@@ -404,7 +404,7 @@ public abstract class DAQComponent
         /**
          * Emergency stop of component.
          *
-         * @return <tt>true</tt> if all engines have stopped
+         * @return <tt>true</tt> if all connectors have stopped
          *
          * @throws DAQCompException if there is a problem
          */
@@ -414,7 +414,7 @@ public abstract class DAQComponent
 
             DAQCompException compEx = null;
 
-            Iterator iter = engines.iterator();
+            Iterator iter = connectors.iterator();
             while (iter.hasNext()) {
                 DAQConnector conn = (DAQConnector) iter.next();
 
@@ -884,8 +884,8 @@ public abstract class DAQComponent
     public final void addEngine(String type, DAQComponentInputProcessor engine,
                                 boolean enableMonitoring)
     {
-        engines.add(new DAQInputConnector(type, engine));
-        enginesSorted = false;
+        connectors.add(new DAQInputConnector(type, engine));
+        connSorted = false;
 
         boolean isInputEngine = engine instanceof PayloadInputEngine;
 
@@ -904,14 +904,14 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine output engine
      * @param allowMultipleConnections <tt>true</tt> if this output connector
-     *                                 can connect to multiple input engines
+     *                                 can connect to multiple input connectors
      */
     public final void addEngine(String type, DAQComponentOutputProcess engine,
                                 boolean allowMultipleConnections)
     {
-        engines.add(new DAQOutputConnector(type, engine,
+        connectors.add(new DAQOutputConnector(type, engine,
                                            allowMultipleConnections));
-        enginesSorted = false;
+        connSorted = false;
     }
 
     /**
@@ -922,8 +922,8 @@ public abstract class DAQComponent
      */
     public final void addEngine(String type, DAQComponentOutputProcess engine)
     {
-        engines.add(new DAQOutputConnector(type, engine));
-        enginesSorted = false;
+        connectors.add(new DAQOutputConnector(type, engine));
+        connSorted = false;
     }
 
     /**
@@ -963,8 +963,8 @@ public abstract class DAQComponent
      */
     public final void addSplicer(Splicer splicer, boolean needStart)
     {
-        engines.add(new DAQSplicer(splicer, needStart));
-        enginesSorted = false;
+        connectors.add(new DAQSplicer(splicer, needStart));
+        connSorted = false;
     }
 
     /**
@@ -1084,7 +1084,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Override this method to perform any actions after all output engines
+     * Override this method to perform any actions after all output connectors
      * have been disconnected.
      *
      * @throws DAQCompException if there is a problem
@@ -1164,7 +1164,7 @@ public abstract class DAQComponent
      */
     public final PayloadInputEngine getInputEngine(String type)
     {
-        for (Iterator iter = engines.iterator(); iter.hasNext();) {
+        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
             if (dc.isInput() && !dc.isSplicer()) {
                 if (dc.getType().equals(type)) {
@@ -1228,7 +1228,7 @@ public abstract class DAQComponent
      */
     public final PayloadOutputEngine getOutputEngine(String type)
     {
-        for (Iterator iter = engines.iterator(); iter.hasNext();) {
+        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
             if (!dc.isInput() && !dc.isSplicer()) {
                 if (dc.getType().equals(type)) {
@@ -1249,7 +1249,7 @@ public abstract class DAQComponent
      */
     public final Splicer getSplicer(String type)
     {
-        for (Iterator iter = engines.iterator(); iter.hasNext();) {
+        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
             DAQConnector dc = (DAQConnector) iter.next();
             if (dc.isSplicer()) {
                 if (dc.getType().equals(type)) {
@@ -1300,13 +1300,13 @@ public abstract class DAQComponent
     }
 
     /**
-     * Are I/O engines still running?
+     * Are connectors still running?
      *
      * @return <tt>true</tt> if any engine is still running
      */
     public boolean isRunning()
     {
-        Iterator iter = engines.iterator();
+        Iterator iter = connectors.iterator();
         while (iter.hasNext()) {
             DAQConnector conn = (DAQConnector) iter.next();
 
@@ -1319,13 +1319,13 @@ public abstract class DAQComponent
     }
 
     /**
-     * Are all I/O engines stopped?
+     * Are all connectors stopped?
      *
-     * @return <tt>true</tt> if all engines have stopped
+     * @return <tt>true</tt> if all connectors have stopped
      */
     public boolean isStopped()
     {
-        Iterator iter = engines.iterator();
+        Iterator iter = connectors.iterator();
         while (iter.hasNext()) {
             DAQConnector conn = (DAQConnector) iter.next();
 
@@ -1344,7 +1344,7 @@ public abstract class DAQComponent
      */
     public final Iterator listConnectors()
     {
-        return engines.iterator();
+        return connectors.iterator();
     }
 
     /**
@@ -1487,13 +1487,13 @@ public abstract class DAQComponent
             }
         }
 
-        // sort engines so they are started in the correct order
-        if (!enginesSorted) {
-            Collections.sort(engines, new ConnCmp());
-            enginesSorted = true;
+        // sort connectors so they are started in the correct order
+        if (!connSorted) {
+            Collections.sort(connectors, new ConnCmp());
+            connSorted = true;
         }
 
-        Iterator iter = engines.iterator();
+        Iterator iter = connectors.iterator();
         while (iter.hasNext()) {
             DAQConnector conn = (DAQConnector) iter.next();
 
@@ -1533,7 +1533,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Start engines.
+     * Start connectors.
      *
      * @throws DAQCompException if there is a problem
      */
@@ -1542,7 +1542,7 @@ public abstract class DAQComponent
     {
         DAQCompException compEx = null;
 
-        Iterator iter = engines.iterator();
+        Iterator iter = connectors.iterator();
         while (iter.hasNext()) {
             DAQConnector conn = (DAQConnector) iter.next();
 
@@ -1620,7 +1620,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Override this method to perform any clean-up after all I/O engines
+     * Override this method to perform any clean-up after all connectors
      * have stopped.
      *
      * @throws DAQCompException if there is a problem stopping the component
@@ -1632,7 +1632,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Override this method to perform any clean-up before I/O engines
+     * Override this method to perform any clean-up before connectors
      * are stopped.
      *
      * @throws DAQCompException if there is a problem stopping the component
@@ -1684,11 +1684,11 @@ public abstract class DAQComponent
             buf.append(']');
         }
 
-        if (engines.size() > 0) {
+        if (connectors.size() > 0) {
             buf.append(" [");
 
             boolean first = true;
-            for (Iterator iter = engines.iterator(); iter.hasNext(); ) {
+            for (Iterator iter = connectors.iterator(); iter.hasNext(); ) {
                 if (first) {
                     first = false;
                 } else {
