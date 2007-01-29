@@ -376,6 +376,28 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to destroy a component.
+     *
+     * @param id component ID
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if no component matches the specified ID
+     */
+    public String destroy(int id)
+        throws DAQCompException
+    {
+        DAQComponent comp = getComponent(id);
+        if (comp == null) {
+            throw new DAQCompException("Component#" + id + " not found");
+        }
+
+        comp.destroy();
+
+        return "OK";
+    }
+
+    /**
      * XML-RPC method forcing the specified component to stop current run.
      *
      * @param id component ID
