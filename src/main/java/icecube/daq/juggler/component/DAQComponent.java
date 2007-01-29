@@ -858,6 +858,17 @@ public abstract class DAQComponent
     }
 
     /**
+     * Add a connector.
+     *
+     * @param conn connector
+     */
+    public final void addConnector(DAQConnector conn)
+    {
+        connectors.add(conn);
+        connSorted = false;
+    }
+
+    /**
      * Add an input engine with the specified type.
      *
      * @param type engine type
@@ -884,8 +895,7 @@ public abstract class DAQComponent
     public final void addEngine(String type, DAQComponentInputProcessor engine,
                                 boolean enableMonitoring)
     {
-        connectors.add(new DAQInputConnector(type, engine));
-        connSorted = false;
+        addConnector(new DAQInputConnector(type, engine));
 
         boolean isInputEngine = engine instanceof PayloadInputEngine;
 
@@ -909,9 +919,8 @@ public abstract class DAQComponent
     public final void addEngine(String type, DAQComponentOutputProcess engine,
                                 boolean allowMultipleConnections)
     {
-        connectors.add(new DAQOutputConnector(type, engine,
-                                           allowMultipleConnections));
-        connSorted = false;
+        addConnector(new DAQOutputConnector(type, engine,
+                                            allowMultipleConnections));
     }
 
     /**
@@ -922,8 +931,7 @@ public abstract class DAQComponent
      */
     public final void addEngine(String type, DAQComponentOutputProcess engine)
     {
-        connectors.add(new DAQOutputConnector(type, engine));
-        connSorted = false;
+        addConnector(new DAQOutputConnector(type, engine));
     }
 
     /**
@@ -963,8 +971,7 @@ public abstract class DAQComponent
      */
     public final void addSplicer(Splicer splicer, boolean needStart)
     {
-        connectors.add(new DAQSplicer(splicer, needStart));
-        connSorted = false;
+        addConnector(new DAQSplicer(splicer, needStart));
     }
 
     /**
