@@ -42,7 +42,7 @@ public abstract class DAQConnector
      *
      * @param type connector type
      */
-    DAQConnector(String type)
+    public DAQConnector(String type)
     {
         this.type = type;
     }
