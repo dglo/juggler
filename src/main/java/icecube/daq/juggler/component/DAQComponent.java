@@ -99,6 +99,15 @@ public abstract class DAQComponent
         "StopMessagesReceived",
     };
 
+    /** Methods names for PayloadOutputEngine MBean */
+    private static final String[] outputEngineMethods = new String[] {
+        "BytesSent",
+        "PresentChannelStates",
+        "PresentState",
+        "RecordsSent",
+        "StopMessagesSent",
+    };
+
     /** component type */
     private String name;
     /** component instance number */
@@ -417,6 +426,11 @@ public abstract class DAQComponent
             Iterator iter = connectors.iterator();
             while (iter.hasNext()) {
                 DAQConnector conn = (DAQConnector) iter.next();
+
+                // skip stopped connectors
+                if (conn.isStopped()) {
+                    continue;
+                }
 
                 try {
                     conn.forcedStopProcessing();
@@ -879,33 +893,28 @@ public abstract class DAQComponent
      */
     public final void addEngine(String type, DAQComponentInputProcessor engine)
     {
-        addEngine(type, engine, false);
+        addConnector(new DAQInputConnector(type, engine));
     }
 
     /**
-     * Add an input engine with the specified type.
+     * Add an input engine with the specified type,
+     * and supply a monitoring MBean .
      *
      * @param type engine type
      * @param engine input engine
-     * @param enableMonitoring add an MBean for this input engine
      *
-     * @throws Error if 'enableMonitoring' is <tt>true</tt> but
-     *               'engine' is not a PayloadInputEngine
+     * @throws Error if 'engine' is not a PayloadInputEngine
      */
-    public final void addEngine(String type, DAQComponentInputProcessor engine,
-                                boolean enableMonitoring)
+    public final void addMonitoredEngine(String type,
+                                         DAQComponentInputProcessor engine)
     {
         addConnector(new DAQInputConnector(type, engine));
 
-        boolean isInputEngine = engine instanceof PayloadInputEngine;
-
-        if (enableMonitoring) {
-            if (!isInputEngine) {
-                throw new Error("Engine is not a PayloadInputEngine");
-            }
-
-            addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
+        if (!(engine instanceof PayloadInputEngine)) {
+            throw new Error("Can only monitor PayloadInputEngine");
         }
+
+        addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
     }
 
     /**
@@ -932,6 +941,27 @@ public abstract class DAQComponent
     public final void addEngine(String type, DAQComponentOutputProcess engine)
     {
         addConnector(new DAQOutputConnector(type, engine));
+    }
+
+    /**
+     * Add an output engine with the specified type.
+     * and supply a monitoring MBean .
+     *
+     * @param type engine type
+     * @param engine output engine
+     *
+     * @throws Error if 'engine' is not a PayloadOutputEngine
+     */
+    public final void addMonitoredEngine(String type,
+                                         DAQComponentOutputProcess engine)
+    {
+        addConnector(new DAQOutputConnector(type, engine));
+
+        if (!(engine instanceof PayloadOutputEngine)) {
+            throw new Error("Can only monitor PayloadOutputEngine");
+        }
+
+        addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
     }
 
     /**
