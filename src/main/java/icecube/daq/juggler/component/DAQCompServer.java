@@ -103,6 +103,9 @@ public class DAQCompServer
     /** URL of configuration server */
     private URL configURL;
 
+    /** if <tt>true</tt>, show spinners */
+    private boolean showSpinner;
+
     /**
      * XML-RPC stub
      */
@@ -573,7 +576,12 @@ public class DAQCompServer
      */
     private boolean monitorServer(XmlRpcClient client, DAQComponent comp)
     {
-        Spinner spinner = new Spinner("-\\|/");
+        Spinner spinner;
+        if (showSpinner) {
+            spinner = new Spinner("-\\|/");
+        } else {
+            spinner = null;
+        }
 
         int numFails = 0;
         boolean compDestroyed = false;
@@ -593,7 +601,9 @@ public class DAQCompServer
                 break;
             }
 
-            spinner.print();
+            if (spinner != null) {
+                spinner.print();
+            }
         }
 
         return !compDestroyed;
@@ -648,6 +658,9 @@ public class DAQCompServer
         for (int i = 0; i < args.length; i++) {
             if (args[i].length() > 1 && args[i].charAt(0) == '-') {
                 switch(args[i].charAt(1)) {
+                case 'S':
+                    showSpinner = true;
+                    break;
                 case 'c':
                     i++;
                     String urlStr = args[i];
@@ -662,6 +675,10 @@ public class DAQCompServer
                                            urlStr + "\"");
                         usage = true;
                     }
+                    break;
+                case 'd':
+                    i++;
+                    comp.setDispatchDestStorage(args[i]);
                     break;
                 case 'g':
                     i++;
@@ -709,10 +726,6 @@ public class DAQCompServer
                         usage = true;
                     }
                     break;
-                case 'd':
-                    i++;
-                    comp.setDispatchDestStorage(args[i]);
-                    break;
                 case 's':
                     i++;
                     long maxFileSize = 0;
@@ -749,10 +762,11 @@ public class DAQCompServer
 
         if (usage) {
             System.err.println("java " + comp.getClass().getName() + " " +
+                               " [-S(howSpinner)]" +
                                " [-c configServerURL]" +
+                               " [-d dispatchDestPath]" +
                                " [-g globalConfigPath]" +
                                " [-l logAddress:logPort]" +
-                               " [-d dispatchDestPath]" +
                                " [-s maxDispatchFileSize]" +
                                "");
             System.exit(1);
@@ -865,6 +879,13 @@ public class DAQCompServer
                                   int port)
         throws DAQCompException
     {
+        Spinner spinner;
+        if (showSpinner) {
+            spinner = new Spinner("?*");
+        } else {
+            spinner = null;
+        }
+
         InetAddress addr;
         try {
             addr = InetAddress.getLocalHost();
@@ -872,7 +893,6 @@ public class DAQCompServer
             throw new DAQCompException("Couldn't get local host name", uhe);
         }
 
-        Spinner spinner = new Spinner("?*");
         while (true) {
             try {
                 announce(client, comp, addr.getHostAddress(), port);
@@ -882,7 +902,9 @@ public class DAQCompServer
                     final String errMsg = "Couldn't announce component";
                     throw new DAQCompException(errMsg, xre);
                 } else {
-                    spinner.print();
+                    if (spinner == null) {
+                        spinner.print();
+                    }
 
                     try {
                         Thread.sleep(1000);
