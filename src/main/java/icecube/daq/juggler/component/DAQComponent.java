@@ -5,6 +5,7 @@ import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.PayloadInputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
+import icecube.daq.io.SpliceablePayloadInputEngine;
 
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
@@ -97,6 +98,19 @@ public abstract class DAQComponent
         "PresentState",
         "RecordsReceived",
         "StopMessagesReceived",
+    };
+
+    /** Methods names for SpliceablePayloadInputEngine MBean */
+    private static final String[] spliceableInputEngineMethods = new String[] {
+        "BufferCurrentAcquiredBuffers",
+        "BufferCurrentAcquiredBytes",
+        "BytesReceived",
+        "PresentChannelStates",
+        "PresentState",
+        "RecordsReceived",
+        "StopMessagesReceived",
+        "StrandDepth",
+        "StrandMax",
     };
 
     /** Methods names for PayloadOutputEngine MBean */
@@ -910,11 +924,15 @@ public abstract class DAQComponent
     {
         addConnector(new DAQInputConnector(type, engine));
 
-        if (!(engine instanceof PayloadInputEngine)) {
+        if (engine instanceof SpliceablePayloadInputEngine) {
+            addMBean(type, new MBeanWrapper(engine,
+                                            spliceableInputEngineMethods));
+        } else if (engine instanceof PayloadInputEngine) {
+            addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
+        } else {
             throw new Error("Can only monitor PayloadInputEngine");
         }
 
-        addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
     }
 
     /**
