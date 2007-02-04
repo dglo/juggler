@@ -1409,6 +1409,9 @@ public class DAQComponentTest
         MockInputEngine mockIn = new MockInputEngine();
         mockComp.addEngine("garbage", mockIn);
 
+        MockInputEngine mockSelf = new MockInputEngine();
+        mockComp.addEngine(DAQConnector.TYPE_SELF_CONTAINED, mockSelf);
+
         MockOutputEngine mockOut = new MockOutputEngine();
         mockComp.addEngine("gunk", mockOut);
 
@@ -1417,7 +1420,7 @@ public class DAQComponentTest
             iter.next();
             numFound++;
         }
-        assertEquals("Bad number of connectors", 2, numFound);
+        assertEquals("Bad number of connectors", 3, numFound);
     }
 
     public void testDestroy()
@@ -1603,6 +1606,9 @@ public class DAQComponentTest
 
         MockInputEngine mockIn = new MockInputEngine();
         mockComp.addEngine("garbage", mockIn);
+
+        MockInputEngine mockSelf = new MockInputEngine();
+        mockComp.addEngine(DAQConnector.TYPE_SELF_CONTAINED, mockSelf);
 
         MockOutputEngine mockOut = new MockOutputEngine();
         mockComp.addEngine("gunk", mockOut);

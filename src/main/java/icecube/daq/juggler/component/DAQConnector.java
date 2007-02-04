@@ -31,6 +31,8 @@ public abstract class DAQConnector
     public static final String TYPE_TEST_DATA = "testData";
     /** icetopTrigger/iniceTrigger->globalTrigger trigger connector. */
     public static final String TYPE_TRIGGER = "trigger";
+    /** self-contained connector which doesn't need any external connections */
+    public static final String TYPE_SELF_CONTAINED = "selfContained";
 
     /** General-purpose byte buffer cache. */
     public static final String TYPE_GENERIC_CACHE = "genericCache";

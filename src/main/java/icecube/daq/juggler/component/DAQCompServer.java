@@ -179,8 +179,13 @@ public class DAQCompServer
                 continue;
             }
 
+            String type = conn.getType();
+            if (type.equals(DAQConnector.TYPE_SELF_CONTAINED)) {
+                continue;
+            }
+
             Object[] row = new Object[3];
-            row[0] = conn.getType();
+            row[0] = type;
             row[1] = conn.isInput() ? Boolean.TRUE : Boolean.FALSE;
             row[2] = new Integer(conn.getPort());
 
