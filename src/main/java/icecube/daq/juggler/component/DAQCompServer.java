@@ -146,6 +146,7 @@ public class DAQCompServer
     public DAQCompServer(DAQComponent comp, String[] args)
         throws DAQCompException
     {
+	comp.setLogLevel(Level.INFO);
         processArgs(comp, args);
 
         resetLogAppender();
@@ -208,16 +209,15 @@ public class DAQCompServer
         }
 
         Object[] rtnArray = (Object[]) rtnObj;
-        if (rtnArray.length != 5) {
-            throw new XmlRpcException("Expected 5-element array, got " +
+        if (rtnArray.length != 4) {
+            throw new XmlRpcException("Expected 4-element array, got " +
                                       rtnArray.length + " elements");
         }
 
         final int compId = ((Integer) rtnArray[0]).intValue();
         final String logIP = (String) rtnArray[1];
         final int logPort = ((Integer) rtnArray[2]).intValue();
-        final String levelStr = (String) rtnArray[3];
-        final int tmpServerId =  ((Integer) rtnArray[4]).intValue();
+	final int tmpServerId =  ((Integer) rtnArray[3]).intValue();
 
         if (serverIdSet) {
             LOG.error("Overwriting server ID");
@@ -226,15 +226,10 @@ public class DAQCompServer
         serverId = tmpServerId;
         serverIdSet = true;
 
-        final Level logLevel = getLogLevel(levelStr);
-        if (logLevel == null) {
-            throw new XmlRpcException("Bad log level '" + levelStr + "'");
-        }
-
-        comp.setId(compId);
+	comp.setId(compId);
 
         try {
-            setDefaultAppender(logIP, logPort, logLevel);
+            setDefaultAppender(logIP, logPort, comp.getLogLevel());
         } catch (UnknownHostException uhe) {
             throw new XmlRpcException("Unknown log host '" + logIP + "'", uhe);
         } catch (SocketException se) {
@@ -553,7 +548,7 @@ public class DAQCompServer
      * @throws DAQCompException if no component matches the specified ID
      * @throws IOException if new appender could not be created
      */
-    public String logTo(int id, String address, int port, String levelStr)
+    public String logTo(int id, String address, int port)
         throws DAQCompException, IOException
     {
         DAQComponent comp = getComponent(id);
@@ -561,13 +556,7 @@ public class DAQCompServer
             throw new DAQCompException("Component#" + id + " not found");
         }
 
-        Level level = getLogLevel(levelStr);
-        if (level == null) {
-            throw new DAQCompException("Bad log level '" + levelStr + "'");
-        }
-
-        setLogAppender(new DAQLogAppender(level, address, port));
-
+        setLogAppender(new DAQLogAppender(comp.getLogLevel(), address, port));
         return "OK";
     }
 
@@ -694,15 +683,25 @@ public class DAQCompServer
                     i++;
                     String addrStr = args[i];
                     int ic = addrStr.indexOf(':');
-                    if (ic < 0) {
+		    int il = addrStr.indexOf(',');
+                    if (ic < 0 || il < 0) {
                         System.err.println("Bad log argument '" +
                                            addrStr + "'");
                         usage = true;
                         break;
                     }
 
-                    String logHost = addrStr.substring(0, ic);
-                    String portStr = addrStr.substring(ic + 1);
+                    String logHost  = addrStr.substring(0, ic);
+                    String portStr  = addrStr.substring(ic + 1, il);
+		    String levelStr = addrStr.substring(il+1);
+
+		    Level logLevel = getLogLevel(levelStr);
+		    if(logLevel == null) {
+			System.err.println("Bad log level: '"+levelStr+"'");
+			usage = true;
+			break;
+		    } 
+		    comp.setLogLevel(logLevel);
 
                     int logPort;
                     try {
@@ -717,8 +716,7 @@ public class DAQCompServer
                     }
 
                     try {
-                        setDefaultAppender(logHost, logPort,
-                                           Level.INFO);
+                        setDefaultAppender(logHost, logPort, logLevel);
                     } catch (UnknownHostException uhe) {
                         System.err.println("Bad log host '" +
                                            logHost + "' in '" +
@@ -771,7 +769,7 @@ public class DAQCompServer
                                " [-c configServerURL]" +
                                " [-d dispatchDestPath]" +
                                " [-g globalConfigPath]" +
-                               " [-l logAddress:logPort]" +
+                               " [-l logAddress:logPort,logLevel]" +
                                " [-s maxDispatchFileSize]" +
                                "");
             System.exit(1);
@@ -832,6 +830,7 @@ public class DAQCompServer
     private static void resetLogAppender()
     {
         if (defaultAppender == null) {
+	    System.err.println("WARNING: null default appender!");
             defaultAppender = new MockAppender(Level.INFO);
         }
 
@@ -907,7 +906,7 @@ public class DAQCompServer
                     final String errMsg = "Couldn't announce component";
                     throw new DAQCompException(errMsg, xre);
                 } else {
-                    if (spinner == null) {
+                    if (spinner != null) {
                         spinner.print();
                     }
 
@@ -928,14 +927,15 @@ public class DAQCompServer
      * @param logPort log host port
      * @param logLevel log level
      */
-    private static void setDefaultAppender(String logIP, int logPort,
-                                           Level logLevel)
+    private static void setDefaultAppender(String logIP, int logPort, Level logLevel)
         throws SocketException, UnknownHostException
     {
         if (logIP == null || logIP.length() == 0 || logPort <= 0) {
-            defaultAppender = new MockAppender(Level.INFO);
+            defaultAppender = new MockAppender(logLevel);
+	    System.out.println("WARNING: using MockAppender!");
         } else {
-            defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
+	    defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
+	    System.out.println("Default appender has been set, level "+logLevel);
         }
     }
 
