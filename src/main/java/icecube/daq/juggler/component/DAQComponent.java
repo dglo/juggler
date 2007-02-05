@@ -26,6 +26,8 @@ import java.util.Iterator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.log4j.Level;
+
 /**
  * Generic DAQ component methods.
  *
@@ -129,6 +131,9 @@ public abstract class DAQComponent
 
     /** server-assigned ID */
     private int id = Integer.MIN_VALUE;
+
+    /** server-assigned log level. */
+    private Level logLevel = Level.INFO;
 
     /** list of connectors */
     private ArrayList connectors = new ArrayList();
@@ -1234,6 +1239,16 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the log level for this component.
+     *
+     * @return log level
+     */
+    public Level getLogLevel()
+    {
+        return logLevel;
+    }
+
+    /**
      * Get MBean XML-RPC server port for this component.
      *
      * @return <tt>0</tt> if there is no MBean server for this component
@@ -1493,6 +1508,16 @@ public abstract class DAQComponent
      */
     public void setDispatchDestStorage(String dirName) {
         // Override me!
+    }
+
+    /**
+     * Set the log level for this component.
+     *
+     * @param level new log level
+     */
+    public void setLogLevel(Level level)
+    {
+        logLevel = level;
     }
 
     /**
