@@ -1631,6 +1631,7 @@ public abstract class DAQComponent
             try {
                 conn.startProcessing();
             } catch (Exception ex) {
+                LOG.error("Couldn't start " + name + "#" + num, ex);
                 compEx = new DAQCompException("Couldn't start " + name +
                                               "#" + num + ":" + conn.getType(),
                                               ex);
