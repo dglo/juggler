@@ -130,6 +130,10 @@ public class DataSink
             return "dataSink";
         }
 
+        if (inputType.equals(DAQConnector.TYPE_TRIGGER)) {
+            return "trigSink";
+        }
+
         if (!inputType.equals(DAQConnector.TYPE_TEST_HIT)) {
             LOG.error("Unknown DataSink input type \"" + inputType + "\"");
         }
