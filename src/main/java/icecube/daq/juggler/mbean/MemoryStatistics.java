@@ -4,6 +4,7 @@ package icecube.daq.juggler.mbean;
  * JVM memory statistics.
  */
 public class MemoryStatistics
+    implements MemoryStatisticsMBean
 {
     /** Memory size designators. */
     private static final String[] MEMORY_SUFFIX = { "", "K", "G", "T" };
