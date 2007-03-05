@@ -100,6 +100,7 @@ public abstract class DAQComponent
         "PresentState",
         "RecordsReceived",
         "StopMessagesReceived",
+	"Timer",
     };
 
     /** Methods names for SpliceablePayloadInputEngine MBean */
@@ -113,6 +114,7 @@ public abstract class DAQComponent
         "StopMessagesReceived",
         "StrandDepth",
         "StrandMax",
+	"Timer",
     };
 
     /** Methods names for PayloadOutputEngine MBean */
