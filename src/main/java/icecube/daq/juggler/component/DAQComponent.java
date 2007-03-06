@@ -918,31 +918,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Add an input engine with the specified type,
-     * and supply a monitoring MBean .
-     *
-     * @param type engine type
-     * @param engine input engine
-     *
-     * @throws Error if 'engine' is not a PayloadInputEngine
-     */
-    public final void addMonitoredEngine(String type,
-                                         DAQComponentInputProcessor engine)
-    {
-        addConnector(new DAQInputConnector(type, engine));
-
-        if (engine instanceof SpliceablePayloadInputEngine) {
-            addMBean(type, new MBeanWrapper(engine,
-                                            spliceableInputEngineMethods));
-        } else if (engine instanceof PayloadInputEngine) {
-            addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
-        } else {
-            throw new Error("Can only monitor PayloadInputEngine");
-        }
-
-    }
-
-    /**
      * Add an output engine with the specified type.
      *
      * @param type engine type
@@ -969,6 +944,50 @@ public abstract class DAQComponent
     }
 
     /**
+     * Add an MBean.
+     *
+     * @param name short MBean name
+     * @param mbean MBean object
+     */
+    public final void addMBean(String name, Object mbean)
+    {
+        if (mbeanAgent == null) {
+            mbeanAgent = new MBeanAgent();
+        }
+
+        try {
+            mbeanAgent.addBean(name, mbean);
+        } catch (MBeanAgentException mae) {
+            LOG.error("Couldn't add MBean \"" + name + "\"", mae);
+        }
+    }
+
+    /**
+     * Add an input engine with the specified type,
+     * and supply a monitoring MBean .
+     *
+     * @param type engine type
+     * @param engine input engine
+     *
+     * @throws Error if 'engine' is not a PayloadInputEngine
+     */
+    public final void addMonitoredEngine(String type,
+                                         DAQComponentInputProcessor engine)
+    {
+        addConnector(new DAQInputConnector(type, engine));
+
+        if (engine instanceof SpliceablePayloadInputEngine) {
+            addMBean(type, new MBeanWrapper(engine,
+                                            spliceableInputEngineMethods));
+        } else if (engine instanceof PayloadInputEngine) {
+            addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
+        } else {
+            throw new Error("Can only monitor PayloadInputEngine");
+        }
+
+    }
+
+    /**
      * Add an output engine with the specified type.
      * and supply a monitoring MBean .
      *
@@ -987,25 +1006,6 @@ public abstract class DAQComponent
         }
 
         addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
-    }
-
-    /**
-     * Add an MBean.
-     *
-     * @param name short MBean name
-     * @param mbean MBean object
-     */
-    public final void addMBean(String name, Object mbean)
-    {
-        if (mbeanAgent == null) {
-            mbeanAgent = new MBeanAgent();
-        }
-
-        try {
-            mbeanAgent.addBean(name, mbean);
-        } catch (MBeanAgentException mae) {
-            LOG.error("Couldn't add MBean \"" + name + "\"", mae);
-        }
     }
 
     /**
