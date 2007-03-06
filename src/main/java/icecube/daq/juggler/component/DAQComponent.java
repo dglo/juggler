@@ -4,8 +4,10 @@ import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.PayloadInputEngine;
 import icecube.daq.io.PayloadOutputEngine;
+import icecube.daq.io.PayloadReader;
 import icecube.daq.io.PayloadTransmitChannel;
 import icecube.daq.io.SpliceablePayloadInputEngine;
+import icecube.daq.io.SpliceablePayloadReader;
 
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
@@ -115,6 +117,28 @@ public abstract class DAQComponent
         "StrandDepth",
         "StrandMax",
 	"Timer",
+    };
+
+    /** Methods names for PayloadReader MBean */
+    private static final String[] inputReaderMethods = new String[] {
+        "BufferCurrentAcquiredBuffers",
+        "BufferCurrentAcquiredBytes",
+        "BytesReceived",
+        "PresentState",
+        "RecordsReceived",
+        "StopMessagesReceived",
+    };
+
+    /** Methods names for SpliceablePayloadInputReader MBean */
+    private static final String[] spliceableInputReaderMethods = new String[] {
+        "BufferCurrentAcquiredBuffers",
+        "BufferCurrentAcquiredBytes",
+        "BytesReceived",
+        "PresentState",
+        "RecordsReceived",
+        "StopMessagesReceived",
+        "StrandDepth",
+        "TotalStrandDepth",
     };
 
     /** Methods names for PayloadOutputEngine MBean */
@@ -981,6 +1005,11 @@ public abstract class DAQComponent
                                             spliceableInputEngineMethods));
         } else if (engine instanceof PayloadInputEngine) {
             addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
+        } else if (engine instanceof SpliceablePayloadReader) {
+            addMBean(type, new MBeanWrapper(engine,
+                                            spliceableInputReaderMethods));
+        } else if (engine instanceof PayloadReader) {
+            addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
         } else {
             throw new Error("Can only monitor PayloadInputEngine");
         }
