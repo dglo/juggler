@@ -1,12 +1,11 @@
 package icecube.daq.juggler.mbean;
 
 import java.io.IOException;
+
 import java.lang.reflect.Array;
-import java.util.AbstractMap;
+
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 import javax.management.Attribute;
 import javax.management.InstanceNotFoundException;
@@ -19,51 +18,44 @@ import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.apache.xmlrpc.XmlRpcException;
+
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
-import org.apache.xmlrpc.webserver.DAQWebServer;
-import org.apache.xmlrpc.webserver.XmlRpcStatisticsServer;
+
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**
  * XML-RPC adapter for JMX MBeans.
  */
 class XMLRPCServer
-    implements MBeanData, MBeanRegistration, NotificationListener,
-               XMLRPCServerMBean
+    implements MBeanRegistration, NotificationListener, XMLRPCServerMBean
 {
-    /** If true, gather timing data for all MBean calls */
-    public static final boolean TIME_MBEAN_CALLS = false;
-
-    private static final Logger LOG = Logger.getLogger(XMLRPCServer.class);
+    private static final Log LOG = LogFactory.getLog(XMLRPCServer.class);
 
     private static ObjectName delegateName;
 
+    private ObjectName name;
     private MBeanServer server;
 
     private int port = Integer.MIN_VALUE;
     private WebServer webServer;
 
-    private HashMap<String, ObjectName> beans =
-        new HashMap<String, ObjectName>();
+    private HashMap beans = new HashMap();
+
+    public XMLRPCServer()
+    {
+    }
 
     private static Object fixArray(Object array)
     {
-        boolean forceString = false;
+        Object newArray = null;
 
         final int len = Array.getLength(array);
-        if (len == 0) {
-            Class compType = array.getClass().getComponentType();
-            if (compType == long.class) {
-                compType = Integer.class;
-            }
-            return Array.newInstance(compType, len);
-        }
-
-        Object newArray = null;
         for (int i = 0; i < len; i++) {
             Object elem = fixValue(Array.get(array, i));
 
@@ -71,38 +63,10 @@ class XMLRPCServer
                 newArray = Array.newInstance(elem.getClass(), len);
             }
 
-            try {
-                Array.set(newArray, i, (elem == null || !forceString ? elem :
-                                        elem.toString()));
-            } catch (IllegalArgumentException ill) {
-                String[] objArray = new String[len];
-                for (int j = 0; j < i; j++) {
-                    Object obj = Array.get(newArray, j);
-
-                    String objStr;
-                    if (obj == null) {
-                        objStr = null;
-                    } else {
-                        objStr = obj.toString();
-                    }
-                    objArray[j] = objStr;
-                }
-                objArray[i] = elem.toString();
-                forceString = true;
-                newArray = objArray;
-            }
+            Array.set(newArray, i, elem);
         }
 
         return newArray;
-    }
-
-    private static AbstractMap fixMap(AbstractMap map)
-    {
-        for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
-            entry.setValue(fixValue(entry.getValue()));
-        }
-
-        return map;
     }
 
     private static Object fixAttribute(Object obj)
@@ -121,34 +85,31 @@ class XMLRPCServer
         }
 
         if (val.getClass().isArray()) {
-            return fixArray(val);
+            return fixArray((Object )val);
         } else if (val instanceof Byte) {
-            return Integer.valueOf(((Byte) val).intValue());
+            return new Integer(((Byte) val).intValue());
         } else if (val instanceof Character) {
-            char[] array = new char[] {((Character) val).charValue() };
+            char[] array = new char[] { ((Character) val).charValue() };
             return new String(array);
         } else if (val instanceof Short) {
-            return Integer.valueOf(((Short) val).intValue());
+            return new Integer(((Short) val).intValue());
         } else if (val instanceof Long) {
             long lVal = ((Long) val).longValue();
             if (lVal < (long) Integer.MIN_VALUE ||
                 lVal > (long) Integer.MAX_VALUE)
             {
-                return val.toString();
+                return val.toString() + "L";
             }
 
-            return Integer.valueOf((int) lVal);
+            return new Integer((int) lVal);
         } else if (val instanceof Float) {
-            return Double.valueOf(((Float) val).doubleValue());
-        } else if (val instanceof AbstractMap) {
-            return fixMap((AbstractMap) val);
+            return new Double(((Float) val).doubleValue());
         }
 
         return val;
     }
 
-    @Override
-    public Object get(String mbeanName, String attrName)
+    Object get(String mbeanName, String attrName)
         throws MBeanAgentException
     {
         if (!beans.containsKey(mbeanName)) {
@@ -156,86 +117,15 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = beans.get(mbeanName);
+        ObjectName objName = (ObjectName) beans.get(mbeanName);
 
-        Object attrVal;
         try {
-            attrVal = server.getAttribute(objName, attrName);
+            return fixAttribute(server.getAttribute(objName, attrName));
         } catch (JMException jme) {
             throw new MBeanAgentException("Couldn't get MBean \"" + mbeanName +
                                           "\" attribute \"" + attrName + "\"",
                                           jme);
         }
-
-        return fixAttribute(attrVal);
-    }
-
-    public HashMap getAttributes(String mbeanName, String[] attrNames)
-        throws MBeanAgentException
-    {
-        if (!beans.containsKey(mbeanName)) {
-            throw new MBeanAgentException("Unknown MBean \"" + mbeanName +
-                                          "\"");
-        }
-
-        ObjectName objName = beans.get(mbeanName);
-
-        Iterator iter;
-        try {
-            iter = server.getAttributes(objName, attrNames).iterator();
-        } catch (JMException jme) {
-            String nameStr = null;
-            for (int i = 0; i < attrNames.length; i++) {
-                if (nameStr == null) {
-                    nameStr = "\"" + attrNames[i] + "\"";
-                } else {
-                    nameStr += ", \"" + attrNames[i] + "\"";
-                }
-            }
-            throw new MBeanAgentException("Couldn't get MBean \"" + mbeanName +
-                                          "\" attributes [" + nameStr + "]",
-                                          jme);
-        }
-
-        HashMap map = new HashMap();
-        while (iter.hasNext()) {
-            Attribute attr = (Attribute) iter.next();
-
-            for (int i = 0; i < attrNames.length; i++) {
-                if (attrNames[i].equals(attr.getName())) {
-                    Object val;
-                    try {
-                        val = fixAttribute(attr);
-                    } catch (IllegalArgumentException ill) {
-                        LOG.error("Couldn't fix MBean " + mbeanName +
-                                  " attribute " + attr.getName());
-                        throw ill;
-                    }
-                    if (val != null) {
-                        map.put(attr.getName(), val);
-                    }
-                    break;
-                }
-            }
-        }
-
-        return map;
-    }
-
-    @Override
-    public Map<String, Map> getDictionary()
-        throws MBeanAgentException
-    {
-        HashMap<String, Map> allData = new HashMap<String, Map>();
-
-        for (String mbeanName : beans.keySet()) {
-            final String[] attrNames = listGetters(mbeanName);
-
-            Map attrs = getAttributes(mbeanName, attrNames);
-            allData.put(mbeanName, attrs);
-        }
-
-        return allData;
     }
 
     Object[] getList(String mbeanName, String[] attrNames)
@@ -246,7 +136,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = beans.get(mbeanName);
+        ObjectName objName = (ObjectName) beans.get(mbeanName);
 
         Iterator iter;
         try {
@@ -271,13 +161,7 @@ class XMLRPCServer
 
             for (int i = 0; i < attrNames.length; i++) {
                 if (attrNames[i].equals(attr.getName())) {
-                    try {
-                        vals[i] = fixAttribute(attr);
-                    } catch (IllegalArgumentException ill) {
-                        LOG.error("Couldn't fix MBean " + mbeanName +
-                                  " attribute " + attr.getName());
-                        throw ill;
-                    }
+                    vals[i] = fixAttribute(attr);
                     break;
                 }
             }
@@ -290,10 +174,8 @@ class XMLRPCServer
                                    Object handback)
     {
         if (!(notification instanceof MBeanServerNotification)) {
-            if (LOG.isInfoEnabled()) {
-                LOG.info("Ignoring notification class " +
-                         notification.getClass().getName());
-            }
+            LOG.info("Ignoring notification class " +
+                     notification.getClass().getName());
             return;
         }
 
@@ -319,7 +201,6 @@ class XMLRPCServer
         }
     }
 
-    @Override
     public String[] listGetters(String mbeanName)
         throws MBeanAgentException
     {
@@ -328,7 +209,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = beans.get(mbeanName);
+        ObjectName objName = (ObjectName) beans.get(mbeanName);
 
         MBeanAttributeInfo[] attrInfo;
         try {
@@ -355,7 +236,6 @@ class XMLRPCServer
         return names;
     }
 
-    @Override
     public String[] listMBeans()
         throws MBeanAgentException
     {
@@ -365,6 +245,7 @@ class XMLRPCServer
         for (int i = 0; iter.hasNext(); i++) {
             list[i] = (String) iter.next();
         }
+
         return list;
     }
 
@@ -373,13 +254,11 @@ class XMLRPCServer
         return false;
     }
 
-    @Override
     public void postDeregister()
     {
         // do nothing
     }
 
-    @Override
     public void postRegister(Boolean registrationDone)
     {
         if (delegateName == null) {
@@ -400,7 +279,6 @@ class XMLRPCServer
         }
     }
 
-    @Override
     public void preDeregister()
     {
         try {
@@ -412,6 +290,7 @@ class XMLRPCServer
 
     public ObjectName preRegister(MBeanServer server, ObjectName name)
     {
+        this.name = name;
         this.server = server;
 
         return name;
@@ -422,7 +301,7 @@ class XMLRPCServer
     {
         String key = (String) beanObjName.getKeyProperty("name");
         if (beans.containsKey(key)) {
-            ObjectName oldObjName = beans.get(key);
+            ObjectName oldObjName = (ObjectName) beans.get(key);
 
             if (!beanObjName.equals(oldObjName)) {
                 LOG.error("Overwriting MBean \"" + key + "\" objectName \"" +
@@ -438,7 +317,7 @@ class XMLRPCServer
         this.port = port;
     }
 
-    public void start(MBeanAgent agent)
+    public void start()
         throws MBeanAgentException
     {
         if (port <= 0) {
@@ -449,21 +328,9 @@ class XMLRPCServer
 
         MBeanHandler.setServer(this);
 
-        XmlRpcServer xmlRpcServer;
-        if (TIME_MBEAN_CALLS) {
-            DAQWebServer tmpServer = new DAQWebServer("MBean", port);
+        webServer = new WebServer(port);
 
-            xmlRpcServer =
-                (XmlRpcStatisticsServer) tmpServer.getXmlRpcServer();
-
-            agent.addBean("xmlrpcServer", xmlRpcServer);
-
-            webServer = tmpServer;
-        } else {
-            webServer = new WebServer(port);
-
-            xmlRpcServer = webServer.getXmlRpcServer();
-        }
+        XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
 
         PropertyHandlerMapping phm = new PropertyHandlerMapping();
         try {
@@ -505,8 +372,6 @@ class XMLRPCServer
     {
         String key = (String) beanObjName.getKeyProperty("name");
         beans.remove(key);
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Removed bean " + key);
-        }
+        LOG.info("Removed bean " + key);
     }
 }

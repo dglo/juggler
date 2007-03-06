@@ -9,11 +9,9 @@ import java.io.IOException;
  */
 public abstract class DAQConnector
 {
-    /** Event connector. */
-    public static final String TYPE_EVENT = "event";
     /** Global trigger connector. */
     public static final String TYPE_GLOBAL_TRIGGER = "glblTrig";
-    /** icetopHub-&gt;icetopTrigger hit connector. */
+    /** icetopHub->icetopTrigger hit connector. */
     public static final String TYPE_ICETOP_HIT = "icetopHit";
     /** Moni data connector. */
     public static final String TYPE_MONI_DATA = "moniData";
@@ -23,7 +21,7 @@ public abstract class DAQConnector
     public static final String TYPE_READOUT_REQUEST = "rdoutReq";
     /** SN data connector. */
     public static final String TYPE_SN_DATA = "snData";
-    /** stringHub-&gt;iniceTrigger hit connector. */
+    /** stringHub->iniceTrigger hit connector. */
     public static final String TYPE_STRING_HIT = "stringHit";
     /** Tcal data connector. */
     public static final String TYPE_TCAL_DATA = "tcalData";
@@ -31,7 +29,7 @@ public abstract class DAQConnector
     public static final String TYPE_TEST_HIT = "testHit";
     /** General payload data connector. */
     public static final String TYPE_TEST_DATA = "testData";
-    /** icetopTrigger/iniceTrigger-&gt;globalTrigger trigger connector. */
+    /** icetopTrigger/iniceTrigger->globalTrigger trigger connector. */
     public static final String TYPE_TRIGGER = "trigger";
     /** self-contained connector which doesn't need any external connections */
     public static final String TYPE_SELF_CONTAINED = "selfContained";
@@ -40,18 +38,15 @@ public abstract class DAQConnector
     public static final String TYPE_GENERIC_CACHE = "genericCache";
 
     private String type;
-    private boolean optional;
 
     /**
      * Create a DAQ connector.
      *
      * @param type connector type
-     * @param optional <tt>true</tt> if this is an optional connector
      */
-    public DAQConnector(String type, boolean optional)
+    public DAQConnector(String type)
     {
         this.type = type;
-        this.optional = optional;
     }
 
     /**
@@ -69,30 +64,6 @@ public abstract class DAQConnector
      */
     public abstract void forcedStopProcessing()
         throws Exception;
-
-    /**
-     * Get description character.
-     *
-     * @return one of <tt>I</tt> (optional input), <tt>i</tt> (required input),
-     *         <tt>O</tt> (optional output), or <tt>o</tt> (required output).
-     */
-    public char getDescriptionChar()
-    {
-        if (isInput()) {
-            return optional ? 'I' : 'i';
-        } else if (isOutput()) {
-            return optional ? 'O' : 'o';
-        }
-
-        return '?';
-    }
-
-    /**
-     * Get number of active channels.
-     *
-     * @return number of channels
-     */
-    public abstract int getNumberOfChannels();
 
     /**
      * Get connector port.

@@ -3,16 +3,20 @@ package icecube.daq.juggler.mbean;
 import com.sun.jdmk.comm.HtmlAdaptorServer;
 
 import java.io.IOException;
+
 import java.lang.management.ManagementFactory;
+
 import java.net.ServerSocket;
+
 import java.util.HashMap;
-import java.util.Set;
+import java.util.Iterator;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * MBean container.
@@ -72,7 +76,6 @@ class BeanBin
      *
      * @return debugging string
      */
-    @Override
     public String toString()
     {
         return name + ":" + bean;
@@ -84,10 +87,10 @@ class BeanBin
  */
 public class MBeanAgent
 {
-    private static final Logger LOG = Logger.getLogger(MBeanAgent.class);
+    private static final Log LOG = LogFactory.getLog(MBeanAgent.class);
 
     /** Mapping from short name to MBean object */
-    private HashMap<String, BeanBin> beans = new HashMap<String, BeanBin>();
+    private HashMap beans = new HashMap();
 
     /** HTML port */
     private int htmlPort = Integer.MIN_VALUE;
@@ -120,14 +123,8 @@ public class MBeanAgent
         throws MBeanAgentException
     {
         if (isRunning()) {
-            // allow late bind of MBeans
-            try {
-                MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-                mbs.registerMBean(bean, new ObjectName(getDomain(),
-                    "name", name));
-            } catch (JMException jmx) {
-                throw new MBeanAgentException(jmx);
-            }
+            throw new MBeanAgentException("Cannot remove MBean while" +
+                                          " agent is running");
         }
 
         if (beans.containsKey(name)) {
@@ -148,8 +145,9 @@ public class MBeanAgent
     {
         int port;
 
+        ServerSocket ss;
         try {
-            ServerSocket ss = new ServerSocket();
+            ss = new ServerSocket();
             ss.setReuseAddress(true);
             ss.bind(null);
             port = ss.getLocalPort();
@@ -159,24 +157,6 @@ public class MBeanAgent
         }
 
         return port;
-    }
-
-    /**
-     * Return the requested bean
-     *
-     * @return bean
-     *
-     * @throws MBeanAgentException if there is no bean with the specified name
-     */
-    public Object getBean(String name)
-        throws MBeanAgentException
-    {
-        if (!beans.containsKey(name)) {
-            throw new MBeanAgentException("Bean \"" + name +
-                                          "\" does not exist");
-        }
-
-        return beans.get(name).getBean();
     }
 
     /**
@@ -227,21 +207,6 @@ public class MBeanAgent
     }
 
     /**
-     * Create a local monitoring object.
-     *
-     * @param compName component name
-     * @param compNum component number
-     * @param interval number of seconds between monitoring entries
-     *
-     * @return new local monitoring object
-     */
-    public LocalMonitor getLocalMonitoring(String compName, int compNum,
-                                           int interval)
-    {
-        return new LocalMonitor(compName, compNum, interval, xmlRpcAdapter);
-    }
-
-    /**
      * Get the JMX name used to refer to the XML-RPC server MBean.
      *
      * @return XML-RPC server name
@@ -289,16 +254,6 @@ public class MBeanAgent
     }
 
     /**
-     * Get list of bean names
-     *
-     * @return bean names
-     */
-    public Set<String> listBeans()
-    {
-        return beans.keySet();
-    }
-
-    /**
      * Register all known MBeans with the MBean server.
      */
     private void registerBeans()
@@ -306,7 +261,9 @@ public class MBeanAgent
         // Get the platform MBeanServer
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        for (BeanBin bin : beans.values()) {
+        for (Iterator iter = beans.values().iterator(); iter.hasNext();) {
+            BeanBin bin = (BeanBin) iter.next();
+
             // register MBean with the platform MBeanServer
             try {
                 mbs.registerMBean(bin.getBean(), bin.getBeanName(this));
@@ -338,18 +295,8 @@ public class MBeanAgent
                                           " been added to this agent");
         }
 
-        BeanBin bin = beans.remove(name);
+        BeanBin bin = (BeanBin) beans.remove(name);
         return bin.getBean();
-    }
-
-    /**
-     * Set the MBean data handler to be monitored locally.
-     *
-     * @param moniLocal local monitoring object
-     */
-    public void setMonitoringData(LocalMonitor moniLocal)
-    {
-        moniLocal.setMonitoringData(xmlRpcAdapter);
     }
 
     /**
@@ -391,16 +338,13 @@ public class MBeanAgent
                                           jme);
         }
 
-        // register all MBeans
         registerBeans();
 
         htmlAdapter.start();
-        xmlRpcAdapter.start(this);
+        xmlRpcAdapter.start();
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Started MBean agent: HTML port " + htmlPort +
-                     ", XML-RPC port " + xmlRpcPort);
-        }
+        LOG.info("Started MBean agent: HTML port " + htmlPort +
+                 ", XML-RPC port " + xmlRpcPort);
     }
 
     /**
@@ -411,13 +355,14 @@ public class MBeanAgent
     public void stop()
         throws MBeanAgentException
     {
-        if (htmlAdapter == null || xmlRpcAdapter == null) {
+        if (htmlAdapter == null && xmlRpcAdapter == null) {
             throw new MBeanAgentException("Agent has not been started");
         }
 
         htmlAdapter.stop();
         xmlRpcAdapter.stop();
 
+        int num = 0;
         while (htmlAdapter.getState() == htmlAdapter.STOPPING &&
                !xmlRpcAdapter.isStopped())
         {
@@ -426,6 +371,7 @@ public class MBeanAgent
             } catch (InterruptedException ie) {
                 // ignore interrupts
             }
+            num++;
         }
 
         unregisterBeans();
@@ -442,7 +388,9 @@ public class MBeanAgent
         // Get the platform MBeanServer
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        for (BeanBin bin : beans.values()) {
+        for (Iterator iter = beans.values().iterator(); iter.hasNext();) {
+            BeanBin bin = (BeanBin) iter.next();
+
             try {
                 // unregister basic MBean
                 mbs.unregisterMBean(bin.getBeanName(this));

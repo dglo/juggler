@@ -10,17 +10,20 @@ public class DAQSplicer
 {
     /** splicer. */
     private Splicer splicer;
+    /** Does this splicer need to be started? */
+    private boolean needStart;
 
     /**
      * Create a DAQ splicer 'connector'.
      *
      * @param splicer splicer
      */
-    DAQSplicer(Splicer splicer)
+    DAQSplicer(Splicer splicer, boolean needStart)
     {
-        super("splicer", false);
+        super("splicer");
 
         this.splicer = splicer;
+        this.needStart = needStart;
     }
 
     /**
@@ -28,7 +31,6 @@ public class DAQSplicer
      *
      * @throws Exception if there was a problem
      */
-    @Override
     public void destroy()
         throws Exception
     {
@@ -40,22 +42,10 @@ public class DAQSplicer
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void forcedStopProcessing()
         throws Exception
     {
         // cannot forceably stop splicer
-    }
-
-    /**
-     * Get number of active channels.
-     *
-     * @return number of channels
-     */
-    @Override
-    public int getNumberOfChannels()
-    {
-        return splicer.getStrandCount();
     }
 
     /**
@@ -73,10 +63,9 @@ public class DAQSplicer
      *
      * @return state string
      */
-    @Override
     public String getState()
     {
-        return splicer.getState().name();
+        return splicer.getStateString();
     }
 
     /**
@@ -84,10 +73,9 @@ public class DAQSplicer
      *
      * @return <tt>true</tt> if this connector is running
      */
-    @Override
     public boolean isRunning()
     {
-        return (splicer.getState() != Splicer.State.STOPPED);
+        return (splicer.getState() != Splicer.STOPPED);
     }
 
     /**
@@ -95,7 +83,6 @@ public class DAQSplicer
      *
      * @return <tt>true</tt>
      */
-    @Override
     public boolean isSplicer()
     {
         return true;
@@ -106,10 +93,9 @@ public class DAQSplicer
      *
      * @return <tt>true</tt> if this connector is stopped
      */
-    @Override
     public boolean isStopped()
     {
-        return (splicer.getState() == Splicer.State.STOPPED);
+        return (splicer.getState() == Splicer.STOPPED);
     }
 
     /**
@@ -117,7 +103,6 @@ public class DAQSplicer
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void start()
         throws Exception
     {
@@ -129,7 +114,6 @@ public class DAQSplicer
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void startProcessing()
         throws Exception
     {
@@ -141,7 +125,6 @@ public class DAQSplicer
      *
      * @return debugging string
      */
-    @Override
     public String toString()
     {
         return "Splicer[" + getType() + "=>" + splicer + "]";

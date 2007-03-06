@@ -1,32 +1,31 @@
 package icecube.daq.juggler.mbean;
 
-import icecube.daq.juggler.test.LoggingCase;
+import icecube.daq.juggler.mbean.MBeanAgent;
+import icecube.daq.juggler.mbean.MBeanAgentException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.management.JMException;
 
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import org.apache.xmlrpc.XmlRpcException;
+
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
 public class MBeanAgentTest
-    extends LoggingCase
+    extends TestCase
 {
     private MBeanAgent agent;
-
-    public MBeanAgentTest(String name)
-    {
-        super(name);
-    }
 
     private boolean findBeanInHtml(MBeanAgent agent, String name)
         throws IOException, MBeanAgentException
@@ -40,31 +39,10 @@ public class MBeanAgentTest
         try {
             url = new URL(urlStr);
         } catch (MalformedURLException mue) {
-            throw new IOException("Invalid URL <" + urlStr + ">");
+            throw new IOException("Couldn't connect to <" + urlStr + ">");
         }
 
-        int connectAttempts = 0;
-        InputStream urlStream = null;
-        while (true) {
-            try {
-                urlStream = url.openStream();
-                break;
-            } catch (Exception ex) {
-                connectAttempts++;
-                if (connectAttempts > 5) {
-                    throw new Error("Could not connect to MBean agent at <" +
-                                    url + ">", ex);
-                }
-
-                urlStream = null;
-            }
-
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException ie) {
-                // ignore interrupts
-            }
-        }
+        InputStream urlStream = url.openStream();
         BufferedReader in =
             new BufferedReader(new InputStreamReader(urlStream));
 
@@ -107,7 +85,6 @@ public class MBeanAgentTest
 
         Object[] params = new Object[] { name };
         Object reply = client.execute("mbean.listGetters", params);
-
         assertNotNull("No response from mbean.listGetters", reply);
         assertTrue("Expected array, got " + reply.getClass().getName(),
                    reply.getClass().isArray());
@@ -118,12 +95,8 @@ public class MBeanAgentTest
         return true;
     }
 
-    @Override
     protected void setUp()
-        throws Exception
     {
-        super.setUp();
-
         agent = new MBeanAgent();
     }
 
@@ -132,17 +105,13 @@ public class MBeanAgentTest
         return new TestSuite(MBeanAgentTest.class);
     }
 
-    @Override
     protected void tearDown()
-        throws Exception
     {
         try {
             agent.stop();
         } catch (Exception ex) {
             // ignore teardown errors
         }
-
-        super.tearDown();
     }
 
     public void testSimple()
@@ -185,18 +154,14 @@ public class MBeanAgentTest
     public void testXmlRpc()
         throws IOException, JMException, MBeanAgentException, XmlRpcException
     {
-        if (!XMLRPCServer.TIME_MBEAN_CALLS) {
-            System.out.println("Not testing MBean timing");
-        } else {
-            final String beanName = "hello";
+        final String beanName = "hello";
 
-            Hello bean = new Hello();
-            agent.addBean(beanName, bean);
+        Hello bean = new Hello();
+        agent.addBean(beanName, bean);
 
-            agent.start();
+        agent.start();
 
-            findBeanInXmlRpc(agent, beanName);
-        }
+        findBeanInXmlRpc(agent, beanName);
     }
 
     public void testDynamicMBean()

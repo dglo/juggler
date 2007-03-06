@@ -1,0 +1,113 @@
+package icecube.daq.config;
+
+import java.io.IOException;
+
+import java.util.Enumeration;
+
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceEvent;
+import javax.jmdns.ServiceInfo;
+import javax.jmdns.ServiceListener;
+
+interface DAQConfig
+{
+    /** Base name used for DAQ configuration service lookup. */
+    static String BASE_PATH = "_daq._tcp.local.";
+    /** Configuration server info. */
+    static String CONFIG_INFO = "config." + BASE_PATH;
+    static int PORT = 53703;
+}
+
+class DAQServer
+    implements DAQConfig
+{
+    private JmDNS jmDNS;
+
+    DAQServer()
+        throws IOException
+    {
+        ServiceInfo service =
+            new ServiceInfo(BASE_PATH, CONFIG_INFO, PORT, 0, 0,
+                            "description=DAQ Configuration server");
+
+        jmDNS = new JmDNS();
+        jmDNS.registerService(service);
+    }
+}
+
+class DAQClient
+    implements DAQConfig, ServiceListener
+{
+    private JmDNS jmDNS;
+
+    DAQClient()
+        throws IOException
+    {
+        jmDNS = new JmDNS();
+        jmDNS.addServiceListener(BASE_PATH, this);
+    }
+
+    private static void dumpEvent(ServiceEvent evt, String action)
+    {
+        System.err.println("--- " + action + " Event");
+        System.err.println("TYPE " + evt.getType());
+        System.err.println("NAME " + evt.getName());
+
+        ServiceInfo svcInfo = evt.getInfo();
+        if (svcInfo != null) {
+            System.err.println("TYPE " + svcInfo.getType());
+            System.err.println("NAME " + svcInfo.getName());
+            System.err.println("ADDR " + svcInfo.getHostAddress());
+            System.err.println("INET " + svcInfo.getAddress());
+            System.err.println("PORT " + svcInfo.getPort());
+            System.err.println("PRI " + svcInfo.getPriority());
+            System.err.println("WGT " + svcInfo.getWeight());
+
+            Enumeration names = svcInfo.getPropertyNames();
+            while (names.hasMoreElements()) {
+                String name = (String) names.nextElement();
+                System.err.println(name + "=" +
+                                   svcInfo.getPropertyString(name));
+            }
+        }
+    }
+
+    public void serviceAdded(ServiceEvent evt)
+    {
+        if (evt.getName().equals("config")) {
+            jmDNS.requestServiceInfo(evt.getType(), evt.getName());
+        }
+    }
+
+    public void serviceRemoved(ServiceEvent evt)
+    {
+        dumpEvent(evt, "Remove");
+    }
+
+    public void serviceResolved(ServiceEvent evt)
+    {
+        if (!evt.getName().equals("config")) {
+            System.err.println("Ignoring " + evt.getName() + "." +
+                               evt.getType());
+            return;
+        }
+
+        ServiceInfo svcInfo = evt.getInfo();
+        if (svcInfo == null) {
+            System.err.println("No ServiceInfo available");
+            return;
+        }
+
+        System.err.println("Connect to " + svcInfo.getInetAddress() + ":" +
+                           svcInfo.getPort());
+    }
+}
+
+public class AutoConfig
+{
+    public static void main(String[] args)
+        throws IOException
+    {
+        DAQClient client = new DAQClient();
+    }
+}

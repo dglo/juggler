@@ -1,6 +1,8 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
+import icecube.daq.io.PayloadInputEngine;
+
 import icecube.daq.payload.IByteBufferCache;
 
 import java.io.IOException;
@@ -22,20 +24,7 @@ public class DAQInputConnector
      */
     DAQInputConnector(String type, DAQComponentInputProcessor engine)
     {
-        this(type, engine, false);
-    }
-
-    /**
-     * Create a DAQ input connector.
-     *
-     * @param type connector type
-     * @param engine input engine
-     * @param optional <tt>true</tt> if this is an optional connector
-     */
-    DAQInputConnector(String type, DAQComponentInputProcessor engine,
-                      boolean optional)
-    {
-        super(type, optional);
+        super(type);
 
         this.engine = engine;
     }
@@ -45,7 +34,6 @@ public class DAQInputConnector
      *
      * @throws Exception if there was a problem
      */
-    @Override
     public void destroy()
         throws Exception
     {
@@ -63,7 +51,6 @@ public class DAQInputConnector
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void forcedStopProcessing()
         throws Exception
     {
@@ -71,14 +58,13 @@ public class DAQInputConnector
     }
 
     /**
-     * Get number of active channels.
+     * Get input engine associated with this connector.
      *
-     * @return number of channels
+     * @return input engine
      */
-    @Override
-    public int getNumberOfChannels()
+    public PayloadInputEngine getInputEngine()
     {
-        return engine.getNumberOfChannels();
+        return (PayloadInputEngine) engine;
     }
 
     /**
@@ -86,7 +72,6 @@ public class DAQInputConnector
      *
      * @return port
      */
-    @Override
     public int getPort()
     {
         return engine.getServerPort();
@@ -97,7 +82,6 @@ public class DAQInputConnector
      *
      * @return state string
      */
-    @Override
     public String getState()
     {
         return engine.getPresentState();
@@ -108,7 +92,6 @@ public class DAQInputConnector
      *
      * @return <tt>true</tt>
      */
-    @Override
     public boolean isInput()
     {
         return true;
@@ -119,7 +102,6 @@ public class DAQInputConnector
      *
      * @return <tt>true</tt> if this connector is running
      */
-    @Override
     public boolean isRunning()
     {
         return engine.isRunning();
@@ -130,7 +112,6 @@ public class DAQInputConnector
      *
      * @return <tt>true</tt> if this connector is stopped
      */
-    @Override
     public boolean isStopped()
     {
         return engine.isStopped();
@@ -141,7 +122,6 @@ public class DAQInputConnector
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void start()
         throws Exception
     {
@@ -153,7 +133,6 @@ public class DAQInputConnector
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void startProcessing()
         throws Exception
     {
@@ -167,7 +146,6 @@ public class DAQInputConnector
      *
      * @throws IOException if there is a problem
      */
-    @Override
     public void startServer(IByteBufferCache bufCache)
         throws IOException
     {
@@ -179,7 +157,6 @@ public class DAQInputConnector
      *
      * @return debugging string
      */
-    @Override
     public String toString()
     {
         return "InConn[" + getType() + "=>" + engine + "]";

@@ -19,16 +19,6 @@ public class DAQCompException
     /**
      * Create a DAQ component exception.
      *
-     * @param thr encapsulated exception
-     */
-    public DAQCompException(Throwable thr)
-    {
-        super(thr);
-    }
-
-    /**
-     * Create a DAQ component exception.
-     *
      * @param msg error message
      * @param thr encapsulated exception
      */

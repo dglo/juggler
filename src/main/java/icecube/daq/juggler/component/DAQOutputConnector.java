@@ -1,12 +1,16 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentOutputProcess;
-import icecube.daq.io.OutputChannel;
+import icecube.daq.io.PayloadOutputEngine;
+import icecube.daq.io.PayloadTransmitChannel;
+
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.SourceIdRegistry;
 
 import java.io.IOException;
+
 import java.net.InetSocketAddress;
+
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
 
@@ -43,21 +47,7 @@ public class DAQOutputConnector
     DAQOutputConnector(String type, DAQComponentOutputProcess engine,
                        boolean allowMultipleConnections)
     {
-        this(type, engine, allowMultipleConnections, false);
-    }
-
-    /**
-     * Create a DAQ output connector.
-     *
-     * @param type connector type
-     * @param engine output engine
-     * @param allowMultipleConnections <tt>true</tt> if this output connector
-     *                                 can connect to multiple input engines
-     */
-    DAQOutputConnector(String type, DAQComponentOutputProcess engine,
-                       boolean allowMultipleConnections, boolean optional)
-    {
-        super(type, optional);
+        super(type);
 
         this.engine = engine;
         this.allowMulti = allowMultipleConnections;
@@ -69,16 +59,14 @@ public class DAQOutputConnector
      * @param bufMgr buffer manager to be used by the new transmit channel
      * @param conn connection description
      *
-     * @return new output channel
+     * @return new transmit channel
      *
      * @throws IOException if there was a problem
      */
-    public OutputChannel connect(IByteBufferCache bufMgr, Connection conn)
+    public PayloadTransmitChannel connect(IByteBufferCache bufMgr,
+                                          Connection conn)
         throws IOException
     {
-        DAQComponentOutputProcess.ChannelRequirements channelRequirement =
-                engine.getChannelRequirement();
-
         InetSocketAddress addr =
             new InetSocketAddress(conn.getHost(), conn.getPort());
 
@@ -91,22 +79,13 @@ public class DAQOutputConnector
                                                conn.getPort(), uae);
         }
 
-        switch (channelRequirement)
-        {
-            case NON_BLOCKING:
-                chan.configureBlocking(false);
-                break;
-            case BLOCKING:
-                chan.configureBlocking(true);
-                break;
-            default:
-                throw new Error("Unknown enum: " + channelRequirement);
-        }
+        chan.configureBlocking(false);
+
         final String name = conn.getComponentName();
         final int num = conn.getComponentNumber();
 
         final int srcId =
-            SourceIdRegistry.getSourceIDFromNameAndId(name, num % 1000);
+            SourceIdRegistry.getSourceIDFromNameAndId(name, num);
         return engine.connect(bufMgr, chan, srcId);
     }
 
@@ -126,7 +105,6 @@ public class DAQOutputConnector
      *
      * @throws Exception if there was a problem
      */
-    @Override
     public void destroy()
         throws Exception
     {
@@ -155,7 +133,6 @@ public class DAQOutputConnector
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void forcedStopProcessing()
         throws Exception
     {
@@ -163,14 +140,13 @@ public class DAQOutputConnector
     }
 
     /**
-     * Get number of active channels.
+     * Get output engine associated with this connector.
      *
-     * @return number of channels
+     * @return output engine
      */
-    @Override
-    public int getNumberOfChannels()
+    public PayloadOutputEngine getOutputEngine()
     {
-        return engine.getNumberOfChannels();
+        return (PayloadOutputEngine) engine;
     }
 
     /**
@@ -178,7 +154,6 @@ public class DAQOutputConnector
      *
      * @return state string
      */
-    @Override
     public String getState()
     {
         return engine.getPresentState();
@@ -199,7 +174,6 @@ public class DAQOutputConnector
      *
      * @return <tt>true</tt>
      */
-    @Override
     public boolean isOutput()
     {
         return true;
@@ -210,7 +184,6 @@ public class DAQOutputConnector
      *
      * @return <tt>true</tt> if this connector is running
      */
-    @Override
     public boolean isRunning()
     {
         return engine.isRunning();
@@ -221,7 +194,6 @@ public class DAQOutputConnector
      *
      * @return <tt>true</tt> if this connector is stopped
      */
-    @Override
     public boolean isStopped()
     {
         return engine.isStopped();
@@ -232,7 +204,6 @@ public class DAQOutputConnector
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void start()
         throws Exception
     {
@@ -244,7 +215,6 @@ public class DAQOutputConnector
      *
      * @throws Exception if there is a problem
      */
-    @Override
     public void startProcessing()
         throws Exception
     {
@@ -256,7 +226,6 @@ public class DAQOutputConnector
      *
      * @return debugging string
      */
-    @Override
     public String toString()
     {
         return "OutConn[" + getType() + "=>" + engine + "]";

@@ -92,15 +92,4 @@ public class Connection
     {
         return type != null && type.equals(this.type);
     }
-
-    /*
-     * Return debugging string
-     *
-     * @return debugging description of the connection
-     */
-    @Override
-    public String toString()
-    {
-        return type + "=>" + compName + "#" + compNum + "@" + host + ":" + port;
-    }
 }

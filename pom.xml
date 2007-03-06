@@ -1,4 +1,7 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <parent>
     <artifactId>pDAQ</artifactId>
@@ -9,14 +12,10 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>juggler</artifactId>
   <packaging>jar</packaging>
-  <name>DAQ component framework</name>
-  <description>The ${project.name} sub-system of the Surface Data Acquisition system for the IceCube Project.</description>
+  <name>juggler</name>
 
   <scm>
-    <connection>scm:svn:http://code.icecube.wisc.edu/daq/projects/${project.name}/trunk</connection>
-    <developerConnection>scm:svn:http://code.icecube.wisc.edu/daq/projects/${project.name}/trunk</developerConnection>
-    <tag>HEAD</tag>
-    <url>http://code.icecube.wisc.edu/daq/projects/${project.name}</url>
+    <connection>scm:svn:http://code.icecube.wisc.edu/daq/meta-projects/juggler/trunk</connection>
   </scm>
 
 <!-- this breaks 'mvn site'
@@ -36,52 +35,6 @@
   </build>
 -->
 
-  <profiles>
-    <!--
-        architecture-specific definitions used to choose ZeroMQ native jar file
-    -->
-    <profile>
-      <id>Linux</id>
-      <activation>
-        <property>
-          <name>os.name</name>
-          <value>Linux</value>
-        </property>
-      </activation>
-      <properties>
-        <native.arch>${os.arch}</native.arch>
-        <native.os>${os.name}</native.os>
-      </properties>
-    </profile>
-    <profile>
-      <id>Windows</id>
-      <activation>
-        <os>
-          <family>windows</family>
-        </os>
-      </activation>
-      <properties>
-        <native.arch>${os.arch}</native.arch>
-        <native.os>Windows</native.os>
-      </properties>
-    </profile>
-    <profile>
-      <id>Mac</id>
-      <activation>
-        <os>
-          <family>mac</family>
-        </os>
-      </activation>
-      <properties>
-        <native.arch>${os.arch}</native.arch>
-        <native.os>Darwin</native.os>
-      </properties>
-    </profile>
-  </profiles>
-
-  <!--
-      Dependencies for this project.  These should not contain versions.
-  -->
   <dependencies>
     <dependency>
       <groupId>edu.wisc.icecube</groupId>
@@ -95,17 +48,22 @@
 
     <dependency>
       <groupId>edu.wisc.icecube</groupId>
+      <artifactId>new-dispatch</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.wisc.icecube</groupId>
       <artifactId>payload</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>com.sun.jdmk</groupId>
-      <artifactId>jmxtools</artifactId>
+      <groupId>edu.wisc.icecube</groupId>
+      <artifactId>payload-generator</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.apache.xmlrpc</groupId>
-      <artifactId>xmlrpc-common</artifactId>
+      <groupId>com.sun.jmdk</groupId>
+      <artifactId>jmxtools</artifactId>
     </dependency>
 
     <dependency>
@@ -116,16 +74,6 @@
     <dependency>
       <groupId>org.apache.xmlrpc</groupId>
       <artifactId>xmlrpc-server</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.zeromq</groupId>
-      <artifactId>jeromq</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
     </dependency>
   </dependencies>
 

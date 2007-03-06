@@ -7,7 +7,7 @@ public class MemoryStatistics
     implements MemoryStatisticsMBean
 {
     /** Memory size designators. */
-    private static final String[] MEMORY_SUFFIX = {"", "K", "G", "T" };
+    private static final String[] MEMORY_SUFFIX = { "", "K", "G", "T" };
 
     /** Keep pointer to runtime data. */
     private Runtime rt = Runtime.getRuntime();
@@ -44,13 +44,12 @@ public class MemoryStatistics
         return Long.toString(bytes) + MEMORY_SUFFIX[sufIdx];
     }
 
-    @Override
     public long[] getMemoryStatistics()
     {
         long total = rt.totalMemory();
         long free = rt.freeMemory();
 
-        return new long[] {total - free, total };
+        return new long[] { total - free, total };
     }
 
     /**
@@ -58,7 +57,6 @@ public class MemoryStatistics
      *
      * @return description of current statistics
      */
-    @Override
     public String toString()
     {
         long free = rt.freeMemory();
