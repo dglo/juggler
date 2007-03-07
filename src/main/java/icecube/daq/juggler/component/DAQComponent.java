@@ -1018,7 +1018,7 @@ public abstract class DAQComponent
 
     /**
      * Add an output engine with the specified type,
-     * and supply a monitoring MBean .
+     * and supply a monitoring MBean.
      *
      * @param type engine type
      * @param engine output engine
