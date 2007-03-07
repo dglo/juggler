@@ -946,6 +946,17 @@ public abstract class DAQComponent
      *
      * @param type engine type
      * @param engine output engine
+     */
+    public final void addEngine(String type, DAQComponentOutputProcess engine)
+    {
+        addEngine(type, engine, false);
+    }
+
+    /**
+     * Add an output engine with the specified type.
+     *
+     * @param type engine type
+     * @param engine output engine
      * @param allowMultipleConnections <tt>true</tt> if this output connector
      *                                 can connect to multiple input connectors
      */
@@ -954,17 +965,6 @@ public abstract class DAQComponent
     {
         addConnector(new DAQOutputConnector(type, engine,
                                             allowMultipleConnections));
-    }
-
-    /**
-     * Add an output engine with the specified type.
-     *
-     * @param type engine type
-     * @param engine output engine
-     */
-    public final void addEngine(String type, DAQComponentOutputProcess engine)
-    {
-        addConnector(new DAQOutputConnector(type, engine));
     }
 
     /**
