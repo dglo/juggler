@@ -121,23 +121,35 @@ public abstract class DAQComponent
 
     /** Methods names for PayloadReader MBean */
     private static final String[] inputReaderMethods = new String[] {
+        "AverageBytesSelected",
         "BufferCurrentAcquiredBuffers",
         "BufferCurrentAcquiredBytes",
         "BytesReceived",
+        "MaximumBytesSelected",
+        "MinimumBytesSelected",
+        "NumberOfSelectErrors",
+        "NumberOfSelects",
         "PresentState",
         "RecordsReceived",
         "StopMessagesReceived",
+        "TotalBytesSelected",
     };
 
     /** Methods names for SpliceablePayloadInputReader MBean */
     private static final String[] spliceableInputReaderMethods = new String[] {
+        "AverageBytesSelected",
         "BufferCurrentAcquiredBuffers",
         "BufferCurrentAcquiredBytes",
         "BytesReceived",
+        "MaximumBytesSelected",
+        "MinimumBytesSelected",
+        "NumberOfSelectErrors",
+        "NumberOfSelects",
         "PresentState",
         "RecordsReceived",
         "StopMessagesReceived",
         "StrandDepth",
+        "TotalBytesSelected",
         "TotalStrandDepth",
     };
 
