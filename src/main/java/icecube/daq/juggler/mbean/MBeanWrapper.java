@@ -13,9 +13,14 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public class MBeanWrapper
     implements DynamicMBean
 {
+    private static final Log LOG = LogFactory.getLog(MBeanWrapper.class);
+
     private Object wrappedObj;
     private String[] methodNames;
     private HashMap methods;
@@ -76,9 +81,10 @@ public class MBeanWrapper
                 method =
                     wrappedObj.getClass().getMethod(methodName, null);
             } catch (Exception ex) {
-                throw new Error("Couldn't find method " +
-                                methodName + " info for " +
-                                wrappedObj.getClass().getName(), ex);
+                final String errMsg = "Couldn't find method " + methodName +
+                    " info for " + wrappedObj.getClass().getName();
+                LOG.error(errMsg, ex);
+                throw new Error(errMsg, ex);
             }
 
             try {
@@ -87,9 +93,11 @@ public class MBeanWrapper
                                                   method, null);
                 
             } catch (IntrospectionException ie) {
-                throw new Error("Couldn't build attribute " +
-                                methodNames[i] + " info for " +
-                                wrappedObj.getClass().getName(), ie);
+                final String errMsg = "Couldn't build attribute " +
+                    methodNames[i] + " info for " +
+                    wrappedObj.getClass().getName();
+                LOG.error(errMsg, ie);
+                throw new Error(errMsg, ie);
             }
 
             methods.put(methodNames[i], method);
@@ -102,16 +110,37 @@ public class MBeanWrapper
     public Object invoke(String actionName, Object[] params,
                          String[] signature)
     {
-        throw new Error("Unimplemented");
+        try {
+            throw new Error("Unimplemented");
+        } catch (Error err) {
+            LOG.error("Unimplemented", err);
+            throw err;
+        }
     }
 
     public void setAttribute(Attribute attribute)
     {
-        throw new Error("Unimplemented");
+        try {
+            throw new Error("Unimplemented");
+        } catch (Error err) {
+            LOG.error("Unimplemented", err);
+            throw err;
+        }
     }
 
     public AttributeList setAttributes(AttributeList attributes)
     {
-        throw new Error("Unimplemented");
+        try {
+            throw new Error("Unimplemented");
+        } catch (Error err) {
+            LOG.error("Unimplemented", err);
+            throw err;
+        }
+    }
+
+    public String toString()
+    {
+        return "MBeanWrapper[" + wrappedObj.getClass().getName() + ":" +
+            wrappedObj + "]";
     }
 }
