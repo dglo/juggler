@@ -84,7 +84,7 @@ public class MBeanWrapper
                 final String errMsg = "Couldn't find method " + methodName +
                     " info for " + wrappedObj.getClass().getName();
                 LOG.error(errMsg, ex);
-                throw new Error(errMsg, ex);
+                continue;
             }
 
             try {
