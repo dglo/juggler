@@ -172,7 +172,8 @@ class XMLRPCServer
                     try {
                         vals[i] = fixAttribute(attr);
                     } catch (IllegalArgumentException ill) {
-                        LOG.error("Couldn't fix attribute " + attr.getName());
+                        LOG.error("Couldn't fix MBean " + mbeanName +
+                                  " attribute " + attr.getName());
                         throw ill;
                     }
                     break;
