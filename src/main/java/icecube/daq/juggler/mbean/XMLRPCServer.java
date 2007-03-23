@@ -136,6 +136,58 @@ class XMLRPCServer
         }
     }
 
+    HashMap getAttributes(String mbeanName, String[] attrNames)
+        throws MBeanAgentException
+    {
+        if (!beans.containsKey(mbeanName)) {
+            throw new MBeanAgentException("Unknown MBean \"" + mbeanName +
+                                          "\"");
+        }
+
+        ObjectName objName = (ObjectName) beans.get(mbeanName);
+
+        Iterator iter;
+        try {
+            iter = server.getAttributes(objName, attrNames).iterator();
+        } catch (JMException jme) {
+            String nameStr = null;
+            for (int i = 0; i < attrNames.length; i++) {
+                if (nameStr == null) {
+                    nameStr = "\"" + attrNames[i] + "\"";
+                } else {
+                    nameStr += ", \"" + attrNames[i] + "\"";
+                }
+            }
+            throw new MBeanAgentException("Couldn't get MBean \"" + mbeanName +
+                                          "\" attributes [" + nameStr + "]",
+                                          jme);
+        }
+
+        HashMap map = new HashMap();
+        while (iter.hasNext()) {
+            Attribute attr = (Attribute) iter.next();
+
+            for (int i = 0; i < attrNames.length; i++) {
+                if (attrNames[i].equals(attr.getName())) {
+                    Object val;
+                    try {
+                        val = fixAttribute(attr);
+                    } catch (IllegalArgumentException ill) {
+                        LOG.error("Couldn't fix MBean " + mbeanName +
+                                  " attribute " + attr.getName());
+                        throw ill;
+                    }
+                    if (val != null) {
+                        map.put(attr.getName(), val);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return map;
+    }
+
     Object[] getList(String mbeanName, String[] attrNames)
         throws MBeanAgentException
     {
