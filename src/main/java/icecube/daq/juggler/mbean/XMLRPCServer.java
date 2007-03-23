@@ -63,7 +63,15 @@ class XMLRPCServer
                 newArray = Array.newInstance(elem.getClass(), len);
             }
 
-            Array.set(newArray, i, elem);
+            try {
+                Array.set(newArray, i, elem);
+            } catch (IllegalArgumentException ill) {
+                LOG.error("Cannot set array " + newArray + " element #" + i +
+                          " to " + elem + " (type " +
+                          (elem == null ? "<null>" :
+                           elem.getClass().getName()), ill);
+                throw ill;
+            }
         }
 
         return newArray;
@@ -161,7 +169,12 @@ class XMLRPCServer
 
             for (int i = 0; i < attrNames.length; i++) {
                 if (attrNames[i].equals(attr.getName())) {
-                    vals[i] = fixAttribute(attr);
+                    try {
+                        vals[i] = fixAttribute(attr);
+                    } catch (IllegalArgumentException ill) {
+                        LOG.error("Couldn't fix attribute " + attr.getName());
+                        throw ill;
+                    }
                     break;
                 }
             }
