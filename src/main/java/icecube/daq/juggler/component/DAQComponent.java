@@ -532,6 +532,8 @@ public abstract class DAQComponent
                 state = prevState;
             }
 
+            flushCaches();
+
             if (state != STATE_IDLE) {
                 throw new DAQCompException("Reset from " + getStateString() +
                                            " is not implemented");
@@ -566,6 +568,17 @@ public abstract class DAQComponent
             if (state == STATE_STOPPING && isStopped()) {
                 stopped();
                 state = STATE_READY;
+            }
+        }
+
+        /**
+         * Flush ByteBufferCaches
+         */
+        private final void flushCaches()
+        {
+            Iterator iter = caches.values().iterator();
+            while (iter.hasNext()) {
+                ((IByteBufferCache) iter.next()).flush();
             }
         }
 
