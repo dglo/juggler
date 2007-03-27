@@ -121,23 +121,33 @@ public abstract class DAQComponent
 
     /** Methods names for PayloadReader MBean */
     private static final String[] inputReaderMethods = new String[] {
+        "AverageBytesSelected",
         "BufferCurrentAcquiredBuffers",
         "BufferCurrentAcquiredBytes",
         "BytesReceived",
+        "MaximumBytesSelected",
+        "MinimumBytesSelected",
+        "NumberOfSelects",
         "PresentState",
         "RecordsReceived",
         "StopMessagesReceived",
+        "TotalBytesSelected",
     };
 
     /** Methods names for SpliceablePayloadInputReader MBean */
     private static final String[] spliceableInputReaderMethods = new String[] {
+        "AverageBytesSelected",
         "BufferCurrentAcquiredBuffers",
         "BufferCurrentAcquiredBytes",
         "BytesReceived",
+        "MaximumBytesSelected",
+        "MinimumBytesSelected",
+        "NumberOfSelects",
         "PresentState",
         "RecordsReceived",
         "StopMessagesReceived",
         "StrandDepth",
+        "TotalBytesSelected",
         "TotalStrandDepth",
     };
 
@@ -946,6 +956,17 @@ public abstract class DAQComponent
      *
      * @param type engine type
      * @param engine output engine
+     */
+    public final void addEngine(String type, DAQComponentOutputProcess engine)
+    {
+        addEngine(type, engine, false);
+    }
+
+    /**
+     * Add an output engine with the specified type.
+     *
+     * @param type engine type
+     * @param engine output engine
      * @param allowMultipleConnections <tt>true</tt> if this output connector
      *                                 can connect to multiple input connectors
      */
@@ -954,17 +975,6 @@ public abstract class DAQComponent
     {
         addConnector(new DAQOutputConnector(type, engine,
                                             allowMultipleConnections));
-    }
-
-    /**
-     * Add an output engine with the specified type.
-     *
-     * @param type engine type
-     * @param engine output engine
-     */
-    public final void addEngine(String type, DAQComponentOutputProcess engine)
-    {
-        addConnector(new DAQOutputConnector(type, engine));
     }
 
     /**
@@ -1017,8 +1027,8 @@ public abstract class DAQComponent
     }
 
     /**
-     * Add an output engine with the specified type.
-     * and supply a monitoring MBean .
+     * Add an output engine with the specified type,
+     * and supply a monitoring MBean.
      *
      * @param type engine type
      * @param engine output engine
@@ -1028,7 +1038,26 @@ public abstract class DAQComponent
     public final void addMonitoredEngine(String type,
                                          DAQComponentOutputProcess engine)
     {
-        addConnector(new DAQOutputConnector(type, engine));
+        addMonitoredEngine(type, engine, false);
+    }
+
+    /**
+     * Add an output engine with the specified type,
+     * and supply a monitoring MBean .
+     *
+     * @param type engine type
+     * @param engine output engine
+     * @param allowMultipleConnections <tt>true</tt> if this output connector
+     *                                 can connect to multiple input connectors
+     *
+     * @throws Error if 'engine' is not a PayloadOutputEngine
+     */
+    public final void addMonitoredEngine(String type,
+                                         DAQComponentOutputProcess engine,
+                                         boolean allowMultipleConnections)
+    {
+        addConnector(new DAQOutputConnector(type, engine,
+                                            allowMultipleConnections));
 
         if (!(engine instanceof PayloadOutputEngine)) {
             throw new Error("Can only monitor PayloadOutputEngine");
