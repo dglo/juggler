@@ -55,6 +55,8 @@ class XMLRPCServer
     {
         Object newArray = null;
 
+        boolean forceString = false;
+
         final int len = Array.getLength(array);
         for (int i = 0; i < len; i++) {
             Object elem = fixValue(Array.get(array, i));
@@ -64,13 +66,24 @@ class XMLRPCServer
             }
 
             try {
-                Array.set(newArray, i, elem);
+                Array.set(newArray, i, (elem == null || !forceString ? elem :
+                                        elem.toString()));
             } catch (IllegalArgumentException ill) {
-                LOG.error("Cannot set array " + newArray + " element #" + i +
-                          " to " + elem + " (type " +
-                          (elem == null ? "<null>" :
-                           elem.getClass().getName()), ill);
-                throw ill;
+                String[] objArray = new String[len];
+                for (int j = 0; j < i; j++) {
+                    Object obj = Array.get(newArray, j);
+
+                    String objStr;
+                    if (obj == null) {
+                        objStr = null;
+                    } else {
+                        objStr = obj.toString();
+                    }
+                    objArray[j] = objStr;
+                }
+                objArray[i] = elem.toString();
+                forceString = true;
+                newArray = objArray;
             }
         }
 
@@ -106,7 +119,7 @@ class XMLRPCServer
             if (lVal < (long) Integer.MIN_VALUE ||
                 lVal > (long) Integer.MAX_VALUE)
             {
-                return val.toString() + "L";
+                return val.toString();
             }
 
             return new Integer((int) lVal);
