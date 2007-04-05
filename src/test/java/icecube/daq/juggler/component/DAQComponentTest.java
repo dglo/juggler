@@ -58,7 +58,7 @@ class MockCache
 
     public void flush()
     {
-        throw new Error("Unimplemented");
+        // do nothing
     }
 
     public int getCurrentAquiredBuffers()

@@ -95,69 +95,35 @@ public abstract class DAQComponent
 
     /** Methods names for PayloadInputEngine MBean */
     private static final String[] inputEngineMethods = new String[] {
-        "BufferCurrentAcquiredBuffers",
-        "BufferCurrentAcquiredBytes",
         "BytesReceived",
-        "PresentChannelStates",
-        "PresentState",
         "RecordsReceived",
-        "StopMessagesReceived",
-	"Timer",
     };
 
     /** Methods names for SpliceablePayloadInputEngine MBean */
     private static final String[] spliceableInputEngineMethods = new String[] {
-        "BufferCurrentAcquiredBuffers",
-        "BufferCurrentAcquiredBytes",
         "BytesReceived",
-        "PresentChannelStates",
-        "PresentState",
         "RecordsReceived",
-        "StopMessagesReceived",
         "StrandDepth",
-        "StrandMax",
-	"Timer",
     };
 
     /** Methods names for PayloadReader MBean */
     private static final String[] inputReaderMethods = new String[] {
-        "AverageBytesSelected",
-        "BufferCurrentAcquiredBuffers",
-        "BufferCurrentAcquiredBytes",
         "BytesReceived",
-        "MaximumBytesSelected",
-        "MinimumBytesSelected",
-        "NumberOfSelects",
-        "PresentState",
         "RecordsReceived",
-        "StopMessagesReceived",
-        "TotalBytesSelected",
     };
 
     /** Methods names for SpliceablePayloadInputReader MBean */
     private static final String[] spliceableInputReaderMethods = new String[] {
-        "AverageBytesSelected",
-        "BufferCurrentAcquiredBuffers",
-        "BufferCurrentAcquiredBytes",
         "BytesReceived",
-        "MaximumBytesSelected",
-        "MinimumBytesSelected",
-        "NumberOfSelects",
-        "PresentState",
         "RecordsReceived",
-        "StopMessagesReceived",
         "StrandDepth",
-        "TotalBytesSelected",
         "TotalStrandDepth",
     };
 
     /** Methods names for PayloadOutputEngine MBean */
     private static final String[] outputEngineMethods = new String[] {
         "BytesSent",
-        "PresentChannelStates",
-        "PresentState",
         "RecordsSent",
-        "StopMessagesSent",
     };
 
     /** component type */
@@ -532,6 +498,8 @@ public abstract class DAQComponent
                 state = prevState;
             }
 
+            flushCaches();
+
             if (state != STATE_IDLE) {
                 throw new DAQCompException("Reset from " + getStateString() +
                                            " is not implemented");
@@ -566,6 +534,17 @@ public abstract class DAQComponent
             if (state == STATE_STOPPING && isStopped()) {
                 stopped();
                 state = STATE_READY;
+            }
+        }
+
+        /**
+         * Flush ByteBufferCaches
+         */
+        private final void flushCaches()
+        {
+            Iterator iter = caches.values().iterator();
+            while (iter.hasNext()) {
+                ((IByteBufferCache) iter.next()).flush();
             }
         }
 

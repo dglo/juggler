@@ -46,10 +46,10 @@
       <artifactId>daq-log</artifactId>
     </dependency>
 
-    <dependency>
+    <!-- dependency>
       <groupId>edu.wisc.icecube</groupId>
       <artifactId>new-dispatch</artifactId>
-    </dependency>
+    </dependency -->
 
     <dependency>
       <groupId>edu.wisc.icecube</groupId>

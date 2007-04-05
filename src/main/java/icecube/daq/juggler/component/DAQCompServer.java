@@ -89,8 +89,8 @@ public class DAQCompServer
     /** Logger for most output */
     private static final Log LOG = LogFactory.getLog(DAQCompServer.class);
 
-    /** List of components */
-    private static ArrayList list = new ArrayList();
+    /** Component being served. */
+    private static DAQComponent comp;
 
     /** Server ID (used for rpc_ping) */
     private static int serverId;
@@ -124,6 +124,7 @@ public class DAQCompServer
     public DAQCompServer(DAQComponent comp, URL configURL)
         throws DAQCompException
     {
+        this.comp = comp;
         this.configURL = configURL;
 
         comp.start();
@@ -146,6 +147,8 @@ public class DAQCompServer
     public DAQCompServer(DAQComponent comp, String[] args)
         throws DAQCompException
     {
+        this.comp = comp;
+
 	comp.setLogLevel(Level.INFO);
         processArgs(comp, args);
 
@@ -262,20 +265,17 @@ public class DAQCompServer
     /**
      * XML-RPC method to 'configure' a component which needs no configuration.
      *
-     * @param id component ID
-     *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      *
      * @deprecated this should no longer happen!
      */
-    public String configure(int id)
+    public String configure()
         throws DAQCompException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         comp.configure();
@@ -287,19 +287,17 @@ public class DAQCompServer
      * XML-RPC method to configure a component using
      * the specified configuration name.
      *
-     * @param id component ID
      * @param configName configuration name
      *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      */
-    public String configure(int id, String configName)
+    public String configure(String configName)
         throws DAQCompException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         comp.configure(configName);
@@ -310,19 +308,16 @@ public class DAQCompServer
     /**
      * XML-RPC method to 'connect' a component with no output connections.
      *
-     * @param id component ID
-     *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      * @throws IOException if there is a problem creating a connection
      */
-    public String connect(int id)
+    public String connect()
         throws DAQCompException, IOException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         comp.connect();
@@ -334,24 +329,22 @@ public class DAQCompServer
      * XML-RPC method to connect the component using the specified
      * connection descriptions.
      *
-     * @param id component ID
      * @param objList list of connections
      *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      * @throws IOException if there is a problem creating a connection
      */
-    public String connect(int id, Object[] objList)
+    public String connect(Object[] objList)
         throws DAQCompException, IOException
     {
         if (objList == null || objList.length == 0) {
             throw new DAQCompException("Empty/null list of connections");
         }
 
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         Connection[] connList = new Connection[objList.length];
@@ -381,18 +374,15 @@ public class DAQCompServer
     /**
      * XML-RPC method to destroy a component.
      *
-     * @param id component ID
-     *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      */
-    public String destroy(int id)
+    public String destroy()
         throws DAQCompException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         comp.destroy();
@@ -403,43 +393,20 @@ public class DAQCompServer
     /**
      * XML-RPC method forcing the specified component to stop current run.
      *
-     * @param id component ID
-     *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      * @throws IOException if there was a problem stopping the component
      */
-    public String forcedStop(int id)
+    public String forcedStop()
         throws DAQCompException, IOException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         comp.forcedStop();
         return "OK";
-    }
-
-    /**
-     * Get the specified component.
-     *
-     * @param id component ID
-     *
-     * @return <tt>null</tt> if component was not found
-     */
-    private static DAQComponent getComponent(int id)
-    {
-        Iterator iter = list.iterator();
-        while (iter.hasNext()) {
-            DAQComponent comp = (DAQComponent) iter.next();
-            if (comp.getId() == id) {
-                return comp;
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -481,38 +448,32 @@ public class DAQCompServer
     /**
      * XML-RPC method to return component state.
      *
-     * @param id component ID
-     *
      * @return component state
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      */
-    public String getState(int id)
+    public String getState()
         throws DAQCompException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         return comp.getStateString();
     }
 
     /**
-     * XML-RPC method to list component states.
+     * XML-RPC method to list connector states.
      *
-     * @param id component ID
+     * @return <tt>list of connector states</tt>
      *
-     * @return <tt>list of component states</tt>
-     *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      */
-    public String[][] listConnectorStates(int id)
+    public String[][] listConnectorStates()
         throws DAQCompException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         ArrayList list = new ArrayList();
@@ -538,22 +499,20 @@ public class DAQCompServer
     /**
      * XML-RPC method to tell a component where to log
      *
-     * @param id component ID
      * @param address log host address
      * @param port log host port
      * @param levelStr log level string
      *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      * @throws IOException if new appender could not be created
      */
-    public String logTo(int id, String address, int port)
+    public String logTo(String address, int port)
         throws DAQCompException, IOException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         setLogAppender(new DAQLogAppender(comp.getLogLevel(), address, port));
@@ -779,19 +738,16 @@ public class DAQCompServer
     /**
      * XML-RPC method to reset the specified component back to the idle state.
      *
-     * @param id component ID
-     *
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if there is a problem
      * @throws IOException if there is a problem cleaning up I/O
      */
-    public String reset(int id)
+    public String reset()
         throws DAQCompException, IOException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         resetLogAppender();
@@ -805,18 +761,15 @@ public class DAQCompServer
      * XML-RPC method to reset the specified component's logging back to
      * the default logger.
      *
-     * @param id component ID
-     *
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if there is a problem
      */
-    public String resetLogging(int id)
+    public String resetLogging()
         throws DAQCompException, IOException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         resetLogAppender();
@@ -857,8 +810,6 @@ public class DAQCompServer
             while (true) {
                 try {
                     sendAnnouncement(client, comp, webServer.getPort());
-
-                    list.add(comp);
 
                     if (!monitorServer(client, comp)) {
                         break;
@@ -956,20 +907,18 @@ public class DAQCompServer
     /**
      * XML-RPC method requesting the specified component to start a run.
      *
-     * @param id component ID
      * @param runNumber run number
      *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      * @throws IOException if there was a problem starting the component
      */
-    public String startRun(int id, int runNumber)
+    public String startRun(int runNumber)
         throws DAQCompException, IOException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         comp.startRun(runNumber);
@@ -1034,19 +983,16 @@ public class DAQCompServer
     /**
      * XML-RPC method requesting the specified component to stop current run.
      *
-     * @param id component ID
-     *
      * @return <tt>"OK"</tt>
      *
-     * @throws DAQCompException if no component matches the specified ID
+     * @throws DAQCompException if component does not exist
      * @throws IOException if there was a problem stopping the component
      */
-    public String stopRun(int id)
+    public String stopRun()
         throws DAQCompException, IOException
     {
-        DAQComponent comp = getComponent(id);
         if (comp == null) {
-            throw new DAQCompException("Component#" + id + " not found");
+            throw new DAQCompException("Component not found");
         }
 
         comp.stopRun();
