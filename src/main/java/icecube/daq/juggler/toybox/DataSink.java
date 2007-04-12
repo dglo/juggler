@@ -35,6 +35,8 @@ public class DataSink
         private String name;
         /** byte buffer cache */
         private IByteBufferCache bufMgr;
+        /** expected input buffer size. */
+        private int expSize;
 
         SinkEngine(String name, int id, String fcn, String prefix,
                    IByteBufferCache bufMgr)
@@ -43,6 +45,22 @@ public class DataSink
 
             this.name = name + "#" + id;
             this.bufMgr = bufMgr;
+
+            if (name.equals(DAQConnector.TYPE_TCAL_DATA)) {
+                expSize = 1;
+            } else if (name.equals(DAQConnector.TYPE_SN_DATA)) {
+                expSize = 1;
+            } else if (name.equals(DAQConnector.TYPE_MONI_DATA)) {
+                expSize = 1;
+            } else if (name.equals(DAQConnector.TYPE_TEST_DATA)) {
+                expSize = 1;
+            } else if (name.equals(DAQConnector.TYPE_TRIGGER)) {
+                expSize = 142;
+            } else if (!name.equals(DAQConnector.TYPE_TEST_HIT)) {
+                expSize = 38;
+            } else {
+                throw new Error("Unknown DataSink input type \"" + name + "\"");
+            }
         }
 
         /**
@@ -56,8 +74,9 @@ public class DataSink
             throws IOException
         {
             final int len = buf.getInt(0);
-            if (len != 38) {
-                LOG.error(name + ": Expected 38 bytes, not " + len);
+            if (expSize > 0 && len != expSize) {
+                LOG.error(name + ": Expected " + expSize + " bytes, not " +
+                          len);
             } else {
                 final String dbgStr =
                     icecube.daq.payload.DebugDumper.toString(buf);
@@ -96,7 +115,7 @@ public class DataSink
                                 config.getMaxAcquireBytes(), "DataSink");
         addCache(bufMgr);
 
-        dataSink = new SinkEngine("dataSink", 0, "data", "DS0", bufMgr);
+        dataSink = new SinkEngine(inputType, 0, "data", "DS0", bufMgr);
 
         addEngine(inputType, dataSink);
     }
