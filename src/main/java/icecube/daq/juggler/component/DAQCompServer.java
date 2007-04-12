@@ -3,8 +3,10 @@ package icecube.daq.juggler.component;
 import icecube.daq.juggler.mock.MockAppender;
 
 import icecube.daq.log.DAQLogAppender;
+import icecube.daq.log.LoggingOutputStream;
 
 import java.io.IOException;
+import java.io.PrintStream;
 
 import java.net.BindException;
 import java.net.ConnectException;
@@ -88,6 +90,20 @@ public class DAQCompServer
 
     /** Logger for most output */
     private static final Log LOG = LogFactory.getLog(DAQCompServer.class);
+
+    /** Set to <tt>true</tt> to redirect standard output to logging stream */
+    private static final boolean REDIRECT_STDOUT = false;
+    /** Original standard output stream */
+    private static final PrintStream STDOUT = System.out;
+    /** Standard output logging stream */
+    private static PrintStream outLogStream;
+
+    /** Set to <tt>true</tt> to redirect standard error to logging stream */
+    private static final boolean REDIRECT_STDERR = true;
+    /** Original standard error stream */
+    private static final PrintStream STDERR = System.err;
+    /** Standard error logging stream */
+    private static PrintStream errLogStream;
 
     /** Component being served. */
     private static DAQComponent comp;
@@ -886,7 +902,8 @@ public class DAQCompServer
 	    System.out.println("WARNING: using MockAppender!");
         } else {
 	    defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
-	    System.out.println("Default appender has been set, level "+logLevel);
+	    System.out.println("Default appender has been set, level " +
+                               logLevel);
         }
     }
 
@@ -898,6 +915,38 @@ public class DAQCompServer
         LOG.info("Resetting logging");
 
         BasicConfigurator.resetConfiguration();
+
+        if (appender.equals(defaultAppender)) {
+            if (REDIRECT_STDOUT && !STDOUT.equals(System.out)) {
+                System.out.flush();
+                System.setOut(STDOUT);
+            }
+            if (REDIRECT_STDERR && !STDERR.equals(System.err)) {
+                System.err.flush();
+                System.setErr(STDERR);
+            }
+        } else {
+            if (REDIRECT_STDOUT && STDOUT.equals(System.out)) {
+                if (outLogStream == null) {
+                    Log outLog = LogFactory.getLog("STDOUT");
+                    LoggingOutputStream tmpStream =
+                        new LoggingOutputStream(outLog, Level.INFO);
+                    outLogStream = new PrintStream(tmpStream);
+                }
+                System.out.flush();
+                System.setOut(outLogStream);
+            }
+            if (REDIRECT_STDERR && STDERR.equals(System.err)) {
+                if (errLogStream == null) {
+                    Log errLog = LogFactory.getLog("STDERR");
+                    LoggingOutputStream tmpStream =
+                        new LoggingOutputStream(errLog, Level.ERROR);
+                    errLogStream = new PrintStream(tmpStream);
+                }
+                System.err.flush();
+                System.setErr(errLogStream);
+            }
+        }
 
         BasicConfigurator.configure(appender);
 
