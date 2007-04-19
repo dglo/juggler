@@ -165,7 +165,7 @@ public class DAQCompServer
     {
         this.comp = comp;
 
-	comp.setLogLevel(Level.INFO);
+        comp.setLogLevel(Level.INFO);
         processArgs(comp, args);
 
         resetLogAppender();
@@ -236,7 +236,7 @@ public class DAQCompServer
         final int compId = ((Integer) rtnArray[0]).intValue();
         final String logIP = (String) rtnArray[1];
         final int logPort = ((Integer) rtnArray[2]).intValue();
-	final int tmpServerId =  ((Integer) rtnArray[3]).intValue();
+        final int tmpServerId =  ((Integer) rtnArray[3]).intValue();
 
         if (serverIdSet) {
             LOG.error("Overwriting server ID");
@@ -245,7 +245,7 @@ public class DAQCompServer
         serverId = tmpServerId;
         serverIdSet = true;
 
-	comp.setId(compId);
+        comp.setId(compId);
 
         try {
             setDefaultAppender(logIP, logPort, comp.getLogLevel());
@@ -658,7 +658,7 @@ public class DAQCompServer
                     i++;
                     String addrStr = args[i];
                     int ic = addrStr.indexOf(':');
-		    int il = addrStr.indexOf(',');
+                    int il = addrStr.indexOf(',');
                     if (ic < 0 || il < 0) {
                         System.err.println("Bad log argument '" +
                                            addrStr + "'");
@@ -668,15 +668,15 @@ public class DAQCompServer
 
                     String logHost  = addrStr.substring(0, ic);
                     String portStr  = addrStr.substring(ic + 1, il);
-		    String levelStr = addrStr.substring(il+1);
+                    String levelStr = addrStr.substring(il+1);
 
-		    Level logLevel = getLogLevel(levelStr);
-		    if(logLevel == null) {
-			System.err.println("Bad log level: '"+levelStr+"'");
-			usage = true;
-			break;
-		    } 
-		    comp.setLogLevel(logLevel);
+                    Level logLevel = getLogLevel(levelStr);
+                    if(logLevel == null) {
+                        System.err.println("Bad log level: '"+levelStr+"'");
+                        usage = true;
+                        break;
+                    } 
+                    comp.setLogLevel(logLevel);
 
                     int logPort;
                     try {
@@ -799,7 +799,7 @@ public class DAQCompServer
     private static void resetLogAppender()
     {
         if (defaultAppender == null) {
-	    System.err.println("WARNING: null default appender!");
+            System.err.println("WARNING: null default appender!");
             defaultAppender = new MockAppender(Level.INFO);
         }
 
@@ -899,10 +899,10 @@ public class DAQCompServer
     {
         if (logIP == null || logIP.length() == 0 || logPort <= 0) {
             defaultAppender = new MockAppender(logLevel);
-	    System.out.println("WARNING: using MockAppender!");
+            System.out.println("WARNING: using MockAppender!");
         } else {
-	    defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
-	    System.out.println("Default appender has been set, level " +
+            defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
+            System.out.println("Default appender has been set, level " +
                                logLevel);
         }
     }
