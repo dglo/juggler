@@ -2,6 +2,7 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
+import icecube.daq.log.DAQLogHandler;
 import icecube.daq.log.LoggingOutputStream;
 
 import java.io.IOException;
@@ -19,6 +20,11 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+
+import java.util.logging.Handler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -74,6 +80,103 @@ class Spinner
 }
 
 /**
+ * Logging configuration
+ */
+class LoggingConfiguration
+{
+    private Appender appender;
+    private Handler handler;
+
+    LoggingConfiguration(Level logLevel)
+    {
+        setBasic(logLevel);
+    }
+
+    LoggingConfiguration(String host, int port, Level logLevel)
+        throws SocketException, UnknownHostException
+    {
+        if (host == null || host.length() == 0 || port <= 0) {
+            setBasic(logLevel);
+            System.out.println("WARNING: using STDOUT logging!");
+        } else {
+            appender = new DAQLogAppender(logLevel, host, port);
+            handler = new DAQLogHandler(getUtilLevel(logLevel), host, port);
+            System.out.println("Logging to " + host + ":" + port + ", level " +
+                               logLevel);
+        }
+    }
+
+    void configure()
+    {
+        BasicConfigurator.resetConfiguration();
+        BasicConfigurator.configure(appender);
+
+        // find base logger
+        Logger baseLogger = Logger.getLogger("");
+        while (baseLogger.getParent() != null) {
+            baseLogger = baseLogger.getParent();
+        }
+
+        // clear out default handlers
+        Handler[] hList = baseLogger.getHandlers();
+        for (int i = 0; i < hList.length; i++) {
+            baseLogger.removeHandler(hList[i]);
+        }
+
+        baseLogger.addHandler(handler);
+    }
+
+    private java.util.logging.Level getUtilLevel(Level level)
+    {
+        if (level.equals(Level.ALL)) {
+            return java.util.logging.Level.ALL;
+        }
+
+        if (level.equals(Level.OFF)) {
+            return java.util.logging.Level.OFF;
+        }
+
+        if (level.toInt() > Level.WARN.toInt()) {
+            return java.util.logging.Level.SEVERE;
+        }
+
+        if (level.toInt() > Level.INFO.toInt()) {
+            return java.util.logging.Level.WARNING;
+        }
+
+        if (level.toInt() > Level.DEBUG.toInt()) {
+            return java.util.logging.Level.INFO;
+        }
+
+        return java.util.logging.Level.FINE;
+    }
+
+    boolean matches(String host, int port, Level logLevel)
+    {
+        if (appender instanceof BasicAppender) {
+            return (host == null || host.length() == 0 || port <= 0);
+        }
+
+        DAQLogAppender daqLogAppender = (DAQLogAppender) appender;
+        if (!daqLogAppender.isConnected(host, port)) {
+            return false;
+        }
+
+        if (!daqLogAppender.getLevel().equals(logLevel)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void setBasic(Level logLevel)
+    {
+        appender = new BasicAppender(logLevel);
+        handler = new StreamHandler(System.out, new SimpleFormatter());
+    }
+}
+
+/**
  * Server code which wraps around a DAQ component.
  */
 public class DAQCompServer
@@ -112,8 +215,8 @@ public class DAQCompServer
     /** <tt>true</tt> if server ID has been set */
     private static boolean serverIdSet;
 
-    /** default log appender. */
-    private static Appender defaultAppender;
+    /** default logging configuration. */
+    private static LoggingConfiguration defaultLogConfig;
 
     /** URL of configuration server */
     private URL configURL;
@@ -167,7 +270,7 @@ public class DAQCompServer
         comp.setLogLevel(Level.INFO);
         processArgs(comp, args);
 
-        resetLogAppender();
+        resetLoggingConfiguration();
 
         comp.start();
 
@@ -247,7 +350,7 @@ public class DAQCompServer
         comp.setId(compId);
 
         try {
-            setDefaultAppender(logIP, logPort, comp.getLogLevel());
+            setDefaultLoggingConfiguration(logIP, logPort, comp.getLogLevel());
         } catch (UnknownHostException uhe) {
             throw new XmlRpcException("Unknown log host '" + logIP + "'", uhe);
         } catch (SocketException se) {
@@ -255,7 +358,7 @@ public class DAQCompServer
                                       ":" + logPort + "'", se);
         }
 
-        resetLogAppender();
+        resetLoggingConfiguration();
     }
 
     /**
@@ -521,7 +624,7 @@ public class DAQCompServer
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if component does not exist
-     * @throws IOException if new appender could not be created
+     * @throws IOException if logging configuration could not be set
      */
     public String logTo(String address, int port)
         throws DAQCompException, IOException
@@ -530,7 +633,8 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
-        setLogAppender(new DAQLogAppender(comp.getLogLevel(), address, port));
+        setLoggingConfiguration(new LoggingConfiguration(address, port,
+                                                         comp.getLogLevel()));
         return "OK";
     }
 
@@ -690,7 +794,8 @@ public class DAQCompServer
                     }
 
                     try {
-                        setDefaultAppender(logHost, logPort, logLevel);
+                        setDefaultLoggingConfiguration(logHost, logPort,
+                                                       logLevel);
                     } catch (UnknownHostException uhe) {
                         System.err.println("Bad log host '" +
                                            logHost + "' in '" +
@@ -765,7 +870,7 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
-        resetLogAppender();
+        resetLoggingConfiguration();
 
         comp.reset();
 
@@ -787,22 +892,22 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
-        resetLogAppender();
+        resetLoggingConfiguration();
 
         return "OK";
     }
 
     /**
-     * Reset Log4J to the default appender.
+     * Reset logging to the default configuration.
      */
-    private static void resetLogAppender()
+    private static void resetLoggingConfiguration()
     {
-        if (defaultAppender == null) {
-            System.err.println("WARNING: null default appender!");
-            defaultAppender = new BasicAppender(Level.INFO);
+        if (defaultLogConfig == null) {
+            System.err.println("WARNING: null default logging configuration!");
+            defaultLogConfig = new LoggingConfiguration(Level.INFO);
         }
 
-        setLogAppender(defaultAppender);
+        setLoggingConfiguration(defaultLogConfig);
     }
 
     /**
@@ -887,35 +992,33 @@ public class DAQCompServer
     }
 
     /**
-     * Set the default log appender.
+     * Set the default logging configuration.
      *
      * @param logIP log host address
      * @param logPort log host port
      * @param logLevel log level
      */
-    private static void setDefaultAppender(String logIP, int logPort, Level logLevel)
+    private static void setDefaultLoggingConfiguration(String logIP,
+                                                       int logPort,
+                                                       Level logLevel)
         throws SocketException, UnknownHostException
     {
-        if (logIP == null || logIP.length() == 0 || logPort <= 0) {
-            defaultAppender = new BasicAppender(logLevel);
-            System.out.println("WARNING: using BasicAppender!");
-        } else {
-            defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
-            System.out.println("Default appender has been set, level " +
-                               logLevel);
+        if (defaultLogConfig == null ||
+            !defaultLogConfig.matches(logIP, logPort, logLevel))
+        {
+            defaultLogConfig = new LoggingConfiguration(logIP, logPort,
+                                                        logLevel);
         }
     }
 
     /**
-     * Reset Log4J to the default appender.
+     * Set logging to the specified configuration.
      */
-    private static void setLogAppender(Appender appender)
+    private static void setLoggingConfiguration(LoggingConfiguration logConfig)
     {
         LOG.info("Resetting logging");
 
-        BasicConfigurator.resetConfiguration();
-
-        if (appender.equals(defaultAppender)) {
+        if (logConfig.equals(defaultLogConfig)) {
             if (REDIRECT_STDOUT && !STDOUT.equals(System.out)) {
                 System.out.flush();
                 System.setOut(STDOUT);
@@ -947,7 +1050,7 @@ public class DAQCompServer
             }
         }
 
-        BasicConfigurator.configure(appender);
+        logConfig.configure();
 
         LOG.info("Logging has been reset");
     }
