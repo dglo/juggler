@@ -1,7 +1,6 @@
 package icecube.daq.juggler.component;
 
-import icecube.daq.juggler.mock.MockAppender;
-
+import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.LoggingOutputStream;
 
@@ -800,7 +799,7 @@ public class DAQCompServer
     {
         if (defaultAppender == null) {
             System.err.println("WARNING: null default appender!");
-            defaultAppender = new MockAppender(Level.INFO);
+            defaultAppender = new BasicAppender(Level.INFO);
         }
 
         setLogAppender(defaultAppender);
@@ -898,8 +897,8 @@ public class DAQCompServer
         throws SocketException, UnknownHostException
     {
         if (logIP == null || logIP.length() == 0 || logPort <= 0) {
-            defaultAppender = new MockAppender(logLevel);
-            System.out.println("WARNING: using MockAppender!");
+            defaultAppender = new BasicAppender(logLevel);
+            System.out.println("WARNING: using BasicAppender!");
         } else {
             defaultAppender = new DAQLogAppender(logLevel, logIP, logPort);
             System.out.println("Default appender has been set, level " +
