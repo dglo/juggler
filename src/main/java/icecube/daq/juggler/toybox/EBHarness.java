@@ -101,7 +101,7 @@ public class EBHarness
             }
 
             final int globalRequest =
-                IReadoutRequestElement.READOUT_TYPE_IIIT_GLOBAL;
+                IReadoutRequestElement.READOUT_TYPE_GLOBAL;
 
             GenericReadoutElement elem = new GenericReadoutElement();
             elem.setReadoutType(globalRequest);
