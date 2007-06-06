@@ -821,8 +821,15 @@ public class DAQCompServer
                     comp.setMaxFileSize(maxFileSize);
                     break;
                 default:
-                    System.err.println("Unknown option '" + args[i] + "'");
-                    usage = true;
+                    int numHandled = comp.handleOption(args[i],
+                                                       (i + 1 == args.length ?
+                                                        null : args[i + 1]));
+                    if (numHandled > 0) {
+                        i += numHandled - 1;
+                    } else {
+                        System.err.println("Unknown option '" + args[i] + "'");
+                        usage = true;
+                    }
                     break;
                 }
             } else if (args[i].length() == 0) {
@@ -850,6 +857,7 @@ public class DAQCompServer
                                " [-g globalConfigPath]" +
                                " [-l logAddress:logPort,logLevel]" +
                                " [-s maxDispatchFileSize]" +
+                               comp.getOptionUsage() +
                                "");
             System.exit(1);
         }

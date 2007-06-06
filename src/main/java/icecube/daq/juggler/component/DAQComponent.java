@@ -1331,6 +1331,17 @@ public abstract class DAQComponent
     }
 
     /**
+     * Return the usage message for any options handled in
+     * <tt>handleOption()</tt>.
+     *
+     * @return usage string
+     */
+    public String getOptionUsage()
+    {
+        return "";
+    }
+
+    /**
      * Get an output engine.
      *
      * @param type output engine type
@@ -1398,6 +1409,21 @@ public abstract class DAQComponent
         }
 
         return stateTask.getStateString();
+    }
+
+    /**
+     * Handle a command-line option.
+     *
+     * @param arg0 first argument string
+     * @param arg1 second argument string (or <tt>null</tt> if none available)
+     *
+     * @return 0 if the argument string was not used
+     *         1 if only the first argument string was used
+     *         2 if both argument strings were used
+     */
+    public int handleOption(String arg0, String arg1)
+    {
+        return 0;
     }
 
     /**
