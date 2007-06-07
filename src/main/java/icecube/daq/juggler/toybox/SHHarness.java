@@ -3,7 +3,7 @@ package icecube.daq.juggler.toybox;
 import icecube.daq.io.PayloadDestinationOutputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
-import icecube.daq.io.PushPayloadInputEngine;
+import icecube.daq.io.PushPayloadReader;
 
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
@@ -67,11 +67,11 @@ public class SHHarness
     private PayloadDestinationOutputEngine reqSrc;
     private IPayloadDestinationCollection reqDest;
 
-    private PushPayloadInputEngine hitSink;
-    private PushPayloadInputEngine rdoutSink;
+    private PushPayloadReader hitSink;
+    private PushPayloadReader rdoutSink;
 
     class HitSink
-        extends PushPayloadInputEngine
+        extends PushPayloadReader
     {
         private MasterPayloadFactory masterFactory;
         private ArrayList hitList;
@@ -84,9 +84,9 @@ public class SHHarness
          * @param bufMgr byte buffer manager
          */
         HitSink(IByteBufferCache bufMgr)
+            throws IOException
         {
-            super("hitSink", 0, DAQConnector.TYPE_STRING_HIT, "HitSink",
-                  bufMgr);
+            super("hitSink");
 
             masterFactory = new MasterPayloadFactory(bufMgr);
 
@@ -226,7 +226,7 @@ public class SHHarness
     }
 
     class ReadoutSink
-        extends PushPayloadInputEngine
+        extends PushPayloadReader
     {
         private IByteBufferCache bufMgr;
 
@@ -236,9 +236,9 @@ public class SHHarness
          * @param bufMgr byte buffer manager
          */
         ReadoutSink(IByteBufferCache bufMgr)
+            throws IOException
         {
-            super("rdoutSink", 0, DAQConnector.TYPE_READOUT_DATA, "RdoutSink",
-                  bufMgr);
+            super("rdoutSink");
 
             this.bufMgr = bufMgr;
         }
@@ -285,7 +285,11 @@ public class SHHarness
             new ByteBufferCache(128, 2000000L, 5000000L, "SHHarness.Generic");
         addCache(genBufMgr);
 
-        hitSink = new HitSink(genBufMgr);
+        try {
+            hitSink = new HitSink(genBufMgr);
+        } catch (IOException ioe) {
+            throw new Error("Couldn't create HitSink", ioe);
+        }
         addEngine(DAQConnector.TYPE_STRING_HIT, hitSink);
 
         reqSrc = new PayloadDestinationOutputEngine("reqSrc", 0, "rdoutReq");
@@ -294,7 +298,11 @@ public class SHHarness
         reqSrc.registerBufferManager(dataBufMgr);
         reqDest = reqSrc.getPayloadDestinationCollection();
 
-        rdoutSink = new ReadoutSink(dataBufMgr);
+        try {
+            rdoutSink = new ReadoutSink(dataBufMgr);
+        } catch (IOException ioe) {
+            throw new Error("Couldn't create ReadoutSink", ioe);
+        }
         addEngine(DAQConnector.TYPE_READOUT_DATA, rdoutSink);
     }
 }

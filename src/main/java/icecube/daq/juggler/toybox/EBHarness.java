@@ -2,7 +2,7 @@ package icecube.daq.juggler.toybox;
 
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
-import icecube.daq.io.PushPayloadInputEngine;
+import icecube.daq.io.PushPayloadReader;
 
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
@@ -56,7 +56,7 @@ public class EBHarness
 
     private PayloadOutputEngine trigSrc;
     private PayloadOutputEngine rdoutSrc;
-    private PushPayloadInputEngine reqSink;
+    private PushPayloadReader reqSink;
     private PayloadTransmitChannel trigChan;
     private PayloadTransmitChannel rdoutChan;
 
@@ -178,14 +178,15 @@ public class EBHarness
      * @param rdoutChan readout transmit channel
      */
     class RequestSink
-        extends PushPayloadInputEngine
+        extends PushPayloadReader
     {
         private IByteBufferCache bufMgr;
         private ReadoutDataGenerator dataGen;
 
-        RequestSink(String name, int id, String fcn, IByteBufferCache bufMgr)
+        RequestSink(String name, int id, IByteBufferCache bufMgr)
+            throws IOException
         {
-            super(name, id, fcn, "ReqSink", bufMgr);
+            super(name + "#" + id);
 
             this.bufMgr = bufMgr;
 
@@ -296,7 +297,11 @@ public class EBHarness
         rdoutSrc = new PayloadOutputEngine("rdoutSrc", 0, "rdoutData");
         addEngine(DAQConnector.TYPE_READOUT_DATA, rdoutSrc);
 
-        reqSink = new RequestSink("reqSink", 0, "rdoutReq", genBufMgr);
+        try {
+            reqSink = new RequestSink("reqSink", 0, genBufMgr);
+        } catch (IOException ioe) {
+            throw new Error("Couldn't create RequestSink", ioe);
+        }
         addEngine(DAQConnector.TYPE_READOUT_REQUEST, reqSink);
     }
 

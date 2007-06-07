@@ -1,6 +1,6 @@
 package icecube.daq.juggler.toybox;
 
-import icecube.daq.io.PushPayloadInputEngine;
+import icecube.daq.io.PushPayloadReader;
 
 import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQComponent;
@@ -29,7 +29,7 @@ public class DataSink
      * Input engine.
      */
     class SinkEngine
-        extends PushPayloadInputEngine
+        extends PushPayloadReader
     {
         /** engine name */
         private String name;
@@ -38,10 +38,10 @@ public class DataSink
         /** expected input buffer size. */
         private int expSize;
 
-        SinkEngine(String name, int id, String fcn, String prefix,
-                   IByteBufferCache bufMgr)
+        SinkEngine(String name, int id, IByteBufferCache bufMgr)
+            throws IOException
         {
-            super(name, id, fcn, prefix, bufMgr);
+            super(name + '#' + id);
 
             this.name = name + "#" + id;
             this.bufMgr = bufMgr;
@@ -97,7 +97,7 @@ public class DataSink
     }
 
     /** input engine. */
-    private PushPayloadInputEngine dataSink;
+    private PushPayloadReader dataSink;
 
     /**
      * Create a data payload reader.
@@ -115,7 +115,11 @@ public class DataSink
                                 config.getMaxAcquireBytes(), "DataSink");
         addCache(bufMgr);
 
-        dataSink = new SinkEngine(inputType, 0, "data", "DS0", bufMgr);
+        try {
+           dataSink = new SinkEngine(inputType, 0, bufMgr);
+        } catch (IOException ioe) {
+            throw new Error("Couldn't create SinkEngine", ioe);
+        }
 
         addEngine(inputType, dataSink);
     }

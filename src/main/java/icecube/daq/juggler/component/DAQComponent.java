@@ -2,11 +2,9 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
-import icecube.daq.io.PayloadInputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
 import icecube.daq.io.PayloadTransmitChannel;
-import icecube.daq.io.SpliceablePayloadInputEngine;
 import icecube.daq.io.SpliceablePayloadReader;
 
 import icecube.daq.juggler.mbean.MBeanAgent;
@@ -92,19 +90,6 @@ public abstract class DAQComponent
     };
 
     private static final Log LOG = LogFactory.getLog(DAQComponent.class);
-
-    /** Methods names for PayloadInputEngine MBean */
-    private static final String[] inputEngineMethods = new String[] {
-        "BytesReceived",
-        "RecordsReceived",
-    };
-
-    /** Methods names for SpliceablePayloadInputEngine MBean */
-    private static final String[] spliceableInputEngineMethods = new String[] {
-        "BytesReceived",
-        "RecordsReceived",
-        "StrandDepth",
-    };
 
     /** Methods names for PayloadReader MBean */
     private static final String[] inputReaderMethods = new String[] {
@@ -923,7 +908,7 @@ public abstract class DAQComponent
      * @param engine input engine
      *
      * @throws DAQCompException if 'enableMonitoring' is <tt>true</tt> but
-     *                          'engine' is not a PayloadInputEngine
+     *                          'engine' is not a PayloadReader
      */
     public final void addEngine(String type, DAQComponentInputProcessor engine)
     {
@@ -982,25 +967,20 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine input engine
      *
-     * @throws Error if 'engine' is not a PayloadInputEngine
+     * @throws Error if 'engine' is not a PayloadReader
      */
     public final void addMonitoredEngine(String type,
                                          DAQComponentInputProcessor engine)
     {
         addConnector(new DAQInputConnector(type, engine));
 
-        if (engine instanceof SpliceablePayloadInputEngine) {
-            addMBean(type, new MBeanWrapper(engine,
-                                            spliceableInputEngineMethods));
-        } else if (engine instanceof PayloadInputEngine) {
-            addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
-        } else if (engine instanceof SpliceablePayloadReader) {
+        if (engine instanceof SpliceablePayloadReader) {
             addMBean(type, new MBeanWrapper(engine,
                                             spliceableInputReaderMethods));
         } else if (engine instanceof PayloadReader) {
             addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
         } else {
-            throw new Error("Can only monitor PayloadInputEngine");
+            throw new Error("Can only monitor PayloadReaders");
         }
 
     }
@@ -1252,29 +1232,6 @@ public abstract class DAQComponent
     public final int getId()
     {
         return id;
-    }
-
-    /**
-     * Get an input engine.
-     *
-     * @param type input engine type
-     *
-     * @return <tt>null</tt> if no matching engine was found
-     */
-    public final PayloadInputEngine getInputEngine(String type)
-    {
-        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-            DAQConnector dc = (DAQConnector) iter.next();
-            if (dc.isInput() && !dc.isSplicer()) {
-                if (dc.getType().equals(type)) {
-                    return ((DAQInputConnector) dc).getInputEngine();
-                }
-            } else if (dc.isInput() && dc.isSplicer()) {
-                throw new Error("Conn " + dc + " is both input and splicer!");
-            }
-        }
-
-        return null;
     }
 
     /**
