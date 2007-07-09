@@ -71,6 +71,17 @@ class MockCache
         throw new Error("Unimplemented");
     }
 
+
+    public boolean getIsCacheBounded()
+    {
+        throw new Error("Unimplemented");
+    }
+
+    public long getMaxAquiredBytes()
+    {
+        throw new Error("Unimplemented");
+    }
+
     public int getTotalBuffersAcquired()
     {
         throw new Error("Unimplemented");
