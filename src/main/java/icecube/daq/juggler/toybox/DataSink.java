@@ -6,8 +6,8 @@ import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
 
-import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
+import icecube.daq.payload.VitreousBufferCache;
 
 import java.io.IOException;
 
@@ -109,10 +109,7 @@ public class DataSink
     {
         super(getCompName(inputType), 0);
 
-        IByteBufferCache bufMgr =
-            new ByteBufferCache(config.getGranularity(),
-                                config.getMaxCacheBytes(),
-                                config.getMaxAcquireBytes(), "DataSink");
+        IByteBufferCache bufMgr = new VitreousBufferCache();
         addCache(bufMgr);
 
         try {

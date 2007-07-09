@@ -9,8 +9,8 @@ import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQOutputHack;
 
-import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
+import icecube.daq.payload.VitreousBufferCache;
 
 import java.io.IOException;
 
@@ -93,10 +93,7 @@ public class PassThrough
     {
         super("passThru", 0);
 
-        IByteBufferCache bufMgr =
-            new ByteBufferCache(config.getGranularity(),
-                                config.getMaxCacheBytes(),
-                                config.getMaxAcquireBytes(), "PassThrough");
+        IByteBufferCache bufMgr = new VitreousBufferCache();
         addCache(bufMgr);
 
         try {

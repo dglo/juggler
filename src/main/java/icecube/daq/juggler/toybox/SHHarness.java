@@ -10,7 +10,6 @@ import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
 import icecube.daq.juggler.component.DAQOutputHack;
 
-import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.IPayloadDestinationCollection;
 import icecube.daq.payload.ISourceID;
@@ -18,6 +17,7 @@ import icecube.daq.payload.IUTCTime;
 import icecube.daq.payload.MasterPayloadFactory;
 import icecube.daq.payload.PayloadRegistry;
 import icecube.daq.payload.SourceIdRegistry;
+import icecube.daq.payload.VitreousBufferCache;
 
 import icecube.daq.payload.impl.SourceID4B;
 
@@ -277,12 +277,10 @@ public class SHHarness
 
         this.hitsPerTrigger = hitsPerTrigger;
 
-        IByteBufferCache dataBufMgr =
-            new ByteBufferCache(128, 2000000L, 5000000L, "SHHarness.Req");
+        IByteBufferCache dataBufMgr = new VitreousBufferCache();
         addCache(DAQConnector.TYPE_READOUT_REQUEST, dataBufMgr);
 
-        IByteBufferCache genBufMgr =
-            new ByteBufferCache(128, 2000000L, 5000000L, "SHHarness.Generic");
+        IByteBufferCache genBufMgr = new VitreousBufferCache();
         addCache(genBufMgr);
 
         try {

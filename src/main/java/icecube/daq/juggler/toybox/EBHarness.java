@@ -9,10 +9,10 @@ import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
 import icecube.daq.juggler.component.DAQOutputHack;
 
-import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.PayloadRegistry;
 import icecube.daq.payload.SourceIdRegistry;
+import icecube.daq.payload.VitreousBufferCache;
 
 import icecube.daq.sim.GenericHit;
 import icecube.daq.sim.GenericReadoutElement;
@@ -283,12 +283,10 @@ public class EBHarness
 
         registerOutputHack(this);
 
-        IByteBufferCache dataBufMgr =
-            new ByteBufferCache(128, 2000000L, 5000000L, "EBHarness.Data");
+        IByteBufferCache dataBufMgr = new VitreousBufferCache();
         addCache(DAQConnector.TYPE_READOUT_DATA, dataBufMgr);
 
-        IByteBufferCache genBufMgr =
-            new ByteBufferCache(128, 2000000L, 5000000L, "EBHarness.Generic");
+        IByteBufferCache genBufMgr = new VitreousBufferCache();
         addCache(genBufMgr);
 
         trigSrc = new PayloadOutputEngine("trigSrc", 0, "glblTrig");
