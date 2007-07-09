@@ -523,7 +523,7 @@ public abstract class DAQComponent
         }
 
         /**
-         * Flush ByteBufferCaches
+         * Flush buffer caches
          */
         private final void flushCaches()
         {
@@ -876,7 +876,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Add a byte buffer cache for the specified data type.
+     * Add a buffer cache for the specified data type.
      *
      * @param type buffer cache type
      * @param cache buffer cache
@@ -1191,7 +1191,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Get the byte buffer cache for the specified data type.
+     * Get the buffer cache for the specified data type.
      *
      * @param type data type of buffer cache
      *

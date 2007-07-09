@@ -1,7 +1,7 @@
 package icecube.daq.juggler.component;
 
 /**
- * This interface provides the ByteBufferCache paramaters
+ * This interface provides the buffer cache parameters
  */
 public interface DAQCompConfig
 {
