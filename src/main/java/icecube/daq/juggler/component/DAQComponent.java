@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -1047,6 +1048,17 @@ public abstract class DAQComponent
     }
 
     /**
+     * Begin packaging events for the specified subrun.
+     *
+     * @param subrunNumber subrun number
+     * @param startTime time of first good hit in subrun
+     */
+    public void commitSubrun(int subrunNumber, long startTime)
+    {
+        // override in event builder component
+    }
+
+    /**
      * Configure a component.
      *
      * @throws DAQCompException if the component is not in the correct state
@@ -1442,6 +1454,16 @@ public abstract class DAQComponent
     }
 
     /**
+     * Prepare for the subrun by marking events untrustworthy.
+     *
+     * @param subrunNumber subrun number
+     */
+    public void prepareSubrun(int subrunNumber)
+    {
+        // override in event builder component
+    }
+
+    /**
      * Register output engine observer.
      *
      * @param outputHack output engine observer
@@ -1683,6 +1705,18 @@ public abstract class DAQComponent
         }
 
         stateTask.startRun(runNumber);
+    }
+
+    /**
+     * Start the subrun using the supplied data.
+     *
+     * @param subrunNumber subrun number
+     * @param data subrun data
+     */
+    public long startSubrun(int subrunNumber, List data)
+    {
+        // override in stringHub component
+        return -1L;
     }
 
     /**

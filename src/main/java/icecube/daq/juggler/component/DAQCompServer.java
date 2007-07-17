@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -381,6 +382,29 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method telling the event builder to begin packaging events for
+     * the specified subrun.
+     *
+     * @param subrunNumber subrun number
+     * @param startTime time of first good hit in subrun
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String commitSubrun(int subrunNumber, long startTime)
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.commitSubrun(subrunNumber, startTime);
+
+        return "OK";
+    }
+
+    /**
      * XML-RPC method to 'configure' a component which needs no configuration.
      *
      * @return <tt>"OK"</tt>
@@ -719,6 +743,28 @@ public class DAQCompServer
         }
 
         return sawServer;
+    }
+
+    /**
+     * XML-RPC method requesting the specified component to prepare for a
+     * subrun.
+     *
+     * @param subrunNumber subrun number
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String prepareSubrun(int subrunNumber)
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.prepareSubrun(subrunNumber);
+
+        return "OK";
     }
 
     /**
@@ -1137,6 +1183,26 @@ public class DAQCompServer
         serverConfig.setContentLengthOptional(false);
 
         return webServer;
+    }
+
+    /**
+     * XML-RPC method requesting the specified component to start a subrun.
+     *
+     * @param subrunNumber subrun number
+     * @param data subrun data
+     *
+     * @return start time
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public long startSubrun(int subrunNumber, List data)
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return comp.startSubrun(subrunNumber, data);
     }
 
     /**
