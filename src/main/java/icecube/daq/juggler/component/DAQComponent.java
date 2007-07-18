@@ -1710,10 +1710,9 @@ public abstract class DAQComponent
     /**
      * Start the subrun using the supplied data.
      *
-     * @param subrunNumber subrun number
      * @param data subrun data
      */
-    public long startSubrun(int subrunNumber, List data)
+    public long startSubrun(List data)
     {
         // override in stringHub component
         return -1L;
