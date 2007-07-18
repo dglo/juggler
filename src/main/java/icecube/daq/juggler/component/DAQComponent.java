@@ -1713,8 +1713,11 @@ public abstract class DAQComponent
      * Start the subrun using the supplied data.
      *
      * @param data subrun data
+     *
+     * @throws DAQCompException if there is a problem with the configuration
      */
     public long startSubrun(List<FlasherboardConfiguration> data)
+        throws DAQCompException
     {
         // override in stringHub component
         return -1L;
