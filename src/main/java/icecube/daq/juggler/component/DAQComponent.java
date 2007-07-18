@@ -15,6 +15,8 @@ import icecube.daq.payload.IByteBufferCache;
 
 import icecube.daq.splicer.Splicer;
 
+import icecube.daq.util.FlasherboardConfiguration;
+
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -1712,7 +1714,7 @@ public abstract class DAQComponent
      *
      * @param data subrun data
      */
-    public long startSubrun(List data)
+    public long startSubrun(List<FlasherboardConfiguration> data)
     {
         // override in stringHub component
         return -1L;
