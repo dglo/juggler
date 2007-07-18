@@ -5,6 +5,8 @@ import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.DAQLogHandler;
 import icecube.daq.log.LoggingOutputStream;
 
+import icecube.daq.util.FlasherboardConfiguration;
+
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -386,17 +388,29 @@ public class DAQCompServer
      * the specified subrun.
      *
      * @param subrunNumber subrun number
-     * @param startTime time of first good hit in subrun
+     * @param timeStr string representing time of first good hit in subrun
      *
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if component does not exist
      */
-    public String commitSubrun(int subrunNumber, long startTime)
+    public String commitSubrun(int subrunNumber, String timeStr)
         throws DAQCompException
     {
         if (comp == null) {
             throw new DAQCompException("Component not found");
+        }
+
+        if (timeStr.endsWith("L")) {
+            timeStr = timeStr.substring(0, timeStr.length() - 1);
+        }
+
+        long startTime;
+        try {
+            startTime = Long.parseLong(timeStr);
+        } catch (NumberFormatException nfe) {
+            throw new DAQCompException("Bad time '" + timeStr +
+                                       "' for subrun " + subrunNumber);
         }
 
         comp.commitSubrun(subrunNumber, startTime);
@@ -1189,20 +1203,49 @@ public class DAQCompServer
      * XML-RPC method requesting the specified component to start a subrun.
      *
      * @param subrunNumber subrun number
-     * @param data subrun data
+     * @param rawData Python-formatted subrun data
      *
      * @return start time
      *
      * @throws DAQCompException if component does not exist
      */
-    public long startSubrun(List data)
+    public String startSubrun(List rawData)
         throws DAQCompException
     {
         if (comp == null) {
             throw new DAQCompException("Component not found");
         }
 
-        return comp.startSubrun(data);
+        ArrayList<FlasherboardConfiguration> data =
+            new ArrayList<FlasherboardConfiguration>();
+
+        int n = 0;
+        for (Iterator iter = rawData.iterator(); iter.hasNext(); n++) {
+            Object[] array = (Object[]) iter.next();
+
+            if (array.length != 6) {
+                throw new DAQCompException("Configuration entry #" +
+                                           n + " has only " + array.length +
+                                           " fields");
+            }
+
+            try {
+                String mbid = (String) array[0];
+
+                int[] vals = new int[5];
+                for (int i = 0; i < vals.length; i++) {
+                    vals[i] = ((Integer) array[i + 1]).intValue();
+                }
+
+                data.add(new FlasherboardConfiguration(mbid, vals[0], vals[1],
+                                                       vals[2], vals[3],
+                                                       vals[4]));
+            } catch (Exception ex) {
+                throw new DAQCompException("Couldn't build config array", ex);
+            }
+        }
+
+        return Long.toString(comp.startSubrun(data)) + "L";
     }
 
     /**
