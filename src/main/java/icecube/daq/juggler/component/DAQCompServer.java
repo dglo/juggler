@@ -1195,14 +1195,14 @@ public class DAQCompServer
      *
      * @throws DAQCompException if component does not exist
      */
-    public long startSubrun(int subrunNumber, List data)
+    public long startSubrun(List data)
         throws DAQCompException
     {
         if (comp == null) {
             throw new DAQCompException("Component not found");
         }
 
-        return comp.startSubrun(subrunNumber, data);
+        return comp.startSubrun(data);
     }
 
     /**
