@@ -158,7 +158,7 @@ public abstract class DAQComponent
 
         StateTask()
         {
-            state = STATE_IDLE;
+            state = STATE_UNKNOWN;
         }
 
         private void changeState(int newState)
@@ -608,6 +608,8 @@ public abstract class DAQComponent
 
         public void run()
         {
+            state = STATE_IDLE;
+
             running = true;
             while (running) {
                 synchronized (this) {
@@ -839,6 +841,19 @@ public abstract class DAQComponent
             synchronized (this) {
                 changeState(STATE_STOPPING);
             }
+        }
+
+        public String toString()
+        {
+            return "StateTask[" + STATE_NAMES[state] +
+                "(prev=" + STATE_NAMES[prevState] + ")," +
+                (running ? "" : "!") + "running," +
+                (caughtError ? "" : "!") + "caughtError," +
+                (stateChanged ? "" : "!") + "stateChanged," +
+                (calledStopping ? "" : "!") + "calledStopping," +
+                "config=" + configName + "," +
+                "startNum=" + startNumber +
+                "]";
         }
     }
 
