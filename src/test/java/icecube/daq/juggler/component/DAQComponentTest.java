@@ -563,12 +563,18 @@ public class DAQComponentTest
 {
     private DAQComponent testComp;
 
+    public DAQComponentTest(String name)
+    {
+        super(name);
+    }
+
     public static Test suite()
     {
         return new TestSuite(DAQComponentTest.class);
     }
 
     protected void tearDown()
+        throws Exception
     {
         if (testComp != null) {
             try {
@@ -582,6 +588,8 @@ public class DAQComponentTest
                 System.err.println("Could not destroy component!");
             }
         }
+
+        super.tearDown();
     }
 
     public void testInitial()

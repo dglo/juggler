@@ -27,6 +27,11 @@ public class MBeanAgentTest
 {
     private MBeanAgent agent;
 
+    public MBeanAgentTest(String name)
+    {
+        super(name);
+    }
+
     private boolean findBeanInHtml(MBeanAgent agent, String name)
         throws IOException, MBeanAgentException
     {
@@ -96,7 +101,10 @@ public class MBeanAgentTest
     }
 
     protected void setUp()
+        throws Exception
     {
+        super.setUp();
+
         agent = new MBeanAgent();
     }
 
@@ -106,12 +114,15 @@ public class MBeanAgentTest
     }
 
     protected void tearDown()
+        throws Exception
     {
         try {
             agent.stop();
         } catch (Exception ex) {
             // ignore teardown errors
         }
+
+        super.tearDown();
     }
 
     public void testSimple()
