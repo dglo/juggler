@@ -14,6 +14,7 @@ import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.IPayloadDestinationCollection;
 import icecube.daq.payload.ISourceID;
 import icecube.daq.payload.IUTCTime;
+import icecube.daq.payload.IWriteablePayload;
 import icecube.daq.payload.MasterPayloadFactory;
 import icecube.daq.payload.PayloadRegistry;
 import icecube.daq.payload.SourceIdRegistry;
@@ -188,9 +189,9 @@ public class SHHarness
 
             IUTCTime timeStamp = lastUTC;
 
-            Payload payload;
+            IWriteablePayload payload;
             try {
-                payload = (Payload)
+                payload = (IWriteablePayload)
                     readoutFactory.createPayload(timeStamp, req);
             } catch (Exception e) {
                 if (LOG.isWarnEnabled()) {
