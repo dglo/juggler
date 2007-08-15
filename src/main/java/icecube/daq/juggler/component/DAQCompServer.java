@@ -188,7 +188,7 @@ public class DAQCompServer
      * Frequency (in milliseconds) that config server is 'pinged' to
      * check that it's still alive.
      */
-    private static final int PING_FREQUENCY = 1000;
+    private static final int PING_FREQUENCY = 10000;
 
     /** XML-RPC parameter list for server ping */
     private static final Object[] NO_PARAMS = new Object[0];
