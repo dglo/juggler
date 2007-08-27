@@ -98,6 +98,7 @@ public abstract class DAQComponent
     private static final String[] inputReaderMethods = new String[] {
         "BytesReceived",
         "RecordsReceived",
+        "TotalRecordsReceived",
     };
 
     /** Methods names for SpliceablePayloadInputReader MBean */
@@ -105,6 +106,7 @@ public abstract class DAQComponent
         "BytesReceived",
         "RecordsReceived",
         "StrandDepth",
+        "TotalRecordsReceived",
         "TotalStrandDepth",
     };
 
