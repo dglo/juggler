@@ -886,7 +886,7 @@ public class DAQCompServer
                                                         null : args[i + 1]));
                     if (numHandled > 0) {
                         i += numHandled - 1;
-                    } else {
+                    } else if (numHandled == 0) {
                         System.err.println("Unknown option '" + args[i] + "'");
                         usage = true;
                     }
