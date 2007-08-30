@@ -7,6 +7,7 @@ import icecube.daq.io.PayloadReader;
 import icecube.daq.io.PayloadTransmitChannel;
 import icecube.daq.io.SpliceablePayloadReader;
 
+import icecube.daq.juggler.mbean.LocalMonitor;
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
 import icecube.daq.juggler.mbean.MBeanWrapper;
@@ -137,6 +138,9 @@ public abstract class DAQComponent
 
     /** MBean manager */
     private MBeanAgent mbeanAgent;
+
+    /** Local monitoring, is enabled */
+    private LocalMonitor moniLocal;
 
     private DAQOutputHack outputHack;
 
@@ -1206,6 +1210,21 @@ public abstract class DAQComponent
     }
 
     /**
+     * Enable local monitoring.
+     *
+     * @param interval number of seconds between monitoring entries
+     */
+    public void enableLocalMonitoring(int interval)
+    {
+        if (mbeanAgent == null) {
+            throw new Error("MBean agent is null");
+        }
+
+        moniLocal = mbeanAgent.getLocalMonitoring(getName(), getNumber(),
+                                                  interval);
+    }
+
+    /**
      * Emergency stop of component.
      *
      * @throws DAQCompException if there is a problem
@@ -1723,6 +1742,10 @@ public abstract class DAQComponent
                                        " has been destroyed");
         }
 
+        if (moniLocal != null) {
+            moniLocal.startMonitoring();
+        }
+
         stateTask.startRun(runNumber);
     }
 
@@ -1774,6 +1797,10 @@ public abstract class DAQComponent
         if (stateTask == null) {
             throw new DAQCompException("Component " + name + "#" + num +
                                        " has been destroyed");
+        }
+
+        if (moniLocal != null) {
+            moniLocal.stopMonitoring();
         }
 
         stateTask.stopRun();

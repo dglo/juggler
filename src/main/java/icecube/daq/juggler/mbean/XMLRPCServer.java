@@ -33,7 +33,8 @@ import org.apache.xmlrpc.webserver.WebServer;
  * XML-RPC adapter for JMX MBeans.
  */
 class XMLRPCServer
-    implements MBeanRegistration, NotificationListener, XMLRPCServerMBean
+    implements MBeanData, MBeanRegistration, NotificationListener,
+               XMLRPCServerMBean
 {
     private static final Log LOG = LogFactory.getLog(XMLRPCServer.class);
 
@@ -149,7 +150,7 @@ class XMLRPCServer
         }
     }
 
-    HashMap getAttributes(String mbeanName, String[] attrNames)
+    public HashMap getAttributes(String mbeanName, String[] attrNames)
         throws MBeanAgentException
     {
         if (!beans.containsKey(mbeanName)) {

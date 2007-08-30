@@ -207,6 +207,21 @@ public class MBeanAgent
     }
 
     /**
+     * Create a local monitoring object.
+     *
+     * @param compName component name
+     * @param compNum component number
+     * @param interval number of seconds between monitoring entries
+     *
+     * @return new local monitoring object
+     */
+    public LocalMonitor getLocalMonitoring(String compName, int compNum,
+                                           int interval)
+    {
+        return new LocalMonitor(compName, compNum, interval, xmlRpcAdapter);
+    }
+
+    /**
      * Get the JMX name used to refer to the XML-RPC server MBean.
      *
      * @return XML-RPC server name

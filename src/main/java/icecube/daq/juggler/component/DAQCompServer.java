@@ -790,6 +790,21 @@ public class DAQCompServer
         for (int i = 0; i < args.length; i++) {
             if (args[i].length() > 1 && args[i].charAt(0) == '-') {
                 switch(args[i].charAt(1)) {
+                case 'M':
+                    i++;
+
+                    int secs;
+                    try {
+                        secs = Integer.parseInt(args[i]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Bad monitoring interval '" +
+                                           args[i] + "'");
+                        usage = true;
+                        break;
+                    }
+
+                    comp.enableLocalMonitoring(secs);
+                    break;
                 case 'S':
                     showSpinner = true;
                     break;
@@ -911,6 +926,7 @@ public class DAQCompServer
 
         if (usage) {
             System.err.println("java " + comp.getClass().getName() + " " +
+                               " [-M localMoniSeconds]" +
                                " [-S(howSpinner)]" +
                                " [-c configServerURL]" +
                                " [-d dispatchDestPath]" +
