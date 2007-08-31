@@ -1006,7 +1006,6 @@ public abstract class DAQComponent
         } else {
             throw new Error("Can only monitor PayloadReaders");
         }
-
     }
 
     /**
@@ -1648,6 +1647,10 @@ public abstract class DAQComponent
             } catch (MBeanAgentException mae) {
                 compEx = new DAQCompException("Couldn't start MBean agent",
                                               mae);
+            }
+
+            if (moniLocal != null) {
+                mbeanAgent.setMonitoringData(moniLocal);
             }
         }
 

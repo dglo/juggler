@@ -315,6 +315,16 @@ public class MBeanAgent
     }
 
     /**
+     * Set the MBean data handler to be monitored locally.
+     *
+     * @param moniLocal local monitoring object
+     */
+    public void setMonitoringData(LocalMonitor moniLocal)
+    {
+        moniLocal.setMonitoringData(xmlRpcAdapter);
+    }
+
+    /**
      * Start agent.
      *
      * @throws MBeanAgentException if there is a problem

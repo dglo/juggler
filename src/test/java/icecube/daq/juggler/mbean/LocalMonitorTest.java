@@ -9,6 +9,9 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 class MyMonitor
     extends LocalMonitor
 {
@@ -35,9 +38,14 @@ class MyMonitor
 class MockData
     implements MBeanData
 {
+    private static final Log LOG = LogFactory.getLog(MockData.class);
+
     private int countUp;
     private int countByTwo;
+    private int[] countArray = new int[] { 0, 1, 2 };
     private String growStr = "a";
+    private int[] countHash = new int[] { 1, 3, 100 };
+    private String[] hashNames = new String[] { "First", "Third", "100th" };
 
     public HashMap getAttributes(String mbeanName, String[] attrNames)
         throws MBeanAgentException
@@ -50,6 +58,20 @@ class MockData
             } else if (attrNames[i].equals("countByTwo")) {
                 map.put(attrNames[i], new Integer(countByTwo));
                 countByTwo += 2;
+            } else if (attrNames[i].equals("rawArray")) {
+                int[] tmpArray = new int[countArray.length];
+                for (int j = 0; j < tmpArray.length; j++) {
+                    tmpArray[j] = countArray[j]++;
+                }
+
+                map.put(attrNames[i], tmpArray);
+            } else if (attrNames[i].equals("countArray")) {
+                Integer[] tmpArray = new Integer[countArray.length];
+                for (int j = 0; j < tmpArray.length; j++) {
+                    tmpArray[j] = new Integer(countArray[j]++);
+                }
+
+                map.put(attrNames[i], tmpArray);
             } else if (attrNames[i].equals("growStr")) {
                 map.put(attrNames[i], growStr);
 
@@ -58,6 +80,16 @@ class MockData
                 } else {
                     growStr = "" + (char) (((int) growStr.charAt(0)) + 1);
                 }
+            } else if (attrNames[i].equals("countHash")) {
+                HashMap tmpHash = new HashMap();
+
+                for (int j = 0; j < countHash.length; j++) {
+                    tmpHash.put(hashNames[j], new Integer(countHash[j]++));
+                }
+                map.put(attrNames[i], tmpHash);
+            } else {
+                LOG.error("Unknown " + mbeanName + " attribute " +
+                          attrNames[i]);
             }
         }
 
@@ -68,9 +100,9 @@ class MockData
         throws MBeanAgentException
     {
         if (mbeanName.equals("aBean")) {
-            return new String[] { "countUp", "growStr" };
+            return new String[] { "countUp", "growStr", "countArray" };
         } else {
-            return new String[] { "countByTwo", "growStr" };
+            return new String[] { "countByTwo", "rawArray", "countHash" };
         }
     }
 

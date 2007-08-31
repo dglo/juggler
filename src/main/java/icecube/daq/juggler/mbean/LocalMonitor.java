@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import java.lang.reflect.Array;
+
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -75,7 +77,7 @@ public class LocalMonitor
 
             String fileName;
             if (instNum > 0) {
-                fileName = prefix + "-" + instNum + ".moni";
+                fileName = prefix + "#" + instNum + ".moni";
             } else {
                 fileName = prefix + ".moni";
             }
@@ -96,6 +98,10 @@ public class LocalMonitor
 
     public void run()
     {
+        if (mbeanData == null) {
+            throw new Error("Cannot locally monitor null MBean data");
+        }
+
         boolean firstEntry = true;
 
         PrintWriter out = openWriter();
@@ -132,9 +138,11 @@ public class LocalMonitor
 
                 out.println(keys[i] + ": " + dateStr + ":");
                 for (Object attrName : valMap.keySet()) {
-                    out.println("\t" + attrName + ": " + valMap.get(attrName));
+                    out.println("\t" + attrName + ": " +
+                                toString(valMap.get(attrName)));
                 }
             }
+            out.flush();
 
             long remainder = nextTime - System.currentTimeMillis();
             if (remainder > 0) {
@@ -149,6 +157,16 @@ public class LocalMonitor
         out.close();
     }
 
+    /**
+     * Set the MBean data handler to be monitored locally.
+     *
+     * @param data MBean data handler
+     */
+    public void setMonitoringData(MBeanData data)
+    {
+        mbeanData = data;
+    }
+
     public void startMonitoring()
     {
         Thread thread = new Thread(this);
@@ -159,5 +177,35 @@ public class LocalMonitor
     public void stopMonitoring()
     {
         running = false;
+    }
+
+    private String toString(Object obj)
+    {
+        if (obj.getClass().isArray()) {
+            StringBuffer strBuf = new StringBuffer("[");
+            final int len = Array.getLength(obj);
+            for (int i = 0; i < len; i++) {
+                if (strBuf.length() > 1) {
+                    strBuf.append(", ");
+                }
+                strBuf.append(toString(Array.get(obj, i)));
+            }
+            strBuf.append("]");
+            return strBuf.toString();
+        } else if (obj.getClass().equals(HashMap.class)) {
+            StringBuffer strBuf = new StringBuffer("{");
+            HashMap map = (HashMap) obj;
+            for (Object key: map.keySet()) {
+                if (strBuf.length() > 1) {
+                    strBuf.append(", ");
+                }
+                strBuf.append('\'').append(toString(key));
+                strBuf.append("': ").append(toString(map.get(key)));
+            }
+            strBuf.append("}");
+            return strBuf.toString();
+        } else {
+            return obj.toString();
+        }
     }
 }
