@@ -566,6 +566,25 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to get the number of subrun events from a component.
+     *
+     * @param subrun subrun number
+     *
+     * @return number of events for the subrun
+     *
+     * @throws DAQCompException if component or subrun does not exist
+     */
+    public long getEvents(int subrun)
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return comp.getEvents(subrun);
+    }
+
+    /**
      * Get logging level for the specified string.
      *
      * @param levelStr one of 'off', 'fatal', 'error', 'warn', 'debug', or

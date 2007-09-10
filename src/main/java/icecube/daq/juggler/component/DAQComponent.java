@@ -1274,6 +1274,20 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the number of events for the given subrun.
+     * NOTE: This should only be implemented by the event builder component.
+     *
+     * @param subrun subrun number
+     *
+     * @return -1L
+     */
+    public long getEvents(int subrun)
+        throws DAQCompException
+    {
+        return -1L;
+    }
+
+    /**
      * Get server-assigned ID.
      *
      * @return ID
