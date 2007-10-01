@@ -32,6 +32,8 @@ import java.util.logging.StreamHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.commons.logging.impl.Log4JLogger;
+
 import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -87,19 +89,23 @@ class Spinner
  */
 class LoggingConfiguration
 {
+    private Level logLevel;
     private Appender appender;
     private Handler handler;
 
     LoggingConfiguration(Level logLevel)
+        throws SocketException, UnknownHostException
     {
-        setBasic(logLevel);
+        this(null, 0, logLevel);
     }
 
     LoggingConfiguration(String host, int port, Level logLevel)
         throws SocketException, UnknownHostException
     {
+        this.logLevel = logLevel;
+
         if (host == null || host.length() == 0 || port <= 0) {
-            setBasic(logLevel);
+            setBasic();
             System.out.println("WARNING: using STDOUT logging!");
         } else {
             appender = new DAQLogAppender(logLevel, host, port);
@@ -113,6 +119,15 @@ class LoggingConfiguration
     {
         BasicConfigurator.resetConfiguration();
         BasicConfigurator.configure(appender);
+
+        Log log = LogFactory.getLog(getClass());
+
+        if (log instanceof Log4JLogger) {
+            ((Log4JLogger) log).getLogger().getRootLogger().setLevel(logLevel);
+        } else {
+            log.error("Cannot reset log level for " +
+                      log.getClass().getName());
+        }
 
         // find base logger
         Logger baseLogger = Logger.getLogger("");
@@ -172,7 +187,7 @@ class LoggingConfiguration
         return true;
     }
 
-    private void setBasic(Level logLevel)
+    private void setBasic()
     {
         appender = new BasicAppender(logLevel);
         handler = new StreamHandler(System.out, new SimpleFormatter());
@@ -1007,7 +1022,13 @@ public class DAQCompServer
     {
         if (defaultLogConfig == null) {
             System.err.println("WARNING: null default logging configuration!");
-            defaultLogConfig = new LoggingConfiguration(Level.INFO);
+            try {
+                defaultLogConfig = new LoggingConfiguration(Level.INFO);
+            } catch (SocketException sex) {
+                throw new Error("Unexpected exception", sex);
+            } catch (UnknownHostException uhe) {
+                throw new Error("Unexpected exception", uhe);
+            }
         }
 
         setLoggingConfiguration(defaultLogConfig);
