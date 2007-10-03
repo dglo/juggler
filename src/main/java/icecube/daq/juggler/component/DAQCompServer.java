@@ -589,14 +589,15 @@ public class DAQCompServer
      *
      * @throws DAQCompException if component or subrun does not exist
      */
-    public long getEvents(int subrun)
+    public String getEvents(int subrun)
         throws DAQCompException
     {
         if (comp == null) {
             throw new DAQCompException("Component not found");
         }
 
-        return comp.getEvents(subrun);
+        long evts = comp.getEvents(subrun);
+        return Long.toString(evts) + "L";
     }
 
     /**
