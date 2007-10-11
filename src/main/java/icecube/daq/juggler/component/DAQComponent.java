@@ -114,6 +114,7 @@ public abstract class DAQComponent
     /** Methods names for PayloadOutputEngine MBean */
     private static final String[] outputEngineMethods = new String[] {
         "BytesSent",
+        "Depth",
         "RecordsSent",
     };
 
