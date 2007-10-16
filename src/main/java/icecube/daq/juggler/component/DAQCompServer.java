@@ -1323,4 +1323,21 @@ public class DAQCompServer
         comp.stopRun();
         return "OK";
     }
+
+    /**
+     * XML-RPC method requesting the specified component's version information.
+     *
+     * @return <tt>a string containing the svn version info</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public HashMap getVersionInfo()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return comp.getVersionInfo();
+    }
 }
