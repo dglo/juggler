@@ -2,15 +2,15 @@ package icecube.daq.juggler.toybox;
 
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
-import icecube.daq.io.PushPayloadInputEngine;
+import icecube.daq.io.PushPayloadReader;
 
 import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQOutputHack;
 
-import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
+import icecube.daq.payload.VitreousBufferCache;
 
 import java.io.IOException;
 
@@ -27,14 +27,14 @@ public class PassThrough
      * Input engine.
      */
     class PassEngine
-        extends PushPayloadInputEngine
+        extends PushPayloadReader
     {
         private IByteBufferCache bufMgr;
 
-        PassEngine(String name, int id, String fcn, String prefix,
-                   IByteBufferCache bufMgr)
+        PassEngine(String name, int id, IByteBufferCache bufMgr)
+            throws IOException
         {
-            super(name, id, fcn, prefix, bufMgr);
+            super(name + "#" + id);
 
             this.bufMgr = bufMgr;
         }
@@ -74,7 +74,7 @@ public class PassThrough
     }
 
     /** input engine. */
-    private PushPayloadInputEngine passIn;
+    private PushPayloadReader passIn;
     /** output engine. */
     private PayloadOutputEngine passOut;
 
@@ -93,13 +93,15 @@ public class PassThrough
     {
         super("passThru", 0);
 
-        IByteBufferCache bufMgr =
-            new ByteBufferCache(config.getGranularity(),
-                                config.getMaxCacheBytes(),
-                                config.getMaxAcquireBytes(), "PassThrough");
+        IByteBufferCache bufMgr = new VitreousBufferCache();
         addCache(bufMgr);
 
-        passIn = new PassEngine("passIn", 0, "hits", "pass", bufMgr);
+        try {
+            passIn = new PassEngine("passIn", 0, bufMgr);
+        } catch (IOException ioe) {
+            throw new Error("Couldn't create PassEngine", ioe);
+        }
+
         passOut = new PayloadOutputEngine("passOut", 0, "data");
         registerOutputHack(this);
 

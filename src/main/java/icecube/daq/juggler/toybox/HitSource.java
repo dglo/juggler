@@ -9,8 +9,8 @@ import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
 import icecube.daq.juggler.component.DAQOutputHack;
 
-import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
+import icecube.daq.payload.VitreousBufferCache;
 
 import java.nio.ByteBuffer;
 
@@ -140,10 +140,7 @@ public class HitSource
         hitSrc = new PayloadOutputEngine("hitSrc", 0, "hits");
         registerOutputHack(this);
 
-        IByteBufferCache bufMgr =
-            new ByteBufferCache(config.getGranularity(),
-                                config.getMaxCacheBytes(),
-                                config.getMaxAcquireBytes(), "HitSource");
+        IByteBufferCache bufMgr = new VitreousBufferCache();
         addCache(bufMgr);
 
         gen = new HitGenerator(bufMgr, numHits);

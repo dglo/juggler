@@ -1,13 +1,13 @@
 package icecube.daq.juggler.toybox;
 
-import icecube.daq.io.PushPayloadInputEngine;
+import icecube.daq.io.PushPayloadReader;
 
 import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
 
-import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
+import icecube.daq.payload.VitreousBufferCache;
 
 import java.io.IOException;
 
@@ -29,20 +29,38 @@ public class DataSink
      * Input engine.
      */
     class SinkEngine
-        extends PushPayloadInputEngine
+        extends PushPayloadReader
     {
         /** engine name */
         private String name;
         /** byte buffer cache */
         private IByteBufferCache bufMgr;
+        /** expected input buffer size. */
+        private int expSize;
 
-        SinkEngine(String name, int id, String fcn, String prefix,
-                   IByteBufferCache bufMgr)
+        SinkEngine(String name, int id, IByteBufferCache bufMgr)
+            throws IOException
         {
-            super(name, id, fcn, prefix, bufMgr);
+            super(name + '#' + id);
 
             this.name = name + "#" + id;
             this.bufMgr = bufMgr;
+
+            if (name.equals(DAQConnector.TYPE_TCAL_DATA)) {
+                expSize = 1;
+            } else if (name.equals(DAQConnector.TYPE_SN_DATA)) {
+                expSize = 1;
+            } else if (name.equals(DAQConnector.TYPE_MONI_DATA)) {
+                expSize = 1;
+            } else if (name.equals(DAQConnector.TYPE_TEST_DATA)) {
+                expSize = 1;
+            } else if (name.equals(DAQConnector.TYPE_TRIGGER)) {
+                expSize = 142;
+            } else if (!name.equals(DAQConnector.TYPE_TEST_HIT)) {
+                expSize = 38;
+            } else {
+                throw new Error("Unknown DataSink input type \"" + name + "\"");
+            }
         }
 
         /**
@@ -56,8 +74,9 @@ public class DataSink
             throws IOException
         {
             final int len = buf.getInt(0);
-            if (len != 38) {
-                LOG.error(name + ": Expected 38 bytes, not " + len);
+            if (expSize > 0 && len != expSize) {
+                LOG.error(name + ": Expected " + expSize + " bytes, not " +
+                          len);
             } else {
                 final String dbgStr =
                     icecube.daq.payload.DebugDumper.toString(buf);
@@ -78,7 +97,7 @@ public class DataSink
     }
 
     /** input engine. */
-    private PushPayloadInputEngine dataSink;
+    private PushPayloadReader dataSink;
 
     /**
      * Create a data payload reader.
@@ -90,13 +109,14 @@ public class DataSink
     {
         super(getCompName(inputType), 0);
 
-        IByteBufferCache bufMgr =
-            new ByteBufferCache(config.getGranularity(),
-                                config.getMaxCacheBytes(),
-                                config.getMaxAcquireBytes(), "DataSink");
+        IByteBufferCache bufMgr = new VitreousBufferCache();
         addCache(bufMgr);
 
-        dataSink = new SinkEngine("dataSink", 0, "data", "DS0", bufMgr);
+        try {
+           dataSink = new SinkEngine(inputType, 0, bufMgr);
+        } catch (IOException ioe) {
+            throw new Error("Couldn't create SinkEngine", ioe);
+        }
 
         addEngine(inputType, dataSink);
     }

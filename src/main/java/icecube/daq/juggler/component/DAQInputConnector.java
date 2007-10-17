@@ -1,7 +1,6 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
-import icecube.daq.io.PayloadInputEngine;
 
 import icecube.daq.payload.IByteBufferCache;
 
@@ -55,16 +54,6 @@ public class DAQInputConnector
         throws Exception
     {
         engine.forcedStopProcessing();
-    }
-
-    /**
-     * Get input engine associated with this connector.
-     *
-     * @return input engine
-     */
-    public PayloadInputEngine getInputEngine()
-    {
-        return (PayloadInputEngine) engine;
     }
 
     /**

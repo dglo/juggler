@@ -2,17 +2,17 @@ package icecube.daq.juggler.toybox;
 
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
-import icecube.daq.io.PushPayloadInputEngine;
+import icecube.daq.io.PushPayloadReader;
 
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
 import icecube.daq.juggler.component.DAQOutputHack;
 
-import icecube.daq.payload.ByteBufferCache;
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.PayloadRegistry;
 import icecube.daq.payload.SourceIdRegistry;
+import icecube.daq.payload.VitreousBufferCache;
 
 import icecube.daq.sim.GenericHit;
 import icecube.daq.sim.GenericReadoutElement;
@@ -56,7 +56,7 @@ public class EBHarness
 
     private PayloadOutputEngine trigSrc;
     private PayloadOutputEngine rdoutSrc;
-    private PushPayloadInputEngine reqSink;
+    private PushPayloadReader reqSink;
     private PayloadTransmitChannel trigChan;
     private PayloadTransmitChannel rdoutChan;
 
@@ -101,7 +101,7 @@ public class EBHarness
             }
 
             final int globalRequest =
-                IReadoutRequestElement.READOUT_TYPE_IIIT_GLOBAL;
+                IReadoutRequestElement.READOUT_TYPE_GLOBAL;
 
             GenericReadoutElement elem = new GenericReadoutElement();
             elem.setReadoutType(globalRequest);
@@ -178,14 +178,15 @@ public class EBHarness
      * @param rdoutChan readout transmit channel
      */
     class RequestSink
-        extends PushPayloadInputEngine
+        extends PushPayloadReader
     {
         private IByteBufferCache bufMgr;
         private ReadoutDataGenerator dataGen;
 
-        RequestSink(String name, int id, String fcn, IByteBufferCache bufMgr)
+        RequestSink(String name, int id, IByteBufferCache bufMgr)
+            throws IOException
         {
-            super(name, id, fcn, "ReqSink", bufMgr);
+            super(name + "#" + id);
 
             this.bufMgr = bufMgr;
 
@@ -282,12 +283,10 @@ public class EBHarness
 
         registerOutputHack(this);
 
-        IByteBufferCache dataBufMgr =
-            new ByteBufferCache(128, 2000000L, 5000000L, "EBHarness.Data");
+        IByteBufferCache dataBufMgr = new VitreousBufferCache();
         addCache(DAQConnector.TYPE_READOUT_DATA, dataBufMgr);
 
-        IByteBufferCache genBufMgr =
-            new ByteBufferCache(128, 2000000L, 5000000L, "EBHarness.Generic");
+        IByteBufferCache genBufMgr = new VitreousBufferCache();
         addCache(genBufMgr);
 
         trigSrc = new PayloadOutputEngine("trigSrc", 0, "glblTrig");
@@ -296,7 +295,11 @@ public class EBHarness
         rdoutSrc = new PayloadOutputEngine("rdoutSrc", 0, "rdoutData");
         addEngine(DAQConnector.TYPE_READOUT_DATA, rdoutSrc);
 
-        reqSink = new RequestSink("reqSink", 0, "rdoutReq", genBufMgr);
+        try {
+            reqSink = new RequestSink("reqSink", 0, genBufMgr);
+        } catch (IOException ioe) {
+            throw new Error("Couldn't create RequestSink", ioe);
+        }
         addEngine(DAQConnector.TYPE_READOUT_REQUEST, reqSink);
     }
 

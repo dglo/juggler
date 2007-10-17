@@ -2,13 +2,12 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
-import icecube.daq.io.PayloadInputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
 import icecube.daq.io.PayloadTransmitChannel;
-import icecube.daq.io.SpliceablePayloadInputEngine;
 import icecube.daq.io.SpliceablePayloadReader;
 
+import icecube.daq.juggler.mbean.LocalMonitor;
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
 import icecube.daq.juggler.mbean.MBeanWrapper;
@@ -17,6 +16,8 @@ import icecube.daq.payload.IByteBufferCache;
 
 import icecube.daq.splicer.Splicer;
 
+import icecube.daq.util.FlasherboardConfiguration;
+
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,6 +43,8 @@ import org.apache.log4j.Level;
  * <li>startRun()
  * <li>stopRun()
  * </ol>
+ *
+ * @version $Id: DAQComponent.java 2146 2007-10-17 01:37:59Z ksb $
  */
 public abstract class DAQComponent
 {
@@ -73,6 +77,14 @@ public abstract class DAQComponent
     /** Component is being destroyed. */
     public static final int STATE_RESETTING = 13;
 
+    /** svn version information */
+    private static final HashMap SVN_VER_INFO;
+    static {
+	SVN_VER_INFO = new HashMap(4);
+	SVN_VER_INFO.put("id", "$Id: DAQComponent.java 2146 2007-10-17 01:37:59Z ksb $");
+	SVN_VER_INFO.put("url", "$URL: http://code.icecube.wisc.edu/daq/projects/juggler/releases/Grange/src/main/java/icecube/daq/juggler/component/DAQComponent.java $");
+    }
+
     /** state names */
     private static final String[] STATE_NAMES = {
         "unknown",
@@ -93,23 +105,11 @@ public abstract class DAQComponent
 
     private static final Log LOG = LogFactory.getLog(DAQComponent.class);
 
-    /** Methods names for PayloadInputEngine MBean */
-    private static final String[] inputEngineMethods = new String[] {
-        "BytesReceived",
-        "RecordsReceived",
-    };
-
-    /** Methods names for SpliceablePayloadInputEngine MBean */
-    private static final String[] spliceableInputEngineMethods = new String[] {
-        "BytesReceived",
-        "RecordsReceived",
-        "StrandDepth",
-    };
-
     /** Methods names for PayloadReader MBean */
     private static final String[] inputReaderMethods = new String[] {
         "BytesReceived",
         "RecordsReceived",
+        "TotalRecordsReceived",
     };
 
     /** Methods names for SpliceablePayloadInputReader MBean */
@@ -117,12 +117,14 @@ public abstract class DAQComponent
         "BytesReceived",
         "RecordsReceived",
         "StrandDepth",
+        "TotalRecordsReceived",
         "TotalStrandDepth",
     };
 
     /** Methods names for PayloadOutputEngine MBean */
     private static final String[] outputEngineMethods = new String[] {
         "BytesSent",
+        "Depth",
         "RecordsSent",
     };
 
@@ -148,6 +150,9 @@ public abstract class DAQComponent
     /** MBean manager */
     private MBeanAgent mbeanAgent;
 
+    /** Local monitoring, is enabled */
+    private LocalMonitor moniLocal;
+
     private DAQOutputHack outputHack;
 
     private StateTask stateTask;
@@ -170,7 +175,7 @@ public abstract class DAQComponent
 
         StateTask()
         {
-            state = STATE_IDLE;
+            state = STATE_UNKNOWN;
         }
 
         private void changeState(int newState)
@@ -538,7 +543,7 @@ public abstract class DAQComponent
         }
 
         /**
-         * Flush ByteBufferCaches
+         * Flush buffer caches
          */
         private final void flushCaches()
         {
@@ -620,6 +625,8 @@ public abstract class DAQComponent
 
         public void run()
         {
+            state = STATE_IDLE;
+
             running = true;
             while (running) {
                 synchronized (this) {
@@ -852,6 +859,19 @@ public abstract class DAQComponent
                 changeState(STATE_STOPPING);
             }
         }
+
+        public String toString()
+        {
+            return "StateTask[" + STATE_NAMES[state] +
+                "(prev=" + STATE_NAMES[prevState] + ")," +
+                (running ? "" : "!") + "running," +
+                (caughtError ? "" : "!") + "caughtError," +
+                (stateChanged ? "" : "!") + "stateChanged," +
+                (calledStopping ? "" : "!") + "calledStopping," +
+                "config=" + configName + "," +
+                "startNum=" + startNumber +
+                "]";
+        }
     }
 
     /**
@@ -891,7 +911,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Add a byte buffer cache for the specified data type.
+     * Add a buffer cache for the specified data type.
      *
      * @param type buffer cache type
      * @param cache buffer cache
@@ -923,7 +943,7 @@ public abstract class DAQComponent
      * @param engine input engine
      *
      * @throws DAQCompException if 'enableMonitoring' is <tt>true</tt> but
-     *                          'engine' is not a PayloadInputEngine
+     *                          'engine' is not a PayloadReader
      */
     public final void addEngine(String type, DAQComponentInputProcessor engine)
     {
@@ -982,27 +1002,21 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine input engine
      *
-     * @throws Error if 'engine' is not a PayloadInputEngine
+     * @throws Error if 'engine' is not a PayloadReader
      */
     public final void addMonitoredEngine(String type,
                                          DAQComponentInputProcessor engine)
     {
         addConnector(new DAQInputConnector(type, engine));
 
-        if (engine instanceof SpliceablePayloadInputEngine) {
-            addMBean(type, new MBeanWrapper(engine,
-                                            spliceableInputEngineMethods));
-        } else if (engine instanceof PayloadInputEngine) {
-            addMBean(type, new MBeanWrapper(engine, inputEngineMethods));
-        } else if (engine instanceof SpliceablePayloadReader) {
+        if (engine instanceof SpliceablePayloadReader) {
             addMBean(type, new MBeanWrapper(engine,
                                             spliceableInputReaderMethods));
         } else if (engine instanceof PayloadReader) {
             addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
         } else {
-            throw new Error("Can only monitor PayloadInputEngine");
+            throw new Error("Can only monitor PayloadReaders");
         }
-
     }
 
     /**
@@ -1064,6 +1078,17 @@ public abstract class DAQComponent
     public final void addSplicer(Splicer splicer, boolean needStart)
     {
         addConnector(new DAQSplicer(splicer, needStart));
+    }
+
+    /**
+     * Begin packaging events for the specified subrun.
+     *
+     * @param subrunNumber subrun number
+     * @param startTime time of first good hit in subrun
+     */
+    public void commitSubrun(int subrunNumber, long startTime)
+    {
+        // override in event builder component
     }
 
     /**
@@ -1195,6 +1220,21 @@ public abstract class DAQComponent
     }
 
     /**
+     * Enable local monitoring.
+     *
+     * @param interval number of seconds between monitoring entries
+     */
+    public void enableLocalMonitoring(int interval)
+    {
+        if (mbeanAgent == null) {
+            throw new Error("MBean agent is null");
+        }
+
+        moniLocal = mbeanAgent.getLocalMonitoring(getName(), getNumber(),
+                                                  interval);
+    }
+
+    /**
      * Emergency stop of component.
      *
      * @throws DAQCompException if there is a problem
@@ -1211,7 +1251,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Get the byte buffer cache for the specified data type.
+     * Get the buffer cache for the specified data type.
      *
      * @param type data type of buffer cache
      *
@@ -1245,6 +1285,20 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the number of events for the given subrun.
+     * NOTE: This should only be implemented by the event builder component.
+     *
+     * @param subrun subrun number
+     *
+     * @return -1L
+     */
+    public long getEvents(int subrun)
+        throws DAQCompException
+    {
+        return -1L;
+    }
+
+    /**
      * Get server-assigned ID.
      *
      * @return ID
@@ -1252,29 +1306,6 @@ public abstract class DAQComponent
     public final int getId()
     {
         return id;
-    }
-
-    /**
-     * Get an input engine.
-     *
-     * @param type input engine type
-     *
-     * @return <tt>null</tt> if no matching engine was found
-     */
-    public final PayloadInputEngine getInputEngine(String type)
-    {
-        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-            DAQConnector dc = (DAQConnector) iter.next();
-            if (dc.isInput() && !dc.isSplicer()) {
-                if (dc.getType().equals(type)) {
-                    return ((DAQInputConnector) dc).getInputEngine();
-                }
-            } else if (dc.isInput() && dc.isSplicer()) {
-                throw new Error("Conn " + dc + " is both input and splicer!");
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -1328,6 +1359,17 @@ public abstract class DAQComponent
     public final int getNumber()
     {
         return num;
+    }
+
+    /**
+     * Return the usage message for any options handled in
+     * <tt>handleOption()</tt>.
+     *
+     * @return usage string
+     */
+    public String getOptionUsage()
+    {
+        return "";
     }
 
     /**
@@ -1401,6 +1443,21 @@ public abstract class DAQComponent
     }
 
     /**
+     * Handle a command-line option.
+     *
+     * @param arg0 first argument string
+     * @param arg1 second argument string (or <tt>null</tt> if none available)
+     *
+     * @return 0 if the argument string was not used
+     *         1 if only the first argument string was used
+     *         2 if both argument strings were used
+     */
+    public int handleOption(String arg0, String arg1)
+    {
+        return 0;
+    }
+
+    /**
      * Is there an error from the last request?
      *
      * @return <tt>true</tt> if the last request generated an error
@@ -1456,6 +1513,16 @@ public abstract class DAQComponent
     public final Iterator listConnectors()
     {
         return connectors.iterator();
+    }
+
+    /**
+     * Prepare for the subrun by marking events untrustworthy.
+     *
+     * @param subrunNumber subrun number
+     */
+    public void prepareSubrun(int subrunNumber)
+    {
+        // override in event builder component
     }
 
     /**
@@ -1606,6 +1673,10 @@ public abstract class DAQComponent
                 compEx = new DAQCompException("Couldn't start MBean agent",
                                               mae);
             }
+
+            if (moniLocal != null) {
+                mbeanAgent.setMonitoringData(moniLocal);
+            }
         }
 
         // sort connectors so they are started in the correct order
@@ -1699,7 +1770,25 @@ public abstract class DAQComponent
                                        " has been destroyed");
         }
 
+        if (moniLocal != null) {
+            moniLocal.startMonitoring();
+        }
+
         stateTask.startRun(runNumber);
+    }
+
+    /**
+     * Start the subrun using the supplied data.
+     *
+     * @param data subrun data
+     *
+     * @throws DAQCompException if there is a problem with the configuration
+     */
+    public long startSubrun(List<FlasherboardConfiguration> data)
+        throws DAQCompException
+    {
+        // override in stringHub component
+        return -1L;
     }
 
     /**
@@ -1736,6 +1825,10 @@ public abstract class DAQComponent
         if (stateTask == null) {
             throw new DAQCompException("Component " + name + "#" + num +
                                        " has been destroyed");
+        }
+
+        if (moniLocal != null) {
+            moniLocal.stopMonitoring();
         }
 
         stateTask.stopRun();
@@ -1783,6 +1876,20 @@ public abstract class DAQComponent
                 // ignore interrupts
             }
         }
+    }
+
+    /**
+     * Return this component's svn version info a HashMap.
+     *
+     * This method should be overridden in the derived component
+     * class, otherwise this will return the version info for this
+     * base class file.
+     *
+     * @return svn version info as an array of 2 strings
+     */
+    public HashMap getVersionInfo()
+    {
+	return SVN_VER_INFO;
     }
 
     public String toString()

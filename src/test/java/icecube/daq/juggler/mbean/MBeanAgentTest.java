@@ -3,6 +3,8 @@ package icecube.daq.juggler.mbean;
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
 
+import icecube.daq.juggler.test.LoggingCase;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +16,6 @@ import java.net.URL;
 import javax.management.JMException;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import org.apache.xmlrpc.XmlRpcException;
@@ -23,9 +24,14 @@ import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
 public class MBeanAgentTest
-    extends TestCase
+    extends LoggingCase
 {
     private MBeanAgent agent;
+
+    public MBeanAgentTest(String name)
+    {
+        super(name);
+    }
 
     private boolean findBeanInHtml(MBeanAgent agent, String name)
         throws IOException, MBeanAgentException
@@ -96,7 +102,10 @@ public class MBeanAgentTest
     }
 
     protected void setUp()
+        throws Exception
     {
+        super.setUp();
+
         agent = new MBeanAgent();
     }
 
@@ -106,12 +115,15 @@ public class MBeanAgentTest
     }
 
     protected void tearDown()
+        throws Exception
     {
         try {
             agent.stop();
         } catch (Exception ex) {
             // ignore teardown errors
         }
+
+        super.tearDown();
     }
 
     public void testSimple()

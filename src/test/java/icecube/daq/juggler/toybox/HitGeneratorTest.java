@@ -1,16 +1,19 @@
 package icecube.daq.juggler.toybox;
 
-import icecube.daq.payload.ByteBufferCache;
+import icecube.daq.juggler.test.LoggingCase;
+
+import icecube.daq.payload.IByteBufferCache;
+import icecube.daq.payload.VitreousBufferCache;
 
 import java.nio.ByteBuffer;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
+
 import junit.textui.TestRunner;
 
 public class HitGeneratorTest
-    extends TestCase
+    extends LoggingCase
 {
     public HitGeneratorTest(String name)
     {
@@ -39,7 +42,7 @@ public class HitGeneratorTest
 
     public void testBasic()
     {
-        ByteBufferCache bufCache = new ByteBufferCache(8, 25600, 25600);
+        IByteBufferCache bufCache = new VitreousBufferCache();
 
         final int expNum = 10;
 
@@ -75,7 +78,7 @@ public class HitGeneratorTest
 
     public void testStop()
     {
-        ByteBufferCache bufCache = new ByteBufferCache(8, 25600, 25600);
+        IByteBufferCache bufCache = new VitreousBufferCache();
 
         final int stopNum = 10;
 
@@ -103,7 +106,7 @@ public class HitGeneratorTest
 
     public void testThreeTicks()
     {
-        ByteBufferCache bufCache = new ByteBufferCache(8, 25600, 25600);
+        IByteBufferCache bufCache = new VitreousBufferCache();
 
         final int expNum = 10;
         final int timeInc = 3;
