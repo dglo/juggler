@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2146 2007-10-17 01:37:59Z ksb $
+ * @version $Id: DAQComponent.java 2168 2007-10-20 01:15:02Z ksb $
  */
 public abstract class DAQComponent
 {
@@ -76,14 +76,6 @@ public abstract class DAQComponent
     public static final int STATE_DESTROYING = 12;
     /** Component is being destroyed. */
     public static final int STATE_RESETTING = 13;
-
-    /** svn version information */
-    private static final HashMap SVN_VER_INFO;
-    static {
-	SVN_VER_INFO = new HashMap(4);
-	SVN_VER_INFO.put("id", "$Id: DAQComponent.java 2146 2007-10-17 01:37:59Z ksb $");
-	SVN_VER_INFO.put("url", "$URL: http://code.icecube.wisc.edu/daq/projects/juggler/trunk/src/main/java/icecube/daq/juggler/component/DAQComponent.java $");
-    }
 
     /** state names */
     private static final String[] STATE_NAMES = {
@@ -1879,17 +1871,17 @@ public abstract class DAQComponent
     }
 
     /**
-     * Return this component's svn version info a HashMap.
+     * Return this component's svn version id as a String.
      *
      * This method should be overridden in the derived component
      * class, otherwise this will return the version info for this
      * base class file.
      *
-     * @return svn version info as an array of 2 strings
+     * @return svn version id as a String
      */
-    public HashMap getVersionInfo()
+    public String getVersionInfo()
     {
-	return SVN_VER_INFO;
+	return "$Id: DAQComponent.java 2168 2007-10-20 01:15:02Z ksb $";
     }
 
     public String toString()

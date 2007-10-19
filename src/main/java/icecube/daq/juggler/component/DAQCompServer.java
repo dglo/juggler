@@ -1331,7 +1331,7 @@ public class DAQCompServer
      *
      * @throws DAQCompException if component does not exist
      */
-    public HashMap getVersionInfo()
+    public String getVersionInfo()
         throws DAQCompException
     {
         if (comp == null) {
