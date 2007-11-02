@@ -1,8 +1,7 @@
 package icecube.daq.juggler.component;
 
-import icecube.daq.common.DAQComponentObserver;
-
 import icecube.daq.io.DAQComponentInputProcessor;
+import icecube.daq.io.DAQComponentObserver;
 import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.PayloadReceiveChannel;
 import icecube.daq.io.PayloadTransmitChannel;
