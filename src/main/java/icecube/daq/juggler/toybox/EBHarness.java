@@ -7,7 +7,6 @@ import icecube.daq.io.PushPayloadReader;
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
-import icecube.daq.juggler.component.DAQOutputHack;
 
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.PayloadRegistry;
@@ -37,7 +36,6 @@ import org.apache.commons.logging.LogFactory;
  */
 public class EBHarness
     extends DAQComponent
-    implements DAQOutputHack
 {
     private static final Log LOG = LogFactory.getLog(EBHarness.class);
 
@@ -281,8 +279,9 @@ public class EBHarness
         this.hitsPerTrigger = hitsPerTrigger;
         this.timeInc = 3;
 
-        registerOutputHack(this);
-
+if (true) {
+        throw new Error("This class is broken due to DAQOutputHack removal");
+} else {
         IByteBufferCache dataBufMgr = new VitreousBufferCache();
         addCache(DAQConnector.TYPE_READOUT_DATA, dataBufMgr);
 
@@ -301,6 +300,7 @@ public class EBHarness
             throw new Error("Couldn't create RequestSink", ioe);
         }
         addEngine(DAQConnector.TYPE_READOUT_REQUEST, reqSink);
+}
     }
 
     /**

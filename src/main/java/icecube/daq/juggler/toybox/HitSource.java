@@ -7,7 +7,6 @@ import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
-import icecube.daq.juggler.component.DAQOutputHack;
 
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.VitreousBufferCache;
@@ -105,7 +104,6 @@ class GenTask
  */
 public class HitSource
     extends DAQComponent
-    implements DAQOutputHack
 {
     /** logger */
     private static final Log LOG = LogFactory.getLog(HitSource.class);
@@ -138,14 +136,16 @@ public class HitSource
         super(getCompName(outputType), 0);
 
         hitSrc = new PayloadOutputEngine("hitSrc", 0, "hits");
-        registerOutputHack(this);
-
+if (true) {
+        throw new Error("This class is broken due to DAQOutputHack removal");
+} else {
         IByteBufferCache bufMgr = new VitreousBufferCache();
         addCache(bufMgr);
 
         gen = new HitGenerator(bufMgr, numHits);
 
         addEngine(outputType, hitSrc);
+}
     }
 
     /**

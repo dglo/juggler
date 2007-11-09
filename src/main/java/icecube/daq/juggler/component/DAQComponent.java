@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2168 2007-10-20 01:15:02Z ksb $
+ * @version $Id: DAQComponent.java 2269 2007-11-09 17:18:33Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -144,8 +144,6 @@ public abstract class DAQComponent
 
     /** Local monitoring, is enabled */
     private LocalMonitor moniLocal;
-
-    private DAQOutputHack outputHack;
 
     private StateTask stateTask;
 
@@ -344,11 +342,6 @@ public abstract class DAQComponent
                                                   " to connection #" + i +
                                                   ": " + list[i], ioe);
                     break;
-                }
-
-                if (outputHack != null) {
-                    outputHack.createdTransmitChannel(conn.getOutputEngine(),
-                                                      xmitChan);
                 }
             }
 
@@ -1518,16 +1511,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Register output engine observer.
-     *
-     * @param outputHack output engine observer
-     */
-    public final void registerOutputHack(DAQOutputHack outputHack)
-    {
-        this.outputHack = outputHack;
-    }
-
-    /**
      * Reset the component back to the idle state, doing any necessary cleanup.
      *
      * @throws DAQCompException if the component cannot be reset
@@ -1881,7 +1864,7 @@ public abstract class DAQComponent
      */
     public String getVersionInfo()
     {
-	return "$Id: DAQComponent.java 2168 2007-10-20 01:15:02Z ksb $";
+	return "$Id: DAQComponent.java 2269 2007-11-09 17:18:33Z dglo $";
     }
 
     public String toString()

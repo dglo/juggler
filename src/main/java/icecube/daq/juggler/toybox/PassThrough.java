@@ -7,7 +7,6 @@ import icecube.daq.io.PushPayloadReader;
 import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
-import icecube.daq.juggler.component.DAQOutputHack;
 
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.VitreousBufferCache;
@@ -21,7 +20,6 @@ import java.nio.ByteBuffer;
  */
 public class PassThrough
     extends DAQComponent
-    implements DAQOutputHack
 {
     /**
      * Input engine.
@@ -103,10 +101,13 @@ public class PassThrough
         }
 
         passOut = new PayloadOutputEngine("passOut", 0, "data");
-        registerOutputHack(this);
 
+if (true) {
+        throw new Error("This class is broken due to DAQOutputHack removal");
+} else {
         addEngine(inputType, passIn);
         addEngine(outputType, passOut);
+}
     }
 
     /**
