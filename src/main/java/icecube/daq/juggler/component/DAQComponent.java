@@ -2,9 +2,9 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
+import icecube.daq.io.OutputChannel;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
-import icecube.daq.io.PayloadTransmitChannel;
 import icecube.daq.io.SpliceablePayloadReader;
 
 import icecube.daq.juggler.mbean.LocalMonitor;
@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2269 2007-11-09 17:18:33Z dglo $
+ * @version $Id: DAQComponent.java 2271 2007-11-09 17:46:49Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -332,9 +332,9 @@ public abstract class DAQComponent
                     break;
                 }
 
-                PayloadTransmitChannel xmitChan;
+                OutputChannel outChan;
                 try {
-                    xmitChan =
+                    outChan =
                         conn.connect(getByteBufferCache(conn.getType()),
                                      list[i]);
                 } catch (IOException ioe) {
@@ -1864,7 +1864,7 @@ public abstract class DAQComponent
      */
     public String getVersionInfo()
     {
-	return "$Id: DAQComponent.java 2269 2007-11-09 17:18:33Z dglo $";
+	return "$Id: DAQComponent.java 2271 2007-11-09 17:46:49Z dglo $";
     }
 
     public String toString()

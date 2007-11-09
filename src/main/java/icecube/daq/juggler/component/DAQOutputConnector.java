@@ -1,8 +1,8 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentOutputProcess;
+import icecube.daq.io.OutputChannel;
 import icecube.daq.io.PayloadOutputEngine;
-import icecube.daq.io.PayloadTransmitChannel;
 
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.SourceIdRegistry;
@@ -59,12 +59,11 @@ public class DAQOutputConnector
      * @param bufMgr buffer manager to be used by the new transmit channel
      * @param conn connection description
      *
-     * @return new transmit channel
+     * @return new output channel
      *
      * @throws IOException if there was a problem
      */
-    public PayloadTransmitChannel connect(IByteBufferCache bufMgr,
-                                          Connection conn)
+    public OutputChannel connect(IByteBufferCache bufMgr, Connection conn)
         throws IOException
     {
         InetSocketAddress addr =
