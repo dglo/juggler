@@ -2,9 +2,11 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
+import icecube.daq.io.SimpleReader;
 import icecube.daq.io.OutputChannel;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
+import icecube.daq.io.SpliceableSimpleReader;
 import icecube.daq.io.SpliceablePayloadReader;
 
 import icecube.daq.juggler.mbean.LocalMonitor;
@@ -44,7 +46,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2271 2007-11-09 17:46:49Z dglo $
+ * @version $Id: DAQComponent.java 2343 2007-11-29 22:02:01Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -994,7 +996,12 @@ public abstract class DAQComponent
     {
         addConnector(new DAQInputConnector(type, engine));
 
-        if (engine instanceof SpliceablePayloadReader) {
+        if (engine instanceof SpliceableSimpleReader) {
+            addMBean(type, new MBeanWrapper(engine,
+                                            spliceableInputReaderMethods));
+        } else if (engine instanceof SimpleReader) {
+            addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
+        } else if (engine instanceof SpliceablePayloadReader) {
             addMBean(type, new MBeanWrapper(engine,
                                             spliceableInputReaderMethods));
         } else if (engine instanceof PayloadReader) {
@@ -1864,7 +1871,7 @@ public abstract class DAQComponent
      */
     public String getVersionInfo()
     {
-	return "$Id: DAQComponent.java 2271 2007-11-09 17:46:49Z dglo $";
+	return "$Id: DAQComponent.java 2343 2007-11-29 22:02:01Z dglo $";
     }
 
     public String toString()
