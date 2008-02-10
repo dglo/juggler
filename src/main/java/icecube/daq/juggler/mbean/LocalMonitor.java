@@ -1,15 +1,11 @@
 package icecube.daq.juggler.mbean;
 
-import icecube.daq.juggler.mbean.MBeanAgentException;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import java.lang.reflect.Array;
-
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;

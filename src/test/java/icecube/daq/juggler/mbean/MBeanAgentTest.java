@@ -1,15 +1,11 @@
 package icecube.daq.juggler.mbean;
 
-import icecube.daq.juggler.mbean.MBeanAgent;
-import icecube.daq.juggler.mbean.MBeanAgentException;
-
 import icecube.daq.juggler.test.LoggingCase;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -19,7 +15,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.apache.xmlrpc.XmlRpcException;
-
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 

@@ -1,14 +1,9 @@
 package icecube.daq.juggler.toybox;
 
 import icecube.daq.io.PayloadDestinationOutputEngine;
-import icecube.daq.io.PayloadOutputEngine;
-import icecube.daq.io.PayloadTransmitChannel;
 import icecube.daq.io.PushPayloadReader;
-
-import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
-
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.IPayloadDestinationCollection;
 import icecube.daq.payload.ISourceID;
@@ -18,33 +13,18 @@ import icecube.daq.payload.MasterPayloadFactory;
 import icecube.daq.payload.PayloadRegistry;
 import icecube.daq.payload.SourceIdRegistry;
 import icecube.daq.payload.VitreousBufferCache;
-
 import icecube.daq.payload.impl.SourceID4B;
-
-import icecube.daq.payload.splicer.Payload;
-
-import icecube.daq.sim.GenericHit;
-import icecube.daq.sim.GenericReadoutElement;
-import icecube.daq.sim.GenericTriggerRequest;
-import icecube.daq.sim.ReadoutDataGenerator;
-import icecube.daq.sim.TriggerRequestGenerator;
-
+import icecube.daq.trigger.IHitPayload;
 import icecube.daq.trigger.IReadoutRequest;
 import icecube.daq.trigger.IReadoutRequestElement;
-import icecube.daq.trigger.IHitPayload;
-
 import icecube.daq.trigger.impl.DOMID8B;
 import icecube.daq.trigger.impl.ReadoutRequestPayloadFactory;
-import icecube.daq.trigger.impl.ReadoutRequestPayload;
 
 import java.io.IOException;
-
 import java.nio.ByteBuffer;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-
 import java.util.zip.DataFormatException;
 
 import org.apache.commons.logging.Log;
@@ -57,8 +37,6 @@ public class SHHarness
     extends DAQComponent
 {
     private static final Log LOG = LogFactory.getLog(SHHarness.class);
-
-    private static final int MAX_REQUESTS_IN_FLIGHT = 2;
 
     private static final DOMID8B EMPTY_DOM = new DOMID8B();
 
@@ -228,19 +206,13 @@ public class SHHarness
     class ReadoutSink
         extends PushPayloadReader
     {
-        private IByteBufferCache bufMgr;
-
         /**
          * Readout data reader.
-         *
-         * @param bufMgr byte buffer manager
          */
-        ReadoutSink(IByteBufferCache bufMgr)
+        ReadoutSink()
             throws IOException
         {
             super("rdoutSink");
-
-            this.bufMgr = bufMgr;
         }
 
         /**
@@ -297,7 +269,7 @@ public class SHHarness
         reqDest = reqSrc.getPayloadDestinationCollection();
 
         try {
-            rdoutSink = new ReadoutSink(dataBufMgr);
+            rdoutSink = new ReadoutSink();
         } catch (IOException ioe) {
             throw new Error("Couldn't create ReadoutSink", ioe);
         }

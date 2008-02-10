@@ -387,7 +387,6 @@ public class MBeanAgent
         htmlAdapter.stop();
         xmlRpcAdapter.stop();
 
-        int num = 0;
         while (htmlAdapter.getState() == htmlAdapter.STOPPING &&
                !xmlRpcAdapter.isStopped())
         {
@@ -396,7 +395,6 @@ public class MBeanAgent
             } catch (InterruptedException ie) {
                 // ignore interrupts
             }
-            num++;
         }
 
         unregisterBeans();

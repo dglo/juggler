@@ -10,8 +10,6 @@ public class DAQSplicer
 {
     /** splicer. */
     private Splicer splicer;
-    /** Does this splicer need to be started? */
-    private boolean needStart;
 
     /**
      * Create a DAQ splicer 'connector'.
@@ -23,7 +21,6 @@ public class DAQSplicer
         super("splicer");
 
         this.splicer = splicer;
-        this.needStart = needStart;
     }
 
     /**

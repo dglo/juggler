@@ -888,7 +888,7 @@ public class DAQCompServer
                         System.err.println("Bad log level: '"+levelStr+"'");
                         usage = true;
                         break;
-                    } 
+                    }
                     comp.setLogLevel(logLevel);
 
                     int logPort;
@@ -942,9 +942,7 @@ public class DAQCompServer
                     }
                     break;
                 }
-            } else if (args[i].length() == 0) {
-                // ignore empty arguments
-            } else {
+            } else if (args[i].length() > 0) {
                 System.err.println("Unknown argument '" + args[i] + "'");
                 usage = true;
             }

@@ -40,7 +40,6 @@ class XMLRPCServer
 
     private static ObjectName delegateName;
 
-    private ObjectName name;
     private MBeanServer server;
 
     private int port = Integer.MIN_VALUE;
@@ -107,7 +106,7 @@ class XMLRPCServer
         }
 
         if (val.getClass().isArray()) {
-            return fixArray((Object )val);
+            return fixArray((Object) val);
         } else if (val instanceof Byte) {
             return new Integer(((Byte) val).intValue());
         } else if (val instanceof Character) {
@@ -370,7 +369,6 @@ class XMLRPCServer
 
     public ObjectName preRegister(MBeanServer server, ObjectName name)
     {
-        this.name = name;
         this.server = server;
 
         return name;

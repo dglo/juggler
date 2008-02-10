@@ -2,26 +2,20 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
-import icecube.daq.io.SimpleReader;
-import icecube.daq.io.OutputChannel;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
-import icecube.daq.io.SpliceableSimpleReader;
+import icecube.daq.io.SimpleReader;
 import icecube.daq.io.SpliceablePayloadReader;
-
+import icecube.daq.io.SpliceableSimpleReader;
 import icecube.daq.juggler.mbean.LocalMonitor;
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
 import icecube.daq.juggler.mbean.MBeanWrapper;
-
 import icecube.daq.payload.IByteBufferCache;
-
 import icecube.daq.splicer.Splicer;
-
 import icecube.daq.util.FlasherboardConfiguration;
 
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,7 +25,6 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.log4j.Level;
 
 /**
@@ -46,7 +39,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2343 2007-11-29 22:02:01Z dglo $
+ * @version $Id: DAQComponent.java 2629 2008-02-11 05:48:36Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -334,11 +327,8 @@ public abstract class DAQComponent
                     break;
                 }
 
-                OutputChannel outChan;
                 try {
-                    outChan =
-                        conn.connect(getByteBufferCache(conn.getType()),
-                                     list[i]);
+                    conn.connect(getByteBufferCache(conn.getType()), list[i]);
                 } catch (IOException ioe) {
                     compEx = new DAQCompException("Cannot connect " + conn +
                                                   " to connection #" + i +
@@ -1871,7 +1861,7 @@ public abstract class DAQComponent
      */
     public String getVersionInfo()
     {
-	return "$Id: DAQComponent.java 2343 2007-11-29 22:02:01Z dglo $";
+	return "$Id: DAQComponent.java 2629 2008-02-11 05:48:36Z dglo $";
     }
 
     public String toString()
