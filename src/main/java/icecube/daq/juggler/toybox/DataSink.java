@@ -1,16 +1,13 @@
 package icecube.daq.juggler.toybox;
 
 import icecube.daq.io.PushPayloadReader;
-
 import icecube.daq.juggler.component.DAQCompConfig;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
-
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.VitreousBufferCache;
 
 import java.io.IOException;
-
 import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;

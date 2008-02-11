@@ -1,9 +1,7 @@
 package icecube.daq.juggler.mbean;
 
 import java.io.IOException;
-
 import java.lang.reflect.Array;
-
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -20,13 +18,10 @@ import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.xmlrpc.XmlRpcException;
-
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
-
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**

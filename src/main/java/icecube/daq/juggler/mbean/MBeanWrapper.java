@@ -1,7 +1,6 @@
 package icecube.daq.juggler.mbean;
 
 import java.lang.reflect.Method;
-
 import java.util.HashMap;
 
 import javax.management.Attribute;

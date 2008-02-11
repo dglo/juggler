@@ -3,28 +3,22 @@ package icecube.daq.juggler.toybox;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadTransmitChannel;
 import icecube.daq.io.PushPayloadReader;
-
 import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
-
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.PayloadRegistry;
 import icecube.daq.payload.SourceIdRegistry;
 import icecube.daq.payload.VitreousBufferCache;
-
 import icecube.daq.sim.GenericHit;
 import icecube.daq.sim.GenericReadoutElement;
 import icecube.daq.sim.GenericTriggerRequest;
 import icecube.daq.sim.ReadoutDataGenerator;
 import icecube.daq.sim.TriggerRequestGenerator;
-
 import icecube.daq.trigger.IReadoutRequestElement;
 
 import java.io.IOException;
-
 import java.nio.ByteBuffer;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 

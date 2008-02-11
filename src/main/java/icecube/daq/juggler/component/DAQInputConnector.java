@@ -1,7 +1,6 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
-
 import icecube.daq.payload.IByteBufferCache;
 
 import java.io.IOException;

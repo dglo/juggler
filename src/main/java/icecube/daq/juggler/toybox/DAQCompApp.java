@@ -4,9 +4,7 @@ import icecube.daq.juggler.component.DAQCompException;
 import icecube.daq.juggler.component.DAQCompServer;
 import icecube.daq.juggler.component.DAQComponent;
 import icecube.daq.juggler.component.DAQConnector;
-
 import icecube.daq.juggler.mock.MockAppender;
-
 import icecube.daq.log.DAQLogAppender;
 
 import java.net.MalformedURLException;
@@ -14,7 +12,6 @@ import java.net.URL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 

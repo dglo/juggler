@@ -5,24 +5,18 @@ import icecube.daq.io.DAQComponentObserver;
 import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.PayloadReceiveChannel;
 import icecube.daq.io.PayloadTransmitChannel;
-
 import icecube.daq.juggler.test.LoggingCase;
-
 import icecube.daq.payload.IByteBufferCache;
 
 import java.io.IOException;
-
 import java.net.ServerSocket;
-
 import java.nio.ByteBuffer;
-
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.WritableByteChannel;
-
 import java.util.Iterator;
 
 import junit.framework.Test;

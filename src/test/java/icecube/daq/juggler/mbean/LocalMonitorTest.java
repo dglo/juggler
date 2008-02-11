@@ -2,7 +2,6 @@ package icecube.daq.juggler.mbean;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
 import java.util.HashMap;
 
 import junit.framework.Test;

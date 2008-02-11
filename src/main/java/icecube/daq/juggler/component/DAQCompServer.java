@@ -4,12 +4,10 @@ import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.DAQLogHandler;
 import icecube.daq.log.LoggingOutputStream;
-
 import icecube.daq.util.FlasherboardConfiguration;
 
 import java.io.IOException;
 import java.io.PrintStream;
-
 import java.net.BindException;
 import java.net.ConnectException;
 import java.net.InetAddress;
@@ -18,12 +16,10 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -31,22 +27,16 @@ import java.util.logging.StreamHandler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.commons.logging.impl.Log4JLogger;
-
 import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
-
 import org.apache.xmlrpc.XmlRpcException;
-
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
-
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
-
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**

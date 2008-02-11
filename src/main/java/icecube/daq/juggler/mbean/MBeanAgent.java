@@ -3,11 +3,8 @@ package icecube.daq.juggler.mbean;
 import com.sun.jdmk.comm.HtmlAdaptorServer;
 
 import java.io.IOException;
-
 import java.lang.management.ManagementFactory;
-
 import java.net.ServerSocket;
-
 import java.util.HashMap;
 import java.util.Iterator;
 
