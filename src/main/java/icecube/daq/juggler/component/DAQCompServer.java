@@ -862,16 +862,20 @@ public class DAQCompServer
                     String addrStr = args[i];
                     int ic = addrStr.indexOf(':');
                     int il = addrStr.indexOf(',');
-                    if (ic < 0 || il < 0) {
+                    if (ic < 0 && il < 0) {
                         System.err.println("Bad log argument '" +
                                            addrStr + "'");
                         usage = true;
                         break;
                     }
 
-                    String logHost  = addrStr.substring(0, ic);
-                    String portStr  = addrStr.substring(ic + 1, il);
-                    String levelStr = addrStr.substring(il+1);
+                    String levelStr;
+                    if (il < 0) {
+                        levelStr = "ERROR";
+                        il = addrStr.length();
+                    } else {
+                        levelStr = addrStr.substring(il+1);
+                    }
 
                     Level logLevel = getLogLevel(levelStr);
                     if(logLevel == null) {
@@ -881,16 +885,31 @@ public class DAQCompServer
                     }
                     comp.setLogLevel(logLevel);
 
+                    String logHost;
                     int logPort;
-                    try {
-                        logPort =
-                            Integer.parseInt(portStr);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Bad log port '" +
-                                           portStr + "' in '" +
-                                           addrStr + "'");
-                        usage = true;
-                        break;
+
+                    if (ic < 0) {
+                        logHost = null;
+                        logPort = 0;
+                    } else {
+                        if (ic == 0) {
+                            logHost = "localhost";
+                        } else {
+                            logHost = addrStr.substring(0, ic);
+                        }
+
+                        String portStr  = addrStr.substring(ic + 1, il);
+
+                        try {
+                            logPort =
+                                Integer.parseInt(portStr);
+                        } catch (NumberFormatException e) {
+                            System.err.println("Bad log port '" +
+                                               portStr + "' in '" +
+                                               addrStr + "'");
+                            usage = true;
+                            break;
+                        }
                     }
 
                     try {
@@ -907,6 +926,7 @@ public class DAQCompServer
                                            "'");
                         usage = true;
                     }
+
                     break;
                 case 's':
                     i++;
@@ -1119,8 +1139,12 @@ public class DAQCompServer
         if (defaultLogConfig == null ||
             !defaultLogConfig.matches(logIP, logPort, logLevel))
         {
-            defaultLogConfig = new LoggingConfiguration(logIP, logPort,
-                                                        logLevel);
+            if (logIP == null) {
+                defaultLogConfig = new LoggingConfiguration(logLevel);
+            } else {
+                defaultLogConfig = new LoggingConfiguration(logIP, logPort,
+                                                            logLevel);
+            }
         }
     }
 
