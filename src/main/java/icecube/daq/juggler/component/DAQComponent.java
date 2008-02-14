@@ -4,7 +4,9 @@ import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
+import icecube.daq.io.MultiOutputEngine;
 import icecube.daq.io.SimpleReader;
+import icecube.daq.io.SingleOutputEngine;
 import icecube.daq.io.SpliceablePayloadReader;
 import icecube.daq.io.SpliceableSimpleReader;
 import icecube.daq.juggler.mbean.LocalMonitor;
@@ -39,7 +41,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2629 2008-02-11 05:48:36Z dglo $
+ * @version $Id: DAQComponent.java 2646 2008-02-14 16:25:29Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -110,6 +112,20 @@ public abstract class DAQComponent
 
     /** Methods names for PayloadOutputEngine MBean */
     private static final String[] outputEngineMethods = new String[] {
+        "BytesSent",
+        "Depth",
+        "RecordsSent",
+    };
+
+    /** Methods names for SingleOutputEngine MBean */
+    private static final String[] singleEngineMethods = new String[] {
+        "BytesSent",
+        "Depth",
+        "RecordsSent",
+    };
+
+    /** Methods names for MultiOutputEngine MBean */
+    private static final String[] multiEngineMethods = new String[] {
         "BytesSent",
         "Depth",
         "RecordsSent",
@@ -997,7 +1013,7 @@ public abstract class DAQComponent
         } else if (engine instanceof PayloadReader) {
             addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
         } else {
-            throw new Error("Can only monitor PayloadReaders");
+            throw new Error("Cannot monitor " + engine.getClass().getName());
         }
     }
 
@@ -1034,11 +1050,15 @@ public abstract class DAQComponent
         addConnector(new DAQOutputConnector(type, engine,
                                             allowMultipleConnections));
 
-        if (!(engine instanceof PayloadOutputEngine)) {
-            throw new Error("Can only monitor PayloadOutputEngine");
+        if (engine instanceof PayloadOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
+        } else if (engine instanceof SingleOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, singleEngineMethods));
+        } else if (engine instanceof MultiOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, multiEngineMethods));
+        } else {
+            throw new Error("Cannot monitor " + engine.getClass().getName());
         }
-
-        addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
     }
 
     /**
@@ -1861,7 +1881,7 @@ public abstract class DAQComponent
      */
     public String getVersionInfo()
     {
-	return "$Id: DAQComponent.java 2629 2008-02-11 05:48:36Z dglo $";
+	return "$Id: DAQComponent.java 2646 2008-02-14 16:25:29Z dglo $";
     }
 
     public String toString()
