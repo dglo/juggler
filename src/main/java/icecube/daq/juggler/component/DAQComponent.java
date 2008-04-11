@@ -6,6 +6,7 @@ import icecube.daq.io.MultiOutputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
 import icecube.daq.io.SimpleReader;
+import icecube.daq.io.SimpleOutputEngine;
 import icecube.daq.io.SingleOutputEngine;
 import icecube.daq.io.SpliceablePayloadReader;
 import icecube.daq.io.SpliceableSimpleReader;
@@ -41,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2769 2008-03-10 15:22:49Z dglo $
+ * @version $Id: DAQComponent.java 2902 2008-04-11 17:31:33Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -127,6 +128,12 @@ public abstract class DAQComponent
     /** Methods names for MultiOutputEngine MBean */
     private static final String[] multiEngineMethods = new String[] {
         "BytesSent",
+        "Depth",
+        "RecordsSent",
+    };
+
+    /** Methods names for SimpleOutputEngine MBean */
+    private static final String[] simpleEngineMethods = new String[] {
         "Depth",
         "RecordsSent",
     };
@@ -1056,6 +1063,8 @@ public abstract class DAQComponent
             addMBean(type, new MBeanWrapper(engine, singleEngineMethods));
         } else if (engine instanceof MultiOutputEngine) {
             addMBean(type, new MBeanWrapper(engine, multiEngineMethods));
+        } else if (engine instanceof SimpleOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, simpleEngineMethods));
         } else {
             throw new Error("Cannot monitor " + engine.getClass().getName());
         }
@@ -1881,7 +1890,7 @@ public abstract class DAQComponent
      */
     public String getVersionInfo()
     {
-	return "$Id: DAQComponent.java 2769 2008-03-10 15:22:49Z dglo $";
+	return "$Id: DAQComponent.java 2902 2008-04-11 17:31:33Z dglo $";
     }
 
     public String toString()
