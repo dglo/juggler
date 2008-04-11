@@ -3,6 +3,7 @@ package icecube.daq.juggler.component;
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentObserver;
 import icecube.daq.io.DAQComponentOutputProcess;
+import icecube.daq.io.OutputChannel;
 import icecube.daq.io.PayloadReceiveChannel;
 import icecube.daq.io.PayloadTransmitChannel;
 import icecube.daq.juggler.test.LoggingCase;
@@ -315,6 +316,11 @@ class MockOutputEngine
     public void forcedStopProcessing()
     {
         running = false;
+    }
+
+    public OutputChannel getChannel()
+    {
+        throw new Error("Unimplemented");
     }
 
     public String getPresentState()
