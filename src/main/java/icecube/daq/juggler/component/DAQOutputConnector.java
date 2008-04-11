@@ -136,16 +136,6 @@ public class DAQOutputConnector
     }
 
     /**
-     * Get output engine associated with this connector.
-     *
-     * @return output engine
-     */
-    public PayloadOutputEngine getOutputEngine()
-    {
-        return (PayloadOutputEngine) engine;
-    }
-
-    /**
      * Get current engine state.
      *
      * @return state string

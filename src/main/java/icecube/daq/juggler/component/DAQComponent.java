@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2902 2008-04-11 17:31:33Z dglo $
+ * @version $Id: DAQComponent.java 2911 2008-04-11 19:48:28Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -1384,27 +1384,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Get an output engine.
-     *
-     * @param type output engine type
-     *
-     * @return <tt>null</tt> if no matching engine was found
-     */
-    public final PayloadOutputEngine getOutputEngine(String type)
-    {
-        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-            DAQConnector dc = (DAQConnector) iter.next();
-            if (dc.isOutput()) {
-                if (dc.getType().equals(type)) {
-                    return ((DAQOutputConnector) dc).getOutputEngine();
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Get a splicer.
      *
      * @param type splicer type
@@ -1890,7 +1869,7 @@ public abstract class DAQComponent
      */
     public String getVersionInfo()
     {
-	return "$Id: DAQComponent.java 2902 2008-04-11 17:31:33Z dglo $";
+	return "$Id: DAQComponent.java 2911 2008-04-11 19:48:28Z dglo $";
     }
 
     public String toString()
