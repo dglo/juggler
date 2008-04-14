@@ -5,8 +5,8 @@ import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.MultiOutputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
-import icecube.daq.io.SimpleReader;
 import icecube.daq.io.SimpleOutputEngine;
+import icecube.daq.io.SimpleReader;
 import icecube.daq.io.SingleOutputEngine;
 import icecube.daq.io.SpliceablePayloadReader;
 import icecube.daq.io.SpliceableSimpleReader;
@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2911 2008-04-11 19:48:28Z dglo $
+ * @version $Id: DAQComponent.java 2921 2008-04-14 21:23:54Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -1869,7 +1869,7 @@ public abstract class DAQComponent
      */
     public String getVersionInfo()
     {
-	return "$Id: DAQComponent.java 2911 2008-04-11 19:48:28Z dglo $";
+	return "$Id: DAQComponent.java 2921 2008-04-14 21:23:54Z dglo $";
     }
 
     public String toString()
