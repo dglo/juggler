@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2933 2008-04-17 19:16:47Z dglo $
+ * @version $Id: DAQComponent.java 2938 2008-04-17 19:34:56Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -1651,9 +1651,22 @@ public abstract class DAQComponent
     public final void start()
         throws DAQCompException
     {
+        start(true);
+    }
+
+    /**
+     * Start background threads.
+     *
+     * @param startMBeanAgent if <tt>false</tt>, do not start MBean server
+     *
+     * @throws DAQCompException if input server cannot be started
+     */
+    public final void start(boolean startMBeanAgent)
+        throws DAQCompException
+    {
         DAQCompException compEx = null;
 
-        if (mbeanAgent != null) {
+        if (startMBeanAgent && mbeanAgent != null) {
             try {
                 mbeanAgent.start();
             } catch (MBeanAgentException mae) {
