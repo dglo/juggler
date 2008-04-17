@@ -142,9 +142,8 @@ public class MBeanAgent
     {
         int port;
 
-        ServerSocket ss;
         try {
-            ss = new ServerSocket();
+            ServerSocket ss = new ServerSocket();
             ss.setReuseAddress(true);
             ss.bind(null);
             port = ss.getLocalPort();
