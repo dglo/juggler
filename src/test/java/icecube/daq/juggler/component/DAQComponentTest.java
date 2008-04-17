@@ -456,6 +456,11 @@ class MiniComponent
     {
         super(name, num);
     }
+
+    public String getVersionInfo()
+    {
+        return "$Id$";
+    }
 }
 
 class MockComponent
@@ -494,6 +499,11 @@ class MockComponent
     public void disconnected()
     {
         calledDisconnected = true;
+    }
+
+    public String getVersionInfo()
+    {
+        return "$Id$";
     }
 
     public void stopEnginesWhenStopping()

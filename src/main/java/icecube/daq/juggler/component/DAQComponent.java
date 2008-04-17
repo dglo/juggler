@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2921 2008-04-14 21:23:54Z dglo $
+ * @version $Id: DAQComponent.java 2933 2008-04-17 19:16:47Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -1433,6 +1433,13 @@ public abstract class DAQComponent
     }
 
     /**
+     * Return this component's version id.
+     *
+     * @return version id string
+     */
+    public abstract String getVersionInfo();
+
+    /**
      * Handle a command-line option.
      *
      * @param arg0 first argument string
@@ -1597,6 +1604,17 @@ public abstract class DAQComponent
     }
 
     /**
+     * Set the component ID assigned by the server.
+     * This should only be called by DAQCompServer.
+     *
+     * @param id assigned ID
+     */
+    final void setId(int id)
+    {
+        this.id = id;
+    }
+
+    /**
      * Set the log level for this component.
      *
      * @param level new log level
@@ -1613,17 +1631,6 @@ public abstract class DAQComponent
      */
     public void setMaxFileSize(long maxFileSize) {
         // Override me!
-    }
-
-    /**
-     * Set the component ID assigned by the server.
-     * This should only be called by DAQCompServer.
-     *
-     * @param id assigned ID
-     */
-    final void setId(int id)
-    {
-        this.id = id;
     }
 
     /**
@@ -1859,19 +1866,10 @@ public abstract class DAQComponent
     }
 
     /**
-     * Return this component's svn version id as a String.
+     * Debugging string.
      *
-     * This method should be overridden in the derived component
-     * class, otherwise this will return the version info for this
-     * base class file.
-     *
-     * @return svn version id as a String
+     * @return debugging string
      */
-    public String getVersionInfo()
-    {
-	return "$Id: DAQComponent.java 2921 2008-04-14 21:23:54Z dglo $";
-    }
-
     public String toString()
     {
         StringBuffer buf = new StringBuffer(name);
