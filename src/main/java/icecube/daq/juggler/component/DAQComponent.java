@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2938 2008-04-17 19:34:56Z dglo $
+ * @version $Id: DAQComponent.java 2947 2008-04-18 19:47:01Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -1381,27 +1381,6 @@ public abstract class DAQComponent
     public String getOptionUsage()
     {
         return "";
-    }
-
-    /**
-     * Get a splicer.
-     *
-     * @param type splicer type
-     *
-     * @return <tt>null</tt> if no matching splicer was found
-     */
-    public final Splicer getSplicer(String type)
-    {
-        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-            DAQConnector dc = (DAQConnector) iter.next();
-            if (dc.isSplicer()) {
-                if (dc.getType().equals(type)) {
-                    return ((DAQSplicer) dc).getSplicer();
-                }
-            }
-        }
-
-        return null;
     }
 
     /**
