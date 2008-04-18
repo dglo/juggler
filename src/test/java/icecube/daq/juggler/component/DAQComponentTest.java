@@ -328,6 +328,11 @@ class MockOutputEngine
         throw new Error("Unimplemented");
     }
 
+    public long[] getRecordsSent()
+    {
+        throw new Error("Unimplemented");
+    }
+
     public boolean isConnected()
     {
         return connected;
