@@ -81,7 +81,7 @@ public class DAQOutputConnector
         final int num = conn.getComponentNumber();
 
         final int srcId =
-            SourceIdRegistry.getSourceIDFromNameAndId(name, num);
+            SourceIdRegistry.getSourceIDFromNameAndId(name, num % 1000);
         return engine.connect(bufMgr, chan, srcId);
     }
 
