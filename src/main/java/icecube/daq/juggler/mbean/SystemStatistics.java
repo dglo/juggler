@@ -2,12 +2,9 @@ package icecube.daq.juggler.mbean;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import java.util.HashMap;
 import java.util.Iterator;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,8 +29,9 @@ public class SystemStatistics
         Pattern.compile("^.*load\\s+averages?:" + LOAD_AVG_STR + LOAD_AVG_STR +
                         LOAD_AVG_STR);
 
-    /** disk free space command. */
-    private ProcessBuilder df = new ProcessBuilder("df", "-l", "-k");
+    /** disk free space command. The -k must be *after* the -P on
+     * BSD-based systems! */
+    private ProcessBuilder df = new ProcessBuilder("df", "-P", "-l", "-k");
     /** pattern for parsing 'df' output. */
     private Pattern dfPat =
         Pattern.compile("^\\s*(\\S+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)" +

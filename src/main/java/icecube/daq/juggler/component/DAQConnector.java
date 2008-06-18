@@ -9,9 +9,11 @@ import java.io.IOException;
  */
 public abstract class DAQConnector
 {
+    /** Event connector. */
+    public static final String TYPE_EVENT = "event";
     /** Global trigger connector. */
     public static final String TYPE_GLOBAL_TRIGGER = "glblTrig";
-    /** icetopHub->icetopTrigger hit connector. */
+    /** icetopHub-&gt;icetopTrigger hit connector. */
     public static final String TYPE_ICETOP_HIT = "icetopHit";
     /** Moni data connector. */
     public static final String TYPE_MONI_DATA = "moniData";
@@ -21,7 +23,7 @@ public abstract class DAQConnector
     public static final String TYPE_READOUT_REQUEST = "rdoutReq";
     /** SN data connector. */
     public static final String TYPE_SN_DATA = "snData";
-    /** stringHub->iniceTrigger hit connector. */
+    /** stringHub-&gt;iniceTrigger hit connector. */
     public static final String TYPE_STRING_HIT = "stringHit";
     /** Tcal data connector. */
     public static final String TYPE_TCAL_DATA = "tcalData";
@@ -29,7 +31,7 @@ public abstract class DAQConnector
     public static final String TYPE_TEST_HIT = "testHit";
     /** General payload data connector. */
     public static final String TYPE_TEST_DATA = "testData";
-    /** icetopTrigger/iniceTrigger->globalTrigger trigger connector. */
+    /** icetopTrigger/iniceTrigger-&gt;globalTrigger trigger connector. */
     public static final String TYPE_TRIGGER = "trigger";
     /** self-contained connector which doesn't need any external connections */
     public static final String TYPE_SELF_CONTAINED = "selfContained";

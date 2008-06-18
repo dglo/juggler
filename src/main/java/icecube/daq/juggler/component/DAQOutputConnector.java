@@ -1,16 +1,13 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentOutputProcess;
+import icecube.daq.io.OutputChannel;
 import icecube.daq.io.PayloadOutputEngine;
-import icecube.daq.io.PayloadTransmitChannel;
-
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.SourceIdRegistry;
 
 import java.io.IOException;
-
 import java.net.InetSocketAddress;
-
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
 
@@ -59,12 +56,11 @@ public class DAQOutputConnector
      * @param bufMgr buffer manager to be used by the new transmit channel
      * @param conn connection description
      *
-     * @return new transmit channel
+     * @return new output channel
      *
      * @throws IOException if there was a problem
      */
-    public PayloadTransmitChannel connect(IByteBufferCache bufMgr,
-                                          Connection conn)
+    public OutputChannel connect(IByteBufferCache bufMgr, Connection conn)
         throws IOException
     {
         InetSocketAddress addr =
@@ -85,7 +81,7 @@ public class DAQOutputConnector
         final int num = conn.getComponentNumber();
 
         final int srcId =
-            SourceIdRegistry.getSourceIDFromNameAndId(name, num);
+            SourceIdRegistry.getSourceIDFromNameAndId(name, num % 1000);
         return engine.connect(bufMgr, chan, srcId);
     }
 
@@ -137,16 +133,6 @@ public class DAQOutputConnector
         throws Exception
     {
         engine.forcedStopProcessing();
-    }
-
-    /**
-     * Get output engine associated with this connector.
-     *
-     * @return output engine
-     */
-    public PayloadOutputEngine getOutputEngine()
-    {
-        return (PayloadOutputEngine) engine;
     }
 
     /**

@@ -2,24 +2,23 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
+import icecube.daq.io.MultiOutputEngine;
 import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
-import icecube.daq.io.PayloadTransmitChannel;
+import icecube.daq.io.SimpleOutputEngine;
+import icecube.daq.io.SimpleReader;
+import icecube.daq.io.SingleOutputEngine;
 import icecube.daq.io.SpliceablePayloadReader;
-
+import icecube.daq.io.SpliceableSimpleReader;
 import icecube.daq.juggler.mbean.LocalMonitor;
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
 import icecube.daq.juggler.mbean.MBeanWrapper;
-
 import icecube.daq.payload.IByteBufferCache;
-
 import icecube.daq.splicer.Splicer;
-
 import icecube.daq.util.FlasherboardConfiguration;
 
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,7 +28,6 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.log4j.Level;
 
 /**
@@ -44,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2146 2007-10-17 01:37:59Z ksb $
+ * @version $Id: DAQComponent.java 2947 2008-04-18 19:47:01Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -76,14 +74,6 @@ public abstract class DAQComponent
     public static final int STATE_DESTROYING = 12;
     /** Component is being destroyed. */
     public static final int STATE_RESETTING = 13;
-
-    /** svn version information */
-    private static final HashMap SVN_VER_INFO;
-    static {
-	SVN_VER_INFO = new HashMap(4);
-	SVN_VER_INFO.put("id", "$Id: DAQComponent.java 2146 2007-10-17 01:37:59Z ksb $");
-	SVN_VER_INFO.put("url", "$URL: http://code.icecube.wisc.edu/daq/projects/juggler/releases/Grange/src/main/java/icecube/daq/juggler/component/DAQComponent.java $");
-    }
 
     /** state names */
     private static final String[] STATE_NAMES = {
@@ -128,6 +118,26 @@ public abstract class DAQComponent
         "RecordsSent",
     };
 
+    /** Methods names for SingleOutputEngine MBean */
+    private static final String[] singleEngineMethods = new String[] {
+        "BytesSent",
+        "Depth",
+        "RecordsSent",
+    };
+
+    /** Methods names for MultiOutputEngine MBean */
+    private static final String[] multiEngineMethods = new String[] {
+        "BytesSent",
+        "Depth",
+        "RecordsSent",
+    };
+
+    /** Methods names for SimpleOutputEngine MBean */
+    private static final String[] simpleEngineMethods = new String[] {
+        "Depth",
+        "RecordsSent",
+    };
+
     /** component type */
     private String name;
     /** component instance number */
@@ -152,8 +162,6 @@ public abstract class DAQComponent
 
     /** Local monitoring, is enabled */
     private LocalMonitor moniLocal;
-
-    private DAQOutputHack outputHack;
 
     private StateTask stateTask;
 
@@ -342,21 +350,13 @@ public abstract class DAQComponent
                     break;
                 }
 
-                PayloadTransmitChannel xmitChan;
                 try {
-                    xmitChan =
-                        conn.connect(getByteBufferCache(conn.getType()),
-                                     list[i]);
+                    conn.connect(getByteBufferCache(conn.getType()), list[i]);
                 } catch (IOException ioe) {
                     compEx = new DAQCompException("Cannot connect " + conn +
                                                   " to connection #" + i +
                                                   ": " + list[i], ioe);
                     break;
-                }
-
-                if (outputHack != null) {
-                    outputHack.createdTransmitChannel(conn.getOutputEngine(),
-                                                      xmitChan);
                 }
             }
 
@@ -1009,13 +1009,18 @@ public abstract class DAQComponent
     {
         addConnector(new DAQInputConnector(type, engine));
 
-        if (engine instanceof SpliceablePayloadReader) {
+        if (engine instanceof SpliceableSimpleReader) {
+            addMBean(type, new MBeanWrapper(engine,
+                                            spliceableInputReaderMethods));
+        } else if (engine instanceof SimpleReader) {
+            addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
+        } else if (engine instanceof SpliceablePayloadReader) {
             addMBean(type, new MBeanWrapper(engine,
                                             spliceableInputReaderMethods));
         } else if (engine instanceof PayloadReader) {
             addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
         } else {
-            throw new Error("Can only monitor PayloadReaders");
+            throw new Error("Cannot monitor " + engine.getClass().getName());
         }
     }
 
@@ -1052,11 +1057,17 @@ public abstract class DAQComponent
         addConnector(new DAQOutputConnector(type, engine,
                                             allowMultipleConnections));
 
-        if (!(engine instanceof PayloadOutputEngine)) {
-            throw new Error("Can only monitor PayloadOutputEngine");
+        if (engine instanceof PayloadOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
+        } else if (engine instanceof SingleOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, singleEngineMethods));
+        } else if (engine instanceof MultiOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, multiEngineMethods));
+        } else if (engine instanceof SimpleOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, simpleEngineMethods));
+        } else {
+            throw new Error("Cannot monitor " + engine.getClass().getName());
         }
-
-        addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
     }
 
     /**
@@ -1373,48 +1384,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Get an output engine.
-     *
-     * @param type output engine type
-     *
-     * @return <tt>null</tt> if no matching engine was found
-     */
-    public final PayloadOutputEngine getOutputEngine(String type)
-    {
-        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-            DAQConnector dc = (DAQConnector) iter.next();
-            if (dc.isOutput()) {
-                if (dc.getType().equals(type)) {
-                    return ((DAQOutputConnector) dc).getOutputEngine();
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Get a splicer.
-     *
-     * @param type splicer type
-     *
-     * @return <tt>null</tt> if no matching splicer was found
-     */
-    public final Splicer getSplicer(String type)
-    {
-        for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-            DAQConnector dc = (DAQConnector) iter.next();
-            if (dc.isSplicer()) {
-                if (dc.getType().equals(type)) {
-                    return ((DAQSplicer) dc).getSplicer();
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Get current state.
      *
      * @return current state
@@ -1441,6 +1410,13 @@ public abstract class DAQComponent
 
         return stateTask.getStateString();
     }
+
+    /**
+     * Return this component's version id.
+     *
+     * @return version id string
+     */
+    public abstract String getVersionInfo();
 
     /**
      * Handle a command-line option.
@@ -1526,16 +1502,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Register output engine observer.
-     *
-     * @param outputHack output engine observer
-     */
-    public final void registerOutputHack(DAQOutputHack outputHack)
-    {
-        this.outputHack = outputHack;
-    }
-
-    /**
      * Reset the component back to the idle state, doing any necessary cleanup.
      *
      * @throws DAQCompException if the component cannot be reset
@@ -1617,6 +1583,17 @@ public abstract class DAQComponent
     }
 
     /**
+     * Set the component ID assigned by the server.
+     * This should only be called by DAQCompServer.
+     *
+     * @param id assigned ID
+     */
+    final void setId(int id)
+    {
+        this.id = id;
+    }
+
+    /**
      * Set the log level for this component.
      *
      * @param level new log level
@@ -1633,17 +1610,6 @@ public abstract class DAQComponent
      */
     public void setMaxFileSize(long maxFileSize) {
         // Override me!
-    }
-
-    /**
-     * Set the component ID assigned by the server.
-     * This should only be called by DAQCompServer.
-     *
-     * @param id assigned ID
-     */
-    final void setId(int id)
-    {
-        this.id = id;
     }
 
     /**
@@ -1664,9 +1630,22 @@ public abstract class DAQComponent
     public final void start()
         throws DAQCompException
     {
+        start(true);
+    }
+
+    /**
+     * Start background threads.
+     *
+     * @param startMBeanAgent if <tt>false</tt>, do not start MBean server
+     *
+     * @throws DAQCompException if input server cannot be started
+     */
+    public final void start(boolean startMBeanAgent)
+        throws DAQCompException
+    {
         DAQCompException compEx = null;
 
-        if (mbeanAgent != null) {
+        if (startMBeanAgent && mbeanAgent != null) {
             try {
                 mbeanAgent.start();
             } catch (MBeanAgentException mae) {
@@ -1879,19 +1858,10 @@ public abstract class DAQComponent
     }
 
     /**
-     * Return this component's svn version info a HashMap.
+     * Debugging string.
      *
-     * This method should be overridden in the derived component
-     * class, otherwise this will return the version info for this
-     * base class file.
-     *
-     * @return svn version info as an array of 2 strings
+     * @return debugging string
      */
-    public HashMap getVersionInfo()
-    {
-	return SVN_VER_INFO;
-    }
-
     public String toString()
     {
         StringBuffer buf = new StringBuffer(name);

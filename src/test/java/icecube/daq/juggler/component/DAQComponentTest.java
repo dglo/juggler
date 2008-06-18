@@ -1,29 +1,23 @@
 package icecube.daq.juggler.component;
 
-import icecube.daq.common.DAQComponentObserver;
-
 import icecube.daq.io.DAQComponentInputProcessor;
+import icecube.daq.io.DAQComponentObserver;
 import icecube.daq.io.DAQComponentOutputProcess;
+import icecube.daq.io.OutputChannel;
 import icecube.daq.io.PayloadReceiveChannel;
 import icecube.daq.io.PayloadTransmitChannel;
-
 import icecube.daq.juggler.test.LoggingCase;
-
 import icecube.daq.payload.IByteBufferCache;
 
 import java.io.IOException;
-
 import java.net.ServerSocket;
-
 import java.nio.ByteBuffer;
-
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.WritableByteChannel;
-
 import java.util.Iterator;
 
 import junit.framework.Test;
@@ -324,7 +318,17 @@ class MockOutputEngine
         running = false;
     }
 
+    public OutputChannel getChannel()
+    {
+        throw new Error("Unimplemented");
+    }
+
     public String getPresentState()
+    {
+        throw new Error("Unimplemented");
+    }
+
+    public long[] getRecordsSent()
     {
         throw new Error("Unimplemented");
     }
@@ -457,6 +461,11 @@ class MiniComponent
     {
         super(name, num);
     }
+
+    public String getVersionInfo()
+    {
+        return "$Id$";
+    }
 }
 
 class MockComponent
@@ -495,6 +504,11 @@ class MockComponent
     public void disconnected()
     {
         calledDisconnected = true;
+    }
+
+    public String getVersionInfo()
+    {
+        return "$Id$";
     }
 
     public void stopEnginesWhenStopping()

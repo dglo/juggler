@@ -1,15 +1,11 @@
 package icecube.daq.juggler.mbean;
 
-import icecube.daq.juggler.mbean.MBeanAgent;
-import icecube.daq.juggler.mbean.MBeanAgentException;
-
 import icecube.daq.juggler.test.LoggingCase;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -19,7 +15,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.apache.xmlrpc.XmlRpcException;
-
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
@@ -45,10 +40,31 @@ public class MBeanAgentTest
         try {
             url = new URL(urlStr);
         } catch (MalformedURLException mue) {
-            throw new IOException("Couldn't connect to <" + urlStr + ">");
+            throw new IOException("Invalid URL <" + urlStr + ">");
         }
 
-        InputStream urlStream = url.openStream();
+        int connectAttempts = 0;
+        InputStream urlStream = null;
+        while (true) {
+            try {
+                urlStream = url.openStream();
+                break;
+            } catch (Exception ex) {
+                connectAttempts++;
+                if (connectAttempts > 5) {
+                    throw new Error("Could not connect to MBean agent at <" +
+                                    url + ">", ex);
+                }
+
+                urlStream = null;
+            }
+
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ie) {
+                // ignore interrupts
+            }
+        }
         BufferedReader in =
             new BufferedReader(new InputStreamReader(urlStream));
 

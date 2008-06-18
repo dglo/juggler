@@ -3,11 +3,8 @@ package icecube.daq.juggler.mbean;
 import com.sun.jdmk.comm.HtmlAdaptorServer;
 
 import java.io.IOException;
-
 import java.lang.management.ManagementFactory;
-
 import java.net.ServerSocket;
-
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -145,9 +142,8 @@ public class MBeanAgent
     {
         int port;
 
-        ServerSocket ss;
         try {
-            ss = new ServerSocket();
+            ServerSocket ss = new ServerSocket();
             ss.setReuseAddress(true);
             ss.bind(null);
             port = ss.getLocalPort();
@@ -387,7 +383,6 @@ public class MBeanAgent
         htmlAdapter.stop();
         xmlRpcAdapter.stop();
 
-        int num = 0;
         while (htmlAdapter.getState() == htmlAdapter.STOPPING &&
                !xmlRpcAdapter.isStopped())
         {
@@ -396,7 +391,6 @@ public class MBeanAgent
             } catch (InterruptedException ie) {
                 // ignore interrupts
             }
-            num++;
         }
 
         unregisterBeans();

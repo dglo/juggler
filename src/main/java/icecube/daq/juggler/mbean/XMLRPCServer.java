@@ -1,9 +1,7 @@
 package icecube.daq.juggler.mbean;
 
 import java.io.IOException;
-
 import java.lang.reflect.Array;
-
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -20,13 +18,10 @@ import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.xmlrpc.XmlRpcException;
-
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
-
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**
@@ -40,7 +35,6 @@ class XMLRPCServer
 
     private static ObjectName delegateName;
 
-    private ObjectName name;
     private MBeanServer server;
 
     private int port = Integer.MIN_VALUE;
@@ -107,7 +101,7 @@ class XMLRPCServer
         }
 
         if (val.getClass().isArray()) {
-            return fixArray((Object )val);
+            return fixArray((Object) val);
         } else if (val instanceof Byte) {
             return new Integer(((Byte) val).intValue());
         } else if (val instanceof Character) {
@@ -370,7 +364,6 @@ class XMLRPCServer
 
     public ObjectName preRegister(MBeanServer server, ObjectName name)
     {
-        this.name = name;
         this.server = server;
 
         return name;

@@ -1,7 +1,6 @@
 package icecube.daq.juggler.mbean;
 
 import java.lang.reflect.Method;
-
 import java.util.HashMap;
 
 import javax.management.Attribute;
@@ -91,7 +90,7 @@ public class MBeanWrapper
                 attrs[i] = new MBeanAttributeInfo(methodNames[i],
                                                   methodNames[i],
                                                   method, null);
-                
+
             } catch (IntrospectionException ie) {
                 final String errMsg = "Couldn't build attribute " +
                     methodNames[i] + " info for " +

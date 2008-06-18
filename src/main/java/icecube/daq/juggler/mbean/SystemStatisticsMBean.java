@@ -7,6 +7,6 @@ import java.util.HashMap;
  */
 public interface SystemStatisticsMBean
 {
-    public double[] getLoadAverage();
-    public HashMap getAvailableDiskSpace();
+    double[] getLoadAverage();
+    HashMap getAvailableDiskSpace();
 }

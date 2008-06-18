@@ -4,12 +4,10 @@ import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.DAQLogHandler;
 import icecube.daq.log.LoggingOutputStream;
-
 import icecube.daq.util.FlasherboardConfiguration;
 
 import java.io.IOException;
 import java.io.PrintStream;
-
 import java.net.BindException;
 import java.net.ConnectException;
 import java.net.InetAddress;
@@ -18,12 +16,10 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -31,22 +27,16 @@ import java.util.logging.StreamHandler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.commons.logging.impl.Log4JLogger;
-
 import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
-
 import org.apache.xmlrpc.XmlRpcException;
-
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
-
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
-
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**
@@ -872,35 +862,54 @@ public class DAQCompServer
                     String addrStr = args[i];
                     int ic = addrStr.indexOf(':');
                     int il = addrStr.indexOf(',');
-                    if (ic < 0 || il < 0) {
+                    if (ic < 0 && il < 0) {
                         System.err.println("Bad log argument '" +
                                            addrStr + "'");
                         usage = true;
                         break;
                     }
 
-                    String logHost  = addrStr.substring(0, ic);
-                    String portStr  = addrStr.substring(ic + 1, il);
-                    String levelStr = addrStr.substring(il+1);
+                    String levelStr;
+                    if (il < 0) {
+                        levelStr = "ERROR";
+                        il = addrStr.length();
+                    } else {
+                        levelStr = addrStr.substring(il+1);
+                    }
 
                     Level logLevel = getLogLevel(levelStr);
                     if(logLevel == null) {
                         System.err.println("Bad log level: '"+levelStr+"'");
                         usage = true;
                         break;
-                    } 
+                    }
                     comp.setLogLevel(logLevel);
 
+                    String logHost;
                     int logPort;
-                    try {
-                        logPort =
-                            Integer.parseInt(portStr);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Bad log port '" +
-                                           portStr + "' in '" +
-                                           addrStr + "'");
-                        usage = true;
-                        break;
+
+                    if (ic < 0) {
+                        logHost = null;
+                        logPort = 0;
+                    } else {
+                        if (ic == 0) {
+                            logHost = "localhost";
+                        } else {
+                            logHost = addrStr.substring(0, ic);
+                        }
+
+                        String portStr  = addrStr.substring(ic + 1, il);
+
+                        try {
+                            logPort =
+                                Integer.parseInt(portStr);
+                        } catch (NumberFormatException e) {
+                            System.err.println("Bad log port '" +
+                                               portStr + "' in '" +
+                                               addrStr + "'");
+                            usage = true;
+                            break;
+                        }
                     }
 
                     try {
@@ -917,6 +926,7 @@ public class DAQCompServer
                                            "'");
                         usage = true;
                     }
+
                     break;
                 case 's':
                     i++;
@@ -942,9 +952,7 @@ public class DAQCompServer
                     }
                     break;
                 }
-            } else if (args[i].length() == 0) {
-                // ignore empty arguments
-            } else {
+            } else if (args[i].length() > 0) {
                 System.err.println("Unknown argument '" + args[i] + "'");
                 usage = true;
             }
@@ -1131,8 +1139,12 @@ public class DAQCompServer
         if (defaultLogConfig == null ||
             !defaultLogConfig.matches(logIP, logPort, logLevel))
         {
-            defaultLogConfig = new LoggingConfiguration(logIP, logPort,
-                                                        logLevel);
+            if (logIP == null) {
+                defaultLogConfig = new LoggingConfiguration(logLevel);
+            } else {
+                defaultLogConfig = new LoggingConfiguration(logIP, logPort,
+                                                            logLevel);
+            }
         }
     }
 
@@ -1331,7 +1343,7 @@ public class DAQCompServer
      *
      * @throws DAQCompException if component does not exist
      */
-    public HashMap getVersionInfo()
+    public String getVersionInfo()
         throws DAQCompException
     {
         if (comp == null) {
