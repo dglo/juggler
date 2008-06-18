@@ -3,8 +3,12 @@ package icecube.daq.juggler.mbean;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +40,13 @@ public class SystemStatistics
     private Pattern dfPat =
         Pattern.compile("^\\s*(\\S+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)" +
                         "\\s+(\\d+)%\\s+(\\S+)\\s*$");
+
+    /** Network IO reading stuff */
+    private static String PNDfilename = "/proc/net/dev";
+    private BufferedReader PNDreader = null;
+    private Pattern barPattern   = Pattern.compile("\\|");
+    private Pattern dataPattern  = Pattern.compile("[:\\s]+");
+    private Pattern spacePattern = Pattern.compile("\\s+");
 
     /**
      * Simple constructor.
@@ -171,6 +182,89 @@ public class SystemStatistics
         return map;
     }
 
+
+    /**
+     * Get infomation on current network IO
+     *
+     * @return TreeMap of network IO name/value stats
+     */
+    public TreeMap<String, Long> getNetworkIO()
+    {
+        TreeMap<String, Long> map = null;
+        boolean past_header = false;
+        String line = null;
+        String header[];
+        String rx_headers[] = null;
+        String tx_headers[] = null;
+        String data[];
+
+        // Network IO reading set-up
+        try {
+            PNDreader = new BufferedReader(new FileReader(PNDfilename));
+        } catch (FileNotFoundException fnfe) {
+            LOG.error("Couldn't open " + PNDfilename + " on OS: " +
+                      System.getProperty("os.name"));
+        }
+
+        while (true) {
+            try {
+                line = PNDreader.readLine();
+            } catch (IOException ioe) {
+                LOG.error("Problem reading io stats: " + ioe);
+            }
+
+            if (line == null) { // End of output
+                break;
+            }
+
+            // Parse header looking for RX and TX headers
+            if (!past_header) {
+                if (line.startsWith("Inter-|")) {
+                    continue;
+                } else if (line.startsWith(" face |")) {
+                    header = barPattern.split(line);
+                    rx_headers = spacePattern.split(header[1]);
+                    tx_headers = spacePattern.split(header[2]);
+                } else {
+                    LOG.error("Bogus " + PNDfilename + "  line: \"" + line + "\"");
+                }
+                past_header = true;
+                continue;
+            }
+
+            if (map == null) {
+                map = new TreeMap<String, Long>();
+            }
+            data = dataPattern.split(line.trim());
+            String iface = data[0];  // one interface per line
+            int rx_i;
+            int tx_i;
+            // The recieve data for this interface
+            for(rx_i = 0; rx_i < rx_headers.length; rx_i++) {
+                try {
+                    map.put(iface + "_rx_" + rx_headers[rx_i],
+                            new Long(data[rx_i + 1]));
+                } catch (NumberFormatException nfe) {
+                    LOG.error("NumberFormatException from " + PNDfilename +
+                              " line: " + nfe.getMessage());
+                }
+            }
+            // The transmit data for this interface
+            for(tx_i = 0; tx_i < tx_headers.length; tx_i++) {
+                try {
+                    map.put(iface + "_tx_" + tx_headers[tx_i],
+                            new Long(data[rx_i + tx_i + 1]));
+                } catch (NumberFormatException nfe) {
+                    LOG.error("NumberFormatException from " + PNDfilename +
+                              " line: " + nfe.getMessage());
+                }
+            }
+        }
+
+        return map;
+    }
+
+
     /**
      * Return description of current statistics.
      *
@@ -214,6 +308,42 @@ public class SystemStatistics
             dfStr = buf.toString();
         }
 
-        return loadStr + dfStr;
+        TreeMap<String, Long> ioMap = getNetworkIO();
+        String ioStr;
+        if (ioMap == null || ioMap.size() == 0) {
+            ioStr = "";
+        } else {
+            StringBuffer buf = new StringBuffer();
+
+            Iterator<String> iter = ioMap.keySet().iterator();
+            while (iter.hasNext()) {
+                String ioStat = iter.next();
+                Long ioData = ioMap.get(ioStat);
+                buf.append(String.format("\n%s=%d", ioStat, ioData));
+            }
+            ioStr = buf.toString();
+        }
+
+        return loadStr + dfStr + ioStr;
     }
+
+    /**
+     * This is intended for unit testing
+     */
+    public static void main(String[] args) {
+        System.out.println("SystemStats: in");
+        SystemStatistics ss = new SystemStatistics();
+
+        System.out.println(ss);
+        for (int i = 0; i < 5; i++) {
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException ie) {
+                break;
+            }
+            System.out.println(ss);
+        }
+        System.out.println("SystemStatistics: out");
+    }
+
 }
