@@ -188,9 +188,9 @@ public class SystemStatistics
      *
      * @return TreeMap of network IO name/value stats
      */
-    public TreeMap<String, Long> getNetworkIO()
+    public TreeMap getNetworkIO()
     {
-        TreeMap<String, Long> map = null;
+        TreeMap map = null;
         boolean past_header = false;
         String line = null;
         String header[];
@@ -233,7 +233,7 @@ public class SystemStatistics
             }
 
             if (map == null) {
-                map = new TreeMap<String, Long>();
+                map = new TreeMap();
             }
             data = dataPattern.split(line.trim());
             String iface = data[0];  // one interface per line
@@ -243,7 +243,7 @@ public class SystemStatistics
             for(rx_i = 0; rx_i < rx_headers.length; rx_i++) {
                 try {
                     map.put(iface + "_rx_" + rx_headers[rx_i],
-                            new Long(data[rx_i + 1]));
+                            Long.parseLong(data[rx_i + 1]));
                 } catch (NumberFormatException nfe) {
                     LOG.error("NumberFormatException from " + PNDfilename +
                               " line: " + nfe.getMessage());
@@ -253,7 +253,7 @@ public class SystemStatistics
             for(tx_i = 0; tx_i < tx_headers.length; tx_i++) {
                 try {
                     map.put(iface + "_tx_" + tx_headers[tx_i],
-                            new Long(data[rx_i + tx_i + 1]));
+                            Long.parseLong(data[rx_i + tx_i + 1]));
                 } catch (NumberFormatException nfe) {
                     LOG.error("NumberFormatException from " + PNDfilename +
                               " line: " + nfe.getMessage());
@@ -308,17 +308,17 @@ public class SystemStatistics
             dfStr = buf.toString();
         }
 
-        TreeMap<String, Long> ioMap = getNetworkIO();
+        TreeMap ioMap = getNetworkIO();
         String ioStr;
         if (ioMap == null || ioMap.size() == 0) {
             ioStr = "";
         } else {
             StringBuffer buf = new StringBuffer();
 
-            Iterator<String> iter = ioMap.keySet().iterator();
+            Iterator iter = ioMap.keySet().iterator();
             while (iter.hasNext()) {
-                String ioStat = iter.next();
-                Long ioData = ioMap.get(ioStat);
+                String ioStat = (String) iter.next();
+                Long ioData = (Long) ioMap.get(ioStat);
                 buf.append(String.format("\n%s=%d", ioStat, ioData));
             }
             ioStr = buf.toString();

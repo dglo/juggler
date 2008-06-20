@@ -2,6 +2,7 @@ package icecube.daq.juggler.mbean;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -85,6 +86,14 @@ class XMLRPCServer
         return newArray;
     }
 
+    private static AbstractMap fixMap(AbstractMap map) {
+
+        for(Object key : map.keySet()) {
+            map.put(key, fixValue(map.get(key)));
+        }
+        return map;
+    }
+
     private static Object fixAttribute(Object obj)
     {
         if (obj == null || !(obj instanceof Attribute)) {
@@ -110,16 +119,26 @@ class XMLRPCServer
         } else if (val instanceof Short) {
             return new Integer(((Short) val).intValue());
         } else if (val instanceof Long) {
+            LOG.error("ksb - long val is: " + val);
             long lVal = ((Long) val).longValue();
             if (lVal < (long) Integer.MIN_VALUE ||
                 lVal > (long) Integer.MAX_VALUE)
             {
-                return val.toString();
+                StringBuilder ret = (new StringBuilder()).append(val).append('L');
+                LOG.error("ksb - returning String: " + ret);
+                return ret.toString();
             }
 
+            LOG.error("ksb - returning Integer: " + new Integer((int) lVal));
             return new Integer((int) lVal);
         } else if (val instanceof Float) {
             return new Double(((Float) val).doubleValue());
+        } else if (val instanceof AbstractMap) {
+            LOG.error("ksb - this map: " + val);
+            (new Throwable("ksb")).printStackTrace();
+            AbstractMap retMap = fixMap((AbstractMap) val);
+            LOG.error("ksb - that map: " + retMap);
+            return retMap;
         }
 
         return val;
