@@ -119,26 +119,18 @@ class XMLRPCServer
         } else if (val instanceof Short) {
             return new Integer(((Short) val).intValue());
         } else if (val instanceof Long) {
-            LOG.error("ksb - long val is: " + val);
             long lVal = ((Long) val).longValue();
             if (lVal < (long) Integer.MIN_VALUE ||
                 lVal > (long) Integer.MAX_VALUE)
             {
-                StringBuilder ret = (new StringBuilder()).append(val).append('L');
-                LOG.error("ksb - returning String: " + ret);
-                return ret.toString();
+                return val.toString();
             }
 
-            LOG.error("ksb - returning Integer: " + new Integer((int) lVal));
             return new Integer((int) lVal);
         } else if (val instanceof Float) {
             return new Double(((Float) val).doubleValue());
         } else if (val instanceof AbstractMap) {
-            LOG.error("ksb - this map: " + val);
-            (new Throwable("ksb")).printStackTrace();
-            AbstractMap retMap = fixMap((AbstractMap) val);
-            LOG.error("ksb - that map: " + retMap);
-            return retMap;
+            return fixMap((AbstractMap) val);
         }
 
         return val;

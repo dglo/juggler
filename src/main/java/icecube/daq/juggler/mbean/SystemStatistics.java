@@ -188,9 +188,9 @@ public class SystemStatistics
      *
      * @return TreeMap of network IO name/value stats
      */
-    public TreeMap getNetworkIO()
+    public TreeMap<String, String> getNetworkIO()
     {
-        TreeMap map = null;
+        TreeMap<String, String> map = null;
         boolean past_header = false;
         String line = null;
         String header[];
@@ -204,6 +204,7 @@ public class SystemStatistics
         } catch (FileNotFoundException fnfe) {
             LOG.error("Couldn't open " + PNDfilename + " on OS: " +
                       System.getProperty("os.name"));
+            return null;
         }
 
         while (true) {
@@ -226,14 +227,15 @@ public class SystemStatistics
                     rx_headers = spacePattern.split(header[1]);
                     tx_headers = spacePattern.split(header[2]);
                 } else {
-                    LOG.error("Bogus " + PNDfilename + "  line: \"" + line + "\"");
+                    LOG.error("Bogus " + PNDfilename +
+                              "  line: \"" + line + "\"");
                 }
                 past_header = true;
                 continue;
             }
 
             if (map == null) {
-                map = new TreeMap();
+                map = new TreeMap<String, String>();
             }
             data = dataPattern.split(line.trim());
             String iface = data[0];  // one interface per line
@@ -241,23 +243,12 @@ public class SystemStatistics
             int tx_i;
             // The recieve data for this interface
             for(rx_i = 0; rx_i < rx_headers.length; rx_i++) {
-                try {
-                    map.put(iface + "_rx_" + rx_headers[rx_i],
-                            Long.parseLong(data[rx_i + 1]));
-                } catch (NumberFormatException nfe) {
-                    LOG.error("NumberFormatException from " + PNDfilename +
-                              " line: " + nfe.getMessage());
-                }
+                map.put(iface + "_rx_" + rx_headers[rx_i], data[rx_i + 1]);
             }
             // The transmit data for this interface
             for(tx_i = 0; tx_i < tx_headers.length; tx_i++) {
-                try {
-                    map.put(iface + "_tx_" + tx_headers[tx_i],
-                            Long.parseLong(data[rx_i + tx_i + 1]));
-                } catch (NumberFormatException nfe) {
-                    LOG.error("NumberFormatException from " + PNDfilename +
-                              " line: " + nfe.getMessage());
-                }
+                map.put(iface + "_tx_" + tx_headers[tx_i],
+                        data[rx_i + tx_i + 1]);
             }
         }
 
@@ -278,8 +269,8 @@ public class SystemStatistics
         if (loadAvg == null || loadAvg.length != 3) {
             loadStr = "";
         } else {
-            loadStr = String.format("load[%f, %f, %f]", loadAvg[0], loadAvg[1],
-                                    loadAvg[2]);
+            loadStr = String.format("load: [%f, %f, %f]\n", loadAvg[0],
+                                    loadAvg[1], loadAvg[2]);
         }
 
         HashMap dfMap = getAvailableDiskSpace();
@@ -288,40 +279,45 @@ public class SystemStatistics
         if (dfMap == null || dfMap.size() == 0) {
             dfStr = "";
         } else {
-            StringBuffer buf = new StringBuffer();
+            StringBuffer buf = new StringBuffer("space: {");
 
-            boolean needComma = loadStr.length() > 0;
+            boolean needComma = false;
             Iterator iter = dfMap.keySet().iterator();
             while (iter.hasNext()) {
                 String mountPt = (String) iter.next();
 
                 if (needComma) {
-                    buf.append(',');
+                    buf.append(", ");
                 }
 
                 Integer avail = (Integer) dfMap.get(mountPt);
-                buf.append(String.format("%s[%d]", mountPt,
+                buf.append(String.format("%s: %d", mountPt,
                                          avail.longValue()));
                 needComma = true;
             }
 
-            dfStr = buf.toString();
+            dfStr = buf.append("}\n").toString();
         }
 
-        TreeMap ioMap = getNetworkIO();
+        TreeMap<String, String> ioMap = getNetworkIO();
         String ioStr;
         if (ioMap == null || ioMap.size() == 0) {
             ioStr = "";
         } else {
-            StringBuffer buf = new StringBuffer();
+            StringBuffer buf = new StringBuffer("network: {");
 
-            Iterator iter = ioMap.keySet().iterator();
+            boolean needComma = false;
+            Iterator<String> iter = ioMap.keySet().iterator();
             while (iter.hasNext()) {
-                String ioStat = (String) iter.next();
-                Long ioData = (Long) ioMap.get(ioStat);
-                buf.append(String.format("\n%s=%d", ioStat, ioData));
+                String ioStat = iter.next();
+                String ioData = ioMap.get(ioStat);
+                if (needComma) {
+                    buf.append(", ");
+                }
+                buf.append(String.format("%s: %s", ioStat, ioData));
+                needComma = true;
             }
-            ioStr = buf.toString();
+            ioStr = buf.append("}\n").toString();
         }
 
         return loadStr + dfStr + ioStr;
