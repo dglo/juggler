@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 2947 2008-04-18 19:47:01Z dglo $
+ * @version $Id: DAQComponent.java 3439 2008-09-02 17:08:41Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -1686,9 +1686,10 @@ public abstract class DAQComponent
                 try {
                     conn.startServer(getByteBufferCache(conn.getType()));
 
-                    LOG.info(name + "#" + num + ":" +
-                             conn.getType() + " listening on port " +
-                             conn.getPort());
+                    if (LOG.isInfoEnabled()) {
+                        LOG.info(name + "#" + num + ":" + conn.getType() +
+                                 " listening on port " + conn.getPort());
+                    }
                 } catch (IOException ioe) {
                     compEx = new DAQCompException("Couldn't start " + name +
                                                   "#" + num + ":" +

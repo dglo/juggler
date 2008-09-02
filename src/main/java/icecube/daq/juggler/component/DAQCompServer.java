@@ -1055,7 +1055,9 @@ public class DAQCompServer
         throws DAQCompException
     {
         WebServer webServer = startServer();
-        LOG.info("XML-RPC on port " + webServer.getPort());
+        if (LOG.isInfoEnabled()) {
+            LOG.info("XML-RPC on port " + webServer.getPort());
+        }
 
         try {
             XmlRpcClient client = buildClient(cfgServerURL);
