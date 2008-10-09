@@ -1,5 +1,6 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.common.IDAQAppender;
 import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.DAQLogHandler;
@@ -17,9 +18,9 @@ import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -105,6 +106,13 @@ class LoggingConfiguration
         }
     }
 
+    LoggingConfiguration(Appender appender, Handler handler, Level logLevel)
+    {
+        this.logLevel = logLevel;
+        this.appender = appender;
+        this.handler = handler;
+    }
+
     void configure()
     {
         BasicConfigurator.resetConfiguration();
@@ -165,12 +173,12 @@ class LoggingConfiguration
             return (host == null || host.length() == 0 || port <= 0);
         }
 
-        DAQLogAppender daqLogAppender = (DAQLogAppender) appender;
-        if (!daqLogAppender.isConnected(host, port)) {
+        IDAQAppender daqApp = (IDAQAppender) appender;
+        if (!daqApp.isConnected(host, port)) {
             return false;
         }
 
-        if (!daqLogAppender.getLevel().equals(logLevel)) {
+        if (!daqApp.getLevel().equals(logLevel)) {
             return false;
         }
 
@@ -226,40 +234,17 @@ public class DAQCompServer
     /** default logging configuration. */
     private static LoggingConfiguration defaultLogConfig;
 
+    /** if <tt>true</tt>, show spinners */
+    private static boolean showSpinner;
+
     /** URL of configuration server */
     private URL configURL;
-
-    /** if <tt>true</tt>, show spinners */
-    private boolean showSpinner;
 
     /**
      * XML-RPC stub
      */
     public DAQCompServer()
     {
-    }
-
-    /**
-     * Wrap a DAQ component.
-     *
-     * @param comp component being wrapped
-     * @param configURL configuration server URL
-     *
-     * @throws DAQCompException if there is a problem
-     */
-    public DAQCompServer(DAQComponent comp, URL configURL)
-        throws DAQCompException
-    {
-        this.comp = comp;
-        this.configURL = configURL;
-
-        comp.start();
-
-        try {
-            runEverything(comp, configURL);
-        } finally {
-            comp.destroy();
-        }
     }
 
     /**
@@ -276,17 +261,11 @@ public class DAQCompServer
         this.comp = comp;
 
         comp.setLogLevel(Level.INFO);
-        processArgs(comp, args);
+        if (!processArgs(comp, args)) {
+            System.exit(1);
+        }
 
         resetLoggingConfiguration();
-
-        comp.start();
-
-        try {
-            runEverything(comp, configURL);
-        } finally {
-            comp.destroy();
-        }
     }
 
     /**
@@ -500,23 +479,23 @@ public class DAQCompServer
     public String connect(Object[] objList)
         throws DAQCompException, IOException
     {
-        if (objList == null || objList.length == 0) {
-            throw new DAQCompException("Empty/null list of connections");
-        }
-
         if (comp == null) {
             throw new DAQCompException("Component not found");
         }
 
+        if (objList == null || objList.length == 0) {
+            throw new DAQCompException("Empty/null list of connections");
+        }
+
         Connection[] connList = new Connection[objList.length];
         for (int i = 0; i < objList.length; i++) {
-            if (!(objList[i] instanceof HashMap)) {
+            if (!(objList[i] instanceof Map)) {
                 throw new DAQCompException("Unexpected connect element #" +
                                            i + ": " +
                                            objList[i].getClass().getName());
             }
 
-            HashMap map = (HashMap) objList[i];
+            Map map = (Map) objList[i];
 
             String type = (String) map.get("type");
             String compName = (String) map.get("compName");
@@ -641,6 +620,23 @@ public class DAQCompServer
         }
 
         return comp.getStateString();
+    }
+
+    /**
+     * XML-RPC method requesting the specified component's version information.
+     *
+     * @return <tt>a string containing the svn version info</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String getVersionInfo()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return comp.getVersionInfo();
     }
 
     /**
@@ -809,7 +805,7 @@ public class DAQCompServer
     /**
      * Process command-line arguments.
      */
-    private void processArgs(DAQComponent comp, String[] args)
+    private boolean processArgs(DAQComponent comp, String[] args)
     {
         boolean usage = false;
         for (int i = 0; i < args.length; i++) {
@@ -968,18 +964,19 @@ public class DAQCompServer
         }
 
         if (usage) {
-            System.err.println("java " + comp.getClass().getName() + " " +
-                               " [-M localMoniSeconds]" +
-                               " [-S(howSpinner)]" +
-                               " [-c configServerURL]" +
-                               " [-d dispatchDestPath]" +
-                               " [-g globalConfigPath]" +
-                               " [-l logAddress:logPort,logLevel]" +
-                               " [-s maxDispatchFileSize]" +
-                               comp.getOptionUsage() +
-                               "");
-            System.exit(1);
+            String usageMsg = "java " + comp.getClass().getName() + " " +
+                " [-M localMoniSeconds]" +
+                " [-S(howSpinner)]" +
+                " [-c configServerURL]" +
+                " [-d dispatchDestPath]" +
+                " [-g globalConfigPath]" +
+                " [-l logAddress:logPort,logLevel]" +
+                " [-s maxDispatchFileSize]" +
+                comp.getOptionUsage();
+            throw new IllegalArgumentException(usageMsg);
         }
+
+        return !usage;
     }
 
     /**
@@ -1044,6 +1041,38 @@ public class DAQCompServer
     }
 
     /**
+     * Reset the statically cached values.
+     * This is only meant for unit testing.
+     */
+    public static void resetStaticValues()
+    {
+        comp = null;
+        serverId = 0;
+        serverIdSet = false;
+        defaultLogConfig = null;
+        showSpinner = false;
+    }
+
+    /**
+     * Run the server.
+     */
+    public void startServing()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component has not been set");
+        }
+
+        comp.start();
+
+        try {
+            runEverything(comp, configURL);
+        } finally {
+            comp.destroy();
+        }
+    }
+
+    /**
      * Main loop for component.
      *
      * @param comp component being served
@@ -1085,8 +1114,8 @@ public class DAQCompServer
      * @param comp DAQ component being registered
      * @param port local port to which config server should connect
      */
-    private void sendAnnouncement(XmlRpcClient client, DAQComponent comp,
-                                  int port)
+    private static void sendAnnouncement(XmlRpcClient client, DAQComponent comp,
+                                         int port)
         throws DAQCompException
     {
         Spinner spinner;
@@ -1148,6 +1177,20 @@ public class DAQCompServer
                                                             logLevel);
             }
         }
+    }
+
+    /**
+     * Set the default logging configuration for unit testing.
+     *
+     * @param appender mock appender
+     * @param handler mock handler
+     * @param logLevel log level
+     */
+    public static void setDefaultLoggingConfiguration(Appender appender,
+                                                      Handler handler)
+    {
+        defaultLogConfig =
+            new LoggingConfiguration(appender, handler, Level.WARN);
     }
 
     /**
@@ -1287,6 +1330,10 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
+        if (rawData == null || rawData.size() == 0) {
+            throw new DAQCompException("Empty/null list of flashers");
+        }
+
         ArrayList<FlasherboardConfiguration> data =
             new ArrayList<FlasherboardConfiguration>();
 
@@ -1336,22 +1383,5 @@ public class DAQCompServer
 
         comp.stopRun();
         return "OK";
-    }
-
-    /**
-     * XML-RPC method requesting the specified component's version information.
-     *
-     * @return <tt>a string containing the svn version info</tt>
-     *
-     * @throws DAQCompException if component does not exist
-     */
-    public String getVersionInfo()
-        throws DAQCompException
-    {
-        if (comp == null) {
-            throw new DAQCompException("Component not found");
-        }
-
-        return comp.getVersionInfo();
     }
 }
