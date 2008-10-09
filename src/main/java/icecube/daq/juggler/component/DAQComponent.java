@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 3563 2008-10-09 16:55:40Z dglo $
+ * @version $Id: DAQComponent.java 3564 2008-10-09 16:57:43Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -198,11 +198,11 @@ public abstract class DAQComponent
         /**
          * Configure a component using the specified configuration name.
          *
-         * @param name configuration name
+         * @param cfgName configuration name
          *
          * @throws DAQCompException if the component is not in the correct state
          */
-        void configure(String name)
+        void configure(String cfgName)
             throws DAQCompException
         {
             if (state != STATE_CONNECTED && state != STATE_READY) {
@@ -212,7 +212,7 @@ public abstract class DAQComponent
             }
 
             synchronized (this) {
-                configName = name;
+                configName = cfgName;
                 changeState(STATE_CONFIGURING);
             }
         }
@@ -545,7 +545,7 @@ public abstract class DAQComponent
         /**
          * Flush buffer caches
          */
-        private final void flushCaches()
+        private void flushCaches()
         {
             Iterator iter = caches.values().iterator();
             while (iter.hasNext()) {
