@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 3439 2008-09-02 17:08:41Z dglo $
+ * @version $Id: DAQComponent.java 3563 2008-10-09 16:55:40Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -1077,18 +1077,7 @@ public abstract class DAQComponent
      */
     public final void addSplicer(Splicer splicer)
     {
-        addSplicer(splicer, true);
-    }
-
-    /**
-     * Add a splicer.
-     *
-     * @param splicer splicer
-     * @param needStart <tt>true</tt> if splicer should be started
-     */
-    public final void addSplicer(Splicer splicer, boolean needStart)
-    {
-        addConnector(new DAQSplicer(splicer, needStart));
+        addConnector(new DAQSplicer(splicer));
     }
 
     /**
