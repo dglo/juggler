@@ -259,11 +259,9 @@ public class DAQCompServer
         throws DAQCompException
     {
         this.comp = comp;
-
         comp.setLogLevel(Level.INFO);
-        if (!processArgs(comp, args)) {
-            System.exit(1);
-        }
+
+        processArgs(comp, args);
 
         resetLoggingConfiguration();
     }
@@ -805,7 +803,7 @@ public class DAQCompServer
     /**
      * Process command-line arguments.
      */
-    private boolean processArgs(DAQComponent comp, String[] args)
+    private void processArgs(DAQComponent comp, String[] args)
     {
         boolean usage = false;
         for (int i = 0; i < args.length; i++) {
@@ -975,8 +973,6 @@ public class DAQCompServer
                 comp.getOptionUsage();
             throw new IllegalArgumentException(usageMsg);
         }
-
-        return !usage;
     }
 
     /**
