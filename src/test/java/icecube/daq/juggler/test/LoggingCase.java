@@ -24,6 +24,11 @@ public class LoggingCase
         appender.clear();
     }
 
+    public MockAppender getAppender()
+    {
+        return appender;
+    }
+
     public Object getMessage(int idx)
     {
         return appender.getMessage(idx);
@@ -41,6 +46,11 @@ public class LoggingCase
 
         BasicConfigurator.resetConfiguration();
         BasicConfigurator.configure(appender);
+    }
+
+    public void setVerbose(boolean val)
+    {
+        appender.setVerbose(val);
     }
 
     protected void tearDown()
