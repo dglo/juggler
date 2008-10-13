@@ -2,6 +2,7 @@ package icecube.daq.juggler.mbean;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -85,6 +86,14 @@ class XMLRPCServer
         return newArray;
     }
 
+    private static AbstractMap fixMap(AbstractMap map) {
+
+        for(Object key : map.keySet()) {
+            map.put(key, fixValue(map.get(key)));
+        }
+        return map;
+    }
+
     private static Object fixAttribute(Object obj)
     {
         if (obj == null || !(obj instanceof Attribute)) {
@@ -120,6 +129,8 @@ class XMLRPCServer
             return new Integer((int) lVal);
         } else if (val instanceof Float) {
             return new Double(((Float) val).doubleValue());
+        } else if (val instanceof AbstractMap) {
+            return fixMap((AbstractMap) val);
         }
 
         return val;
