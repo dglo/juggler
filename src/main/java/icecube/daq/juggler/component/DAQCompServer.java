@@ -1311,6 +1311,7 @@ public class DAQCompServer
 
     /**
      * XML-RPC method requesting the specified component to start a subrun.
+     * Note that an empty list signals the end of the subrun.
      *
      * @param subrunNumber subrun number
      * @param rawData Python-formatted subrun data
@@ -1326,8 +1327,8 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
-        if (rawData == null || rawData.size() == 0) {
-            throw new DAQCompException("Empty/null list of flashers");
+        if (rawData == null) {
+            throw new DAQCompException("Null list of flashers");
         }
 
         ArrayList<FlasherboardConfiguration> data =

@@ -675,7 +675,7 @@ public class DAQCompServerTest
             fail("Should have failed due to null list");
         } catch (DAQCompException dce) {
             assertEquals("Unexpected exception",
-                         "Empty/null list of flashers", dce.getMessage());
+                         "Null list of flashers", dce.getMessage());
         }
     }
 
@@ -686,13 +686,15 @@ public class DAQCompServerTest
 
         MockServer srvr = new MockServer(mockComp, new String[0]);
 
-        try {
-            srvr.startSubrun(new ArrayList());
-            fail("Should have failed due to empty list");
-        } catch (DAQCompException dce) {
-            assertEquals("Unexpected exception",
-                         "Empty/null list of flashers", dce.getMessage());
-        }
+        long startTime = 0L;
+
+        String rtnVal;
+
+        rtnVal = srvr.startSubrun(new ArrayList());
+        assertEquals("Bad startSubrun() return value",
+                     Long.toString(startTime) + "L", rtnVal);
+        assertTrue("startSubrun() was not called",
+                   mockComp.wasStartSubrunCalled());
     }
 
     public void testStartSubrunListShort()
