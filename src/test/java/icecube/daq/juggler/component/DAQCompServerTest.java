@@ -1,5 +1,6 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.juggler.test.LogReader;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.juggler.test.MockCache;
 import icecube.daq.juggler.test.MockHandler;
@@ -15,6 +16,9 @@ import java.util.List;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 class MockServer
     extends DAQCompServer
@@ -39,6 +43,8 @@ class MockServer
 public class DAQCompServerTest
     extends LoggingCase
 {
+    private static final Log LOG = LogFactory.getLog(DAQCompServerTest.class);
+
     private MockHandler handler;
 
     public DAQCompServerTest(String name)
@@ -74,6 +80,24 @@ public class DAQCompServerTest
     public static Test suite()
     {
         return new TestSuite(DAQCompServerTest.class);
+    }
+
+    private void waitForLogMessages(LogReader logRdr)
+    {
+        for (int i = 0;
+             !logRdr.hasError() && !logRdr.isFinished() && i < 10;
+             i++)
+        {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ie) {
+                // ignore interrupts
+            }
+        }
+
+        if (logRdr.hasError()) fail(logRdr.getNextError());
+        assertEquals("Not all log messages were received from " + logRdr,
+                     0, logRdr.getNumberOfExpectedMessages());
     }
 
     public void testCommitSubrunNull()
@@ -504,7 +528,7 @@ public class DAQCompServerTest
         MockServer srvr = new MockServer();
 
         try {
-            srvr.logTo("xxx", 0);
+            srvr.logTo("xxx", 0, null, 0);
             fail("Should have failed due to null component");
         } catch (DAQCompException dce) {
             assertEquals("Unexpected exception",
@@ -512,7 +536,7 @@ public class DAQCompServerTest
         }
     }
 
-    public void testLogTo()
+    public void testLogToOld()
         throws DAQCompException, IOException
     {
         MockComponent mockComp = new MockComponent("tst", 0);
@@ -521,8 +545,139 @@ public class DAQCompServerTest
 
         String rtnVal;
 
-        rtnVal = srvr.logTo("localhost", 999);
+        rtnVal = srvr.logTo("localhost", 999, null, 0);
         assertEquals("Bad logTo() return value", "OK", rtnVal);
+    }
+
+    public void testLogToOldSocket()
+        throws DAQCompException, IOException
+    {
+        LogReader dfltLog = new LogReader("dflt");
+        LogReader runLog = new LogReader("run");
+
+        final String endResetMsg = "Logging has been reset";
+        final String startResetMsg = "Resetting logging";
+
+        boolean succeeded = false;
+        try {
+            MockComponent mockComp = new MockComponent("tst", 0);
+
+            MockServer srvr = new MockServer(mockComp, new String[0]);
+
+            dfltLog.addExpected(endResetMsg);
+
+            srvr.initializeLogging("localhost", dfltLog.getPort(), null, 0);
+
+            final String dfltMsg = "Test message";
+            dfltLog.addExpected(dfltMsg);
+            LOG.error(dfltMsg);
+            waitForLogMessages(dfltLog);
+            waitForLogMessages(runLog);
+
+            String rtnVal;
+
+            dfltLog.addExpected(startResetMsg);
+            runLog.addExpected(endResetMsg);
+
+            rtnVal = srvr.logTo("localhost", runLog.getPort(), null, 0);
+            assertEquals("Bad logTo() return value", "OK", rtnVal);
+
+            final String runMsg = "Another message";
+            runLog.addExpected(runMsg);
+            LOG.error(runMsg);
+            waitForLogMessages(dfltLog);
+            waitForLogMessages(runLog);
+
+            runLog.addExpected(startResetMsg);
+            dfltLog.addExpected(endResetMsg);
+
+            srvr.resetLogging();
+
+            final String finalMsg = "Final message";
+            dfltLog.addExpected(finalMsg);
+            LOG.error(finalMsg);
+            waitForLogMessages(runLog);
+            waitForLogMessages(dfltLog);
+            succeeded = true;
+        } finally {
+            dfltLog.close();
+            runLog.close();
+            if (!succeeded) {
+                clearMessages();
+            }
+        }
+    }
+
+    public void testLogToNew()
+        throws DAQCompException, IOException
+    {
+        MockComponent mockComp = new MockComponent("tst", 0);
+
+        MockServer srvr = new MockServer(mockComp, new String[0]);
+
+        String rtnVal;
+
+        rtnVal = srvr.logTo(null, 0, "localhost", 999);
+        assertEquals("Bad logTo() return value", "OK", rtnVal);
+    }
+
+    public void testLogToNewSocket()
+        throws DAQCompException, IOException
+    {
+        LogReader dfltLog = new LogReader("dflt", true);
+        LogReader runLog = new LogReader("run", true);
+
+        final String endResetMsg = "Logging has been reset";
+        final String startResetMsg = "Resetting logging";
+
+        boolean succeeded = false;
+        try {
+            MockComponent mockComp = new MockComponent("tst", 0);
+
+            MockServer srvr = new MockServer(mockComp, new String[0]);
+
+            dfltLog.addExpected(endResetMsg);
+
+            srvr.initializeLogging(null, 0, "localhost", dfltLog.getPort());
+
+            final String dfltMsg = "Test message";
+            dfltLog.addExpected(dfltMsg);
+            LOG.error(dfltMsg);
+            waitForLogMessages(dfltLog);
+            waitForLogMessages(runLog);
+
+            String rtnVal;
+
+            dfltLog.addExpected(startResetMsg);
+            runLog.addExpected(endResetMsg);
+
+            rtnVal = srvr.logTo(null, 0, "localhost", runLog.getPort());
+            assertEquals("Bad logTo() return value", "OK", rtnVal);
+
+            final String runMsg = "Another message";
+            runLog.addExpected(runMsg);
+            LOG.error(runMsg);
+            waitForLogMessages(dfltLog);
+            waitForLogMessages(runLog);
+
+            runLog.addExpected(startResetMsg);
+            dfltLog.addExpected(endResetMsg);
+
+            srvr.resetLogging();
+
+            final String finalMsg = "Final message";
+            dfltLog.addExpected(finalMsg);
+            LOG.error(finalMsg);
+            waitForLogMessages(runLog);
+            waitForLogMessages(dfltLog);
+            succeeded = true;
+        } finally {
+            dfltLog.close();
+            runLog.close();
+            if (!succeeded) {
+                clearMessages();
+            }
+        }
     }
 
     public void testPing()

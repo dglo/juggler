@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 3564 2008-10-09 16:57:43Z dglo $
+ * @version $Id: DAQComponent.java 3678 2008-12-02 15:11:08Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -207,7 +207,7 @@ public abstract class DAQComponent
         {
             if (state != STATE_CONNECTED && state != STATE_READY) {
                 throw new DAQCompException("Cannot configure component " +
-                                           name + "#" + num + " from state " +
+                                           getName() + " from state " +
                                            getStateString());
             }
 
@@ -226,8 +226,8 @@ public abstract class DAQComponent
             throws DAQCompException
         {
             if (state != STATE_IDLE) {
-                throw new DAQCompException("Cannot connect component " + name +
-                                           "#" + num + " from state " +
+                throw new DAQCompException("Cannot connect component " +
+                                           getName() + " from state " +
                                            getStateString());
             }
 
@@ -272,7 +272,7 @@ public abstract class DAQComponent
                 state != STATE_DISCONNECTING)
             {
                 throw new DAQCompException("Cannot disconnect component " +
-                                           name + "#" + num + " from state " +
+                                           getName() + " from state " +
                                            getStateString());
             }
 
@@ -300,7 +300,7 @@ public abstract class DAQComponent
                     !((DAQOutputConnector) dc).isConnected())
                 {
                     state = STATE_IDLE;
-                    throw new DAQCompException("Component " + name + "#" + num +
+                    throw new DAQCompException("Component " + getName() +
                                                " has unconnected " +
                                                dc.getType() + " output");
                 }
@@ -320,8 +320,8 @@ public abstract class DAQComponent
                     DAQConnector dc = (DAQConnector) iter.next();
                     if (dc.isOutput() && list[i].matches(dc.getType())) {
                         if (conn != null) {
-                            final String errMsg = "Component " + name + "#" +
-                                num + " has multiple " + list[i].getType() +
+                            final String errMsg = "Component " + getName() +
+                                " has multiple " + list[i].getType() +
                                 " outputs";
 
                             compEx = new DAQCompException(errMsg);
@@ -332,8 +332,8 @@ public abstract class DAQComponent
                         if (conn.isConnected() &&
                             !conn.allowMultipleConnections())
                         {
-                            final String errMsg = "Component " + name + "#" +
-                                num + " output " + list[i].getType() +
+                            final String errMsg = "Component " + getName() +
+                                " output " + list[i].getType() +
                                 " is already connected";
 
                             compEx = new DAQCompException(errMsg);
@@ -343,8 +343,8 @@ public abstract class DAQComponent
                 }
 
                 if (conn == null) {
-                    compEx = new DAQCompException("Component " + name + "#" +
-                                                  num + " does not contain " +
+                    compEx = new DAQCompException("Component " + getName() +
+                                                  " does not contain " +
                                                   list[i].getType() +
                                                   " output");
                     break;
@@ -387,8 +387,8 @@ public abstract class DAQComponent
                 try {
                     conn.destroy();
                 } catch (Exception ex) {
-                    compEx = new DAQCompException("Couldn't destroy " + name +
-                                                  "#" + num + ":" +
+                    compEx = new DAQCompException("Couldn't destroy " +
+                                                  getName() + ":" +
                                                   conn.getType(), ex);
                 }
             }
@@ -462,7 +462,7 @@ public abstract class DAQComponent
                     conn.forcedStopProcessing();
                 } catch (Exception ex) {
                     compEx = new DAQCompException("Couldn't force stop " +
-                                                  name + "#" + num + ":" +
+                                                  getName() + ":" +
                                                   conn.getType(), ex);
                 }
             }
@@ -569,13 +569,27 @@ public abstract class DAQComponent
                 state != STATE_FORCING_STOP)
             {
                 throw new DAQCompException("Cannot force-stop component " +
-                                           name + "#" + num + " from state " +
+                                           getName() + " from state " +
                                            getStateString());
             }
 
             synchronized (this) {
                 changeState(STATE_FORCING_STOP);
             }
+        }
+
+        /**
+         * Get component name.
+         *
+         * @return name
+         */
+        public String getName()
+        {
+            if (num == 0 && !name.endsWith("Hub")) {
+                return name;
+            }
+
+            return name + "#" + num;
         }
 
         /**
@@ -820,8 +834,8 @@ public abstract class DAQComponent
             throws DAQCompException
         {
             if (state != STATE_READY) {
-                throw new DAQCompException("Cannot start component " + name +
-                                           "#" + num + " from state " +
+                throw new DAQCompException("Cannot start component " +
+                                           getName() + " from state " +
                                            getStateString());
             }
 
@@ -849,8 +863,8 @@ public abstract class DAQComponent
         {
             if (state != STATE_READY) {
                 if (state != STATE_RUNNING) {
-                    throw new DAQCompException("Cannot stop component " + name +
-                                               "#" + num + " from state " +
+                    throw new DAQCompException("Cannot stop component " +
+                                               getName() + " from state " +
                                                getStateString());
                 }
             }
@@ -1102,7 +1116,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1120,7 +1134,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1150,7 +1164,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1168,7 +1182,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1184,7 +1198,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1200,7 +1214,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1243,7 +1257,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1500,7 +1514,7 @@ public abstract class DAQComponent
         throws DAQCompException, IOException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1660,15 +1674,13 @@ public abstract class DAQComponent
             try {
                 conn.start();
             } catch (IllegalThreadStateException itse) {
-                compEx = new DAQCompException("Couldn't start " + name +
-                                              "#" + num + ":" +
-                                              conn.getType() + "; engine has" +
-                                              " probably been added" +
-                                              " more than once", itse);
+                compEx = new DAQCompException("Couldn't start " + getName() +
+                                              ":" + conn.getType() +
+                                              "; engine has probably been" +
+                                              "  added more than once", itse);
             } catch (Exception ex) {
-                compEx = new DAQCompException("Couldn't start " + name +
-                                              "#" + num + ":" + conn.getType(),
-                                              ex);
+                compEx = new DAQCompException("Couldn't start " + getName() +
+                                              ":" + conn.getType(), ex);
             }
 
             if (conn.isInput()) {
@@ -1676,12 +1688,12 @@ public abstract class DAQComponent
                     conn.startServer(getByteBufferCache(conn.getType()));
 
                     if (LOG.isInfoEnabled()) {
-                        LOG.info(name + "#" + num + ":" + conn.getType() +
+                        LOG.info(getName() + ":" + conn.getType() +
                                  " listening on port " + conn.getPort());
                     }
                 } catch (IOException ioe) {
-                    compEx = new DAQCompException("Couldn't start " + name +
-                                                  "#" + num + ":" +
+                    compEx = new DAQCompException("Couldn't start " +
+                                                  getName() + ":" +
                                                   conn.getType() + " server",
                                                   ioe);
                 }
@@ -1710,9 +1722,9 @@ public abstract class DAQComponent
             try {
                 conn.startProcessing();
             } catch (Exception ex) {
-                LOG.error("Couldn't start " + name + "#" + num, ex);
-                compEx = new DAQCompException("Couldn't start " + name +
-                                              "#" + num + ":" + conn.getType(),
+                LOG.error("Couldn't start " + getName(), ex);
+                compEx = new DAQCompException("Couldn't start " + getName() +
+                                              ":" + conn.getType(),
                                               ex);
             }
         }
@@ -1735,7 +1747,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1792,7 +1804,7 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         if (stateTask == null) {
-            throw new DAQCompException("Component " + name + "#" + num +
+            throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
 
@@ -1854,8 +1866,7 @@ public abstract class DAQComponent
      */
     public String toString()
     {
-        StringBuffer buf = new StringBuffer(name);
-        buf.append('#').append(num);
+        StringBuffer buf = new StringBuffer(getName());
 
         if (caches.size() > 0) {
             buf.append(" [");

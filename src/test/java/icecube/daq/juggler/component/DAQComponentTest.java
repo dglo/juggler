@@ -1049,7 +1049,7 @@ public class DAQComponentTest
         assertEquals("Bad number of log messages",
                      2, getNumberOfMessages());
         assertEquals("Unexpected log message 0",
-                     "Couldn't start tst#0", getMessage(0));
+                     "Couldn't start tst", getMessage(0));
         assertEquals("Unexpected log message 1",
                      "Start run failed", getMessage(1));
         clearMessages();
