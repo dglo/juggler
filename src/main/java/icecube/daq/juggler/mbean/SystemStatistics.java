@@ -142,15 +142,15 @@ public class SystemStatistics
             } else {
                 final boolean saveAll = false;
                 if (saveAll) {
-                    Integer[] array = new Integer[4];
+                    Long[] array = new Long[4];
                     for (int i = 0; i < array.length; i++) {
                         try {
-                            array[i] = Integer.parseInt(match.group(i + 2));
+                            array[i] = Long.parseLong(match.group(i + 2));
                         } catch (NumberFormatException nfe) {
                             LOG.error("Couldn't parse df #" + i +
                                       " \"" + match.group(i + 2) +
                                       "\" from \"" + line + "\"", nfe);
-                            array[i] = 0;
+                            array[i] = new Long(0);
                         }
                     }
 
@@ -160,14 +160,14 @@ public class SystemStatistics
 
                     map.put(match.group(6), array);
                 } else {
-                    Integer avail;
+                    Long avail;
                     try {
-                        avail = Integer.valueOf(match.group(4));
+                        avail = Long.valueOf(match.group(4));
                     } catch (NumberFormatException nfe) {
                         LOG.error("Couldn't parse df avail bytes \"" +
                                   match.group(4) + "\" from \"" + line + "\"",
                                   nfe);
-                        avail = new Integer(0);
+                        avail = new Long(0);
                     }
 
                     if (map == null) {
@@ -290,7 +290,7 @@ public class SystemStatistics
                     buf.append(", ");
                 }
 
-                Integer avail = (Integer) dfMap.get(mountPt);
+                Long avail = (Long) dfMap.get(mountPt);
                 buf.append(String.format("%s: %d", mountPt,
                                          avail.longValue()));
                 needComma = true;
