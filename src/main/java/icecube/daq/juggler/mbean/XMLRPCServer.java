@@ -326,14 +326,7 @@ class XMLRPCServer
     public String[] listMBeans()
         throws MBeanAgentException
     {
-        String[] list = new String[beans.size()];
-
-        Iterator iter = beans.keySet().iterator();
-        for (int i = 0; iter.hasNext(); i++) {
-            list[i] = (String) iter.next();
-        }
-
-        return list;
+        return (String[]) beans.values().toArray(new String[beans.size()]);
     }
 
     public boolean isStopped()
