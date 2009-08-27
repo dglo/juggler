@@ -120,9 +120,15 @@ public class MBeanAgent
         throws MBeanAgentException
     {
         if (isRunning()) {
-            throw new MBeanAgentException("Cannot remove MBean while" +
-                                          " agent is running");
-        }
+	    // allow late bind of MBeans
+	    try {
+		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+		mbs.registerMBean(bean, new ObjectName(getDomain(), "name", name));
+	    }
+	    catch (JMException jmx) {
+		throw new MBeanAgentException(jmx);
+	    }
+	}
 
         if (beans.containsKey(name)) {
             throw new MBeanAgentException("MBean \"" + name + "\" has" +
@@ -364,8 +370,10 @@ public class MBeanAgent
         htmlAdapter.start();
         xmlRpcAdapter.start();
 
-        LOG.info("Started MBean agent: HTML port " + htmlPort +
-                 ", XML-RPC port " + xmlRpcPort);
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Started MBean agent: HTML port " + htmlPort +
+                     ", XML-RPC port " + xmlRpcPort);
+        }
     }
 
     /**

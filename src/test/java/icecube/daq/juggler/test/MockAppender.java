@@ -1,5 +1,7 @@
 package icecube.daq.juggler.test;
 
+import icecube.daq.common.IDAQAppender;
+
 import java.util.ArrayList;
 
 import org.apache.log4j.Appender;
@@ -14,10 +16,14 @@ import org.apache.log4j.spi.LoggingEvent;
  * Mock log4j appender.
  */
 public class MockAppender
-    implements Appender
+    implements IDAQAppender
 {
     /** minimum level of log messages which will be print. */
     private Level minLevel;
+    /** <tt>true</tt> if messages should be printed as well as cached. */
+    private boolean verbose;
+    /** <tt>true</tt> if messages are not kept. */
+    private boolean flushMsgs;
 
     private ArrayList<LoggingEvent> eventList;
 
@@ -83,7 +89,32 @@ public class MockAppender
     public void doAppend(LoggingEvent evt)
     {
         if (evt.getLevel().toInt() >= minLevel.toInt()) {
-            eventList.add(evt);
+            if (!flushMsgs) {
+                eventList.add(evt);
+            }
+
+            if (verbose) {
+                dumpEvent(evt);
+            }
+        }
+    }
+
+    /**
+     * Dump a logging event to System.out
+     *
+     * @param evt logging event
+     */
+    private void dumpEvent(LoggingEvent evt)
+    {
+        LocationInfo loc = evt.getLocationInformation();
+
+        System.out.println(evt.getLoggerName() + " " + evt.getLevel() +
+                           " [" + loc.fullInfo + "] " +
+                           evt.getMessage());
+
+        String[] stack = evt.getThrowableStrRep();
+        for (int i = 0; stack != null && i < stack.length; i++) {
+            System.out.println("> " + stack[i]);
         }
     }
 
@@ -126,6 +157,16 @@ public class MockAppender
         throw new Error("Unimplemented");
     }
 
+    /**
+     * Get logging level.
+     *
+     * @return logging level
+     */
+    public Level getLevel()
+    {
+        return minLevel;
+    }
+
     public Object getMessage(int idx)
     {
         return getEvent(idx).getMessage();
@@ -144,6 +185,40 @@ public class MockAppender
     public int getNumberOfMessages()
     {
         return eventList.size();
+    }
+
+    /**
+     * Is this appender sending log messages?
+     *
+     * @return <tt>true</tt> if this appender is connected
+     */
+    public boolean isConnected()
+    {
+        return true;
+    }
+
+    /**
+     * Is this appender sending log messages to the specified host and port.
+     *
+     * @param logHost DAQ host name/IP address
+     * @param logPort DAQ port number
+     * @param liveHost I3Live host name/IP address
+     * @param livePort I3Live port number
+     *
+     * @return <tt>true</tt> if this appender uses the host:port
+     */
+    public boolean isConnected(String logHost, int logPort, String liveHost,
+                               int livePort)
+    {
+        return true;
+    }
+
+    /**
+     * Reconnect to the remote socket.
+     */
+    public void reconnect()
+    {
+        // do nothing
     }
 
     /**
@@ -167,6 +242,16 @@ public class MockAppender
     }
 
     /**
+     * Should log messages be flushed?
+     *
+     * @param val <tt>false</tt> if log messages should be saved
+     */
+    public void setFlushMessages(boolean val)
+    {
+        flushMsgs = val;
+    }
+
+    /**
      * Unimplemented.
      *
      * @param x0 ???
@@ -177,6 +262,18 @@ public class MockAppender
     }
 
     /**
+     * Set logging level.
+     *
+     * @param lvl logging level
+     */
+    public MockAppender setLevel(Level lvl)
+    {
+        minLevel = lvl;
+
+        return this;
+    }
+
+    /**
      * Unimplemented.
      *
      * @param s0 ???
@@ -184,5 +281,17 @@ public class MockAppender
     public void setName(String s0)
     {
         throw new Error("Unimplemented");
+    }
+
+    /**
+     * Set verbosity.
+     *
+     * @param val <tt>true</tt> if log messages should be printed
+     */
+    public MockAppender setVerbose(boolean val)
+    {
+        verbose = val;
+
+        return this;
     }
 }

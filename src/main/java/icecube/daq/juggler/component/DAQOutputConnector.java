@@ -2,7 +2,6 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.OutputChannel;
-import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.payload.SourceIdRegistry;
 

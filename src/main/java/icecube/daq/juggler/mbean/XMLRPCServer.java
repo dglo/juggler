@@ -259,8 +259,10 @@ class XMLRPCServer
                                    Object handback)
     {
         if (!(notification instanceof MBeanServerNotification)) {
-            LOG.info("Ignoring notification class " +
-                     notification.getClass().getName());
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Ignoring notification class " +
+                         notification.getClass().getName());
+            }
             return;
         }
 
@@ -330,7 +332,6 @@ class XMLRPCServer
         for (int i = 0; iter.hasNext(); i++) {
             list[i] = (String) iter.next();
         }
-
         return list;
     }
 
@@ -456,6 +457,8 @@ class XMLRPCServer
     {
         String key = (String) beanObjName.getKeyProperty("name");
         beans.remove(key);
-        LOG.info("Removed bean " + key);
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Removed bean " + key);
+        }
     }
 }

@@ -16,7 +16,7 @@ public class DAQSplicer
      *
      * @param splicer splicer
      */
-    DAQSplicer(Splicer splicer, boolean needStart)
+    DAQSplicer(Splicer splicer)
     {
         super("splicer");
 
