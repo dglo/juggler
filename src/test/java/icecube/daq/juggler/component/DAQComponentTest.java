@@ -1,5 +1,6 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.common.DAQCmdInterface;
 import icecube.daq.io.PayloadTransmitChannel;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.juggler.test.MockCache;
@@ -112,6 +113,9 @@ class MiniComponent
 public class DAQComponentTest
     extends LoggingCase
 {
+    private static final String COMPONENT_NAME =
+        DAQCmdInterface.DAQ_EVENTBUILDER;
+
     private DAQComponent testComp;
 
     public DAQComponentTest(String name)
@@ -680,7 +684,8 @@ public class DAQComponentTest
         mockComp.waitForStateChange(DAQComponent.STATE_UNKNOWN);
 
         Connection[] badList = new Connection[] {
-            new Connection("bleh", "unused", 0, "localhost", 123),
+            new Connection("bleh", COMPONENT_NAME, 0,
+                           "localhost", 123),
         };
 
         assertEquals("Bad number of log messages",
@@ -718,9 +723,9 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] badList = new Connection[] {
-            new Connection("gunk", "unused", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
-            new Connection("gunk", "unused", 1, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 1, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -759,9 +764,9 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] badList = new Connection[] {
-            new Connection("gunk", "unused", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
-            new Connection("gunk", "unused", 1, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 1, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -789,7 +794,7 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] badList = new Connection[] {
-            new Connection("gunk", "unused", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -830,7 +835,7 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] badList = new Connection[] {
-            new Connection("gunk", "unused", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -869,7 +874,7 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] connList = new Connection[] {
-            new Connection("gunk", "unused", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -958,7 +963,7 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] badList = new Connection[] {
-            new Connection("gunk", "unused", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -1021,7 +1026,7 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] badList = new Connection[] {
-            new Connection("gunk", "unused", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -1109,7 +1114,7 @@ public class DAQComponentTest
                 MockInputEngine outTarget = new MockInputEngine();
 
                 Connection[] connList = new Connection[] {
-                    new Connection("gunk", "someComp", 0, "localhost",
+                    new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                                    outTarget.getServerPort()),
                 };
 
@@ -1206,7 +1211,7 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] connList = new Connection[] {
-            new Connection("gunk", "someComp", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -1281,7 +1286,7 @@ public class DAQComponentTest
         MockInputEngine outTarget = new MockInputEngine();
 
         Connection[] connList = new Connection[] {
-            new Connection("gunk", "someComp", 0, "localhost",
+            new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                            outTarget.getServerPort()),
         };
 
@@ -1371,7 +1376,7 @@ public class DAQComponentTest
             MockInputEngine outTarget = new MockInputEngine();
 
             Connection[] badList = new Connection[] {
-                new Connection("gunk", "unused", 0, "localhost",
+                new Connection("gunk", COMPONENT_NAME, 0, "localhost",
                                outTarget.getServerPort()),
             };
 

@@ -1,5 +1,6 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.common.DAQCmdInterface;
 import icecube.daq.juggler.test.LogReader;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.juggler.test.MockCache;
@@ -315,7 +316,7 @@ public class DAQCompServerTest
 
         HashMap connMap = new HashMap();
         connMap.put("type", connType);
-        connMap.put("compName", "abc");
+        connMap.put("compName", DAQCmdInterface.DAQ_EVENTBUILDER);
         connMap.put("compNum", new Integer(0));
         connMap.put("host", "localhost");
         connMap.put("port", new Integer(port));

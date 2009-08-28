@@ -3,7 +3,6 @@ package icecube.daq.juggler.mbean;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.HashMap;
@@ -193,10 +192,10 @@ public class SystemStatistics
         TreeMap<String, String> map = null;
         boolean past_header = false;
         String line = null;
-        String header[];
-        String rx_headers[] = null;
-        String tx_headers[] = null;
-        String data[];
+        String[] header;
+        String[] rx_headers = null;
+        String[] tx_headers = null;
+        String[] data;
 
         // Network IO reading set-up
         try {

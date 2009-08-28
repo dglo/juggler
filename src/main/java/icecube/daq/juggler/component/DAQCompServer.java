@@ -29,7 +29,6 @@ import java.util.logging.StreamHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.Log4JLogger;
-import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.xmlrpc.XmlRpcException;
@@ -794,7 +793,7 @@ public class DAQCompServer
 
         int i = 0;
         for (Iterator iter = list.iterator(); iter.hasNext(); ) {
-            array[i++] = (String[] )iter.next();
+            array[i++] = (String[]) iter.next();
         }
 
         return array;
