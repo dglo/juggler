@@ -1148,12 +1148,18 @@ public class DAQCompServer
             while (true) {
                 try {
                     sendAnnouncement(client, comp, webServer.getPort());
+                } catch (Exception ex) {
+                    LOG.error("Couldn't announce " + comp, ex);
+                    continue;
+                }
 
+                try {
                     if (!monitorServer(client, comp)) {
                         break;
                     }
                 } catch (Exception ex) {
-                    LOG.error("Couldn't announce " + comp, ex);
+                    LOG.error("Couldn't monitor " + comp, ex);
+                    continue;
                 }
             }
         } finally {
