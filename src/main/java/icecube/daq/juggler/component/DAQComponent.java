@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 3678 2008-12-02 15:11:08Z dglo $
+ * @version $Id: DAQComponent.java 4615 2009-09-28 17:55:04Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -506,8 +506,8 @@ public abstract class DAQComponent
             flushCaches();
 
             if (state != STATE_IDLE) {
-                throw new DAQCompException("Reset from " + getStateString() +
-                                           " is not implemented");
+                throw new DAQCompException("Reset expected IDLE, not " +
+                                           getStateString());
             }
         }
 
