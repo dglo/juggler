@@ -279,11 +279,12 @@ class LoggingConfiguration
     void configure()
         throws SocketException
     {
+        BasicConfigurator.resetConfiguration();
+
         if (!appender.isConnected()) {
             appender.reconnect();
         }
 
-        BasicConfigurator.resetConfiguration();
         BasicConfigurator.configure(appender);
 
         Log log = LogFactory.getLog(getClass());
