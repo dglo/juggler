@@ -18,6 +18,7 @@ import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -460,18 +461,18 @@ public class DAQCompServer
                                  String host, int port)
         throws XmlRpcException
     {
-        Object[] rtnArray = sendRegistration(client, comp, host, port);
-        if (rtnArray.length != 6) {
-            throw new XmlRpcException("Expected 6-element array, got " +
-                                      rtnArray.length + " elements");
+        Map rtnMap = sendRegistration(client, comp, host, port);
+        if (rtnMap.size() != 6) {
+            throw new XmlRpcException("Expected 6-element hashmap, got " +
+                                      rtnMap.size() + " elements");
         }
 
-        final int compId = ((Integer) rtnArray[0]).intValue();
-        final String logIP = (String) rtnArray[1];
-        final int logPort = ((Integer) rtnArray[2]).intValue();
-        final String liveIP = (String) rtnArray[3];
-        final int livePort = ((Integer) rtnArray[4]).intValue();
-        final int tmpServerId =  ((Integer) rtnArray[5]).intValue();
+        final int compId = ((Integer) rtnMap.get("id")).intValue();
+        final String logIP = (String) rtnMap.get("logIP");
+        final int logPort = ((Integer) rtnMap.get("logPort")).intValue();
+        final String liveIP = (String) rtnMap.get("liveIP");
+        final int livePort = ((Integer) rtnMap.get("livePort")).intValue();
+        final int tmpServerId =  ((Integer) rtnMap.get("serverId")).intValue();
 
         if (serverId != tmpServerId) {
             setServerId(tmpServerId);
@@ -773,7 +774,7 @@ public class DAQCompServer
      *
      * @throws DAQCompException if component does not exist
      */
-    public String[][] listConnectorStates()
+    public HashMap[] listConnectorStates()
         throws DAQCompException
     {
         if (comp == null) {
@@ -785,19 +786,14 @@ public class DAQCompServer
         for (Iterator iter = comp.listConnectors(); iter.hasNext(); ) {
             DAQConnector conn = (DAQConnector) iter.next();
 
-            list.add(new String[] {
-                    conn.getType(), conn.getState().toLowerCase(),
-                });
+            HashMap map = new HashMap();
+            map.put("type", conn.getType());
+            map.put("state", conn.getState().toLowerCase());
+            list.add(map);
         }
 
-        String[][] array = new String[list.size()][2];
-
-        int i = 0;
-        for (Iterator iter = list.iterator(); iter.hasNext(); ) {
-            array[i++] = (String[]) iter.next();
-        }
-
-        return array;
+        HashMap[] array = new HashMap[list.size()];
+        return (HashMap[]) list.toArray(array);
     }
 
     /**
@@ -1230,9 +1226,8 @@ public class DAQCompServer
      *
      * @throws XmlRpcException if the registration message could not be sent
      */
-    private static Object[] sendRegistration(XmlRpcClient client,
-                                             DAQComponent comp, String host,
-                                             int port)
+    private static Map sendRegistration(XmlRpcClient client, DAQComponent comp,
+                                        String host, int port)
         throws XmlRpcException
     {
         ArrayList connList = new ArrayList();
@@ -1265,13 +1260,13 @@ public class DAQCompServer
         Object rtnObj = client.execute("rpc_register_component", params);
         if (rtnObj == null) {
             throw new XmlRpcException("rpc_register_component returned null");
-        } else if (!rtnObj.getClass().isArray()) {
+        } else if (!(rtnObj instanceof Map)) {
             throw new XmlRpcException("Unexpected return object [ " + rtnObj +
                                       "] (type " +
                                       rtnObj.getClass().getName() + ")");
         }
 
-        return (Object[]) rtnObj;
+        return (Map) rtnObj;
     }
 
     /**

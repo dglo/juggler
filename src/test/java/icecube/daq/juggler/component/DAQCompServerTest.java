@@ -314,23 +314,26 @@ public class DAQCompServerTest
 
         MockServer srvr = new MockServer(mockComp, new String[0]);
 
-        HashMap connMap = new HashMap();
-        connMap.put("type", connType);
-        connMap.put("compName", DAQCmdInterface.DAQ_EVENTBUILDER);
-        connMap.put("compNum", new Integer(0));
-        connMap.put("host", "localhost");
-        connMap.put("port", new Integer(port));
+        Object[] connList = new Object[5];
+        connList[0] = connType;
+        connList[1] = DAQCmdInterface.DAQ_EVENTBUILDER;
+        connList[2] = new Integer(0);
+        connList[3] = "localhost";
+        connList[4] = new Integer(port);
         
         String rtnVal;
 
-        rtnVal = srvr.connect(new Object[] { connMap });
+        rtnVal = srvr.connect(new Object[] { connList });
         assertEquals("Bad connect() return value", "OK", rtnVal);
 
-        String[][] states = srvr.listConnectorStates();
+        HashMap[] states = srvr.listConnectorStates();
         assertEquals("Bad number of connectors", 1, states.length);
-        assertEquals("Bad number of connector columns", 2, states[0].length);
-        assertEquals("Bad connector type", connType, states[0][0]);
-        assertEquals("Bad connector state", connState, states[0][1]);
+        assertTrue("Connector does not contain \"type\"",
+                   states[0].containsKey("type"));
+        assertTrue("Connector does not contain \"state\"",
+                   states[0].containsKey("state"));
+        assertEquals("Bad connector type", connType, states[0].get("type"));
+        assertEquals("Bad connector state", connState, states[0].get("state"));
     }
 
     public void testDestroyNull()
