@@ -314,16 +314,16 @@ public class DAQCompServerTest
 
         MockServer srvr = new MockServer(mockComp, new String[0]);
 
-        Object[] connList = new Object[5];
-        connList[0] = connType;
-        connList[1] = DAQCmdInterface.DAQ_EVENTBUILDER;
-        connList[2] = new Integer(0);
-        connList[3] = "localhost";
-        connList[4] = new Integer(port);
+        HashMap connMap = new HashMap();
+        connMap.put("type", connType);
+        connMap.put("compName", DAQCmdInterface.DAQ_EVENTBUILDER);
+        connMap.put("compNum", new Integer(0));
+        connMap.put("host", "localhost");
+        connMap.put("port", new Integer(port));
         
         String rtnVal;
 
-        rtnVal = srvr.connect(new Object[] { connList });
+        rtnVal = srvr.connect(new Object[] { connMap });
         assertEquals("Bad connect() return value", "OK", rtnVal);
 
         HashMap[] states = srvr.listConnectorStates();
