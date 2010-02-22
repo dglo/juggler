@@ -10,6 +10,8 @@ import icecube.daq.io.SimpleReader;
 import icecube.daq.io.SingleOutputEngine;
 import icecube.daq.io.SpliceablePayloadReader;
 import icecube.daq.io.SpliceableSimpleReader;
+import icecube.daq.juggler.alert.Alerter;
+import icecube.daq.juggler.alert.DAQAlerter;
 import icecube.daq.juggler.mbean.LocalMonitor;
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
@@ -42,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 4615 2009-09-28 17:55:04Z dglo $
+ * @version $Id: DAQComponent.java 4909 2010-02-22 23:09:18Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -163,7 +165,11 @@ public abstract class DAQComponent
     /** Local monitoring, is enabled */
     private LocalMonitor moniLocal;
 
+    /** Thread which transitions between states */
     private StateTask stateTask;
+
+    /** Alert manager */
+    private Alerter alerter = new DAQAlerter();
 
     class StateTask
         implements Runnable
@@ -1265,6 +1271,16 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the alert manager.
+     *
+     * @return alert manager
+     */
+    public Alerter getAlerter()
+    {
+        return alerter;
+    }
+
+    /**
      * Get the buffer cache for the specified data type.
      *
      * @param type data type of buffer cache
@@ -1562,6 +1578,16 @@ public abstract class DAQComponent
         }
 
         return needDestroy;
+    }
+
+    /**
+     * Set the alert manager.
+     *
+     * @param alerter alert manager
+     */
+    public void setAlerter(Alerter alerter)
+    {
+        this.alerter = alerter;
     }
 
     /**
