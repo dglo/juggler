@@ -73,53 +73,69 @@ public class DAQAlerter
     /**
      * Send an alert.
      *
-     * @param type alert type
      * @param priority priority level
      * @param condition condition name for alert
+     * @param desc description of alert
      * @param vars map of variable names to values
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(String type, int priority, String condition,
+    public void send(int priority, String condition, String desc,
                      Map<String, Object> vars)
         throws AlertException
     {
-        send(type, priority, Calendar.getInstance(), condition, vars);
+        send(priority, Calendar.getInstance(), condition, desc, vars);
     }
 
     /**
      * Send an alert.
      *
-     * @param type alert type
      * @param priority priority level
      * @param dateTime date and time for alert
      * @param condition condition name for alert
+     * @param desc description of alert
      * @param vars map of variable names to values
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(String type, int priority, Calendar dateTime,
-                     String condition, Map<String, Object> vars)
+    public void send(int priority, Calendar dateTime, String condition,
+                     String desc, Map<String, Object> vars)
         throws AlertException
     {
         if (liveAddr != null) {
-            sendLive(type, priority, dateTime, condition, vars);
+            sendLive(priority, dateTime, condition, desc, vars);
         }
     }
 
-    private void sendLive(String type, int priority, Calendar date,
-                          String condition, Map<String, Object> vars)
+    /**
+     * Send an alert to IceCube Live.
+     *
+     * @param priority priority level
+     * @param dateTime date and time for alert
+     * @param condition condition name for alert
+     * @param desc description of alert
+     * @param vars map of variable names to values
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    private void sendLive(int priority, Calendar date, String condition,
+                          String desc, Map<String, Object> vars)
         throws AlertException
     {
-        if (condition.indexOf("\"") >= 0) {
-            throw new AlertException("Alert conditions cannot contain quotes");
+        if (condition == null || condition.indexOf("\"") >= 0) {
+            throw new AlertException("Bad alert condition \"" + condition +
+                                     "\"");
+        }
+        if (desc == null || desc.indexOf("\"") >= 0) {
+            throw new AlertException("Bad alert description \"" + desc + "\"");
         }
 
         String header =
-            String.format("%s(%s:json) %d [%tF %tT.%tL000] \"\"\"\n",
-                          service, type, priority, date, date, date);
+            String.format("%s(alert:json) %d [%tF %tT.%tL000] \"\"\"\n",
+                          service, priority, date, date, date);
         StringBuilder buf = new StringBuilder(header);
         buf.append(" { \"condition\" : \"").append(condition).append("\"");
+        buf.append(", \"desc\" : \"").append(desc).append("\"");
         buf.append(", \"notify\" : \"\"");
 
         if (vars != null && vars.size() > 0) {
@@ -140,10 +156,10 @@ public class DAQAlerter
                     throw new AlertException("Alert \"" + condition +
                                              "\" variable \"" + key +
                                              "\" has null value");
-                } else if (val instanceof String) {
-                    buf.append("\"").append(val).append("\"");
                 } else if (val instanceof Number) {
                     buf.append(val);
+                } else if (val instanceof String || val instanceof Character) {
+                    buf.append("\"").append(val).append("\"");
                 } else {
                     throw new AlertException("Alert \"" + condition +
                                              "\" variable \"" + key +

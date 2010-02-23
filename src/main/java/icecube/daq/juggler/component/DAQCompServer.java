@@ -1,6 +1,7 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.common.IDAQAppender;
+import icecube.daq.juggler.alert.AlertException;
 import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.DAQLogHandler;
@@ -213,6 +214,13 @@ class LogOptions
             System.err.println("Couldn't set logging to '" + logHost +
                                "' or '" + liveHost + "'");
             return false;
+        }
+
+        try {
+            comp.getAlerter().setLive(liveHost, livePort);
+        } catch (AlertException ae) {
+            System.err.println("Couldn't set alerter to '" + liveHost +
+                               ":" + livePort + "'");
         }
 
         return true;
@@ -821,6 +829,7 @@ public class DAQCompServer
                                                          comp.getLogLevel(),
                                                          logHost, logPort,
                                                          liveHost, livePort));
+
         return "OK";
     }
 

@@ -34,14 +34,23 @@ public interface Alerter
     /**
      * Send an alert.
      *
-     * @param type alert type
      * @param priority priority level
      * @param condition condition name for this alert
+     * @param desc description of alert
      * @param vars map of variable names to values
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    void send(String type, int priority, String condition,
+    void send(int priority, String condition, String desc,
               Map<String, Object> vars)
+        throws AlertException;
+
+    /**
+     * Set IceCube Live host and port
+     *
+     * @param host - host name for IceCube Live server
+     * @param port - port number for IceCube Live server
+     */
+    public void setLive(String host, int port)
         throws AlertException;
 }

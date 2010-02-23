@@ -21,15 +21,15 @@ public class DAQAlerterTest
         super(name);
     }
 
-    private static void addExpectedAlert(LogReader logRdr, String type,
-                                         int prio, Calendar date,
-                                         String condition,
-                                         Map<String, Object> vars)
+    private static void addExpectedAlert(LogReader logRdr, int prio,
+                                         Calendar date, String condition,
+                                         String desc, Map<String, Object> vars)
     {
         final String startStr =
-            String.format("pdaq(%s:json) %d [%tF %tT.%tL000] \"\"\"\n" +
-                          " { \"condition\" : \"%s\", \"notify\" : \"\"",
-                          type, prio, date, date, date, condition);
+            String.format("pdaq(alert:json) %d [%tF %tT.%tL000] \"\"\"\n" +
+                          " { \"condition\" : \"%s\", \"desc\" : \"%s\"," +
+                          " \"notify\" : \"\"", prio, date, date, date,
+                          condition, desc);
 
         StringBuilder buf = new StringBuilder(startStr);
 
@@ -105,10 +105,10 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final String type = "droppedDom";
         final int prio = DAQAlerter.PRIO_ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Bad \" Condition";
+        final String desc = "";
 
         final Map<String, Object> vars = null;
 
@@ -116,11 +116,11 @@ public class DAQAlerterTest
         alerter.setLive("localhost", logRdr.getPort());
 
         try {
-            alerter.send(type, prio, date, condition, vars);
+            alerter.send(prio, date, condition, desc, vars);
             fail("Bad condition should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
-                       ae.getMessage().startsWith("Alert conditions cannot "));
+                       ae.getMessage().startsWith("Bad alert condition "));
         }
     }
 
@@ -133,10 +133,10 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final String type = "droppedDom";
         final int prio = DAQAlerter.PRIO_ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Bad Value";
+        final String desc = "foo";
 
         final String varName = "bad";
 
@@ -147,7 +147,7 @@ public class DAQAlerterTest
         alerter.setLive("localhost", logRdr.getPort());
 
         try {
-            alerter.send(type, prio, date, condition, vars);
+            alerter.send(prio, date, condition, desc, vars);
             fail("Unknown value should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
@@ -166,10 +166,10 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final String type = "droppedDom";
         final int prio = DAQAlerter.PRIO_ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Bad Value";
+        final String desc = "";
 
         final String varName = "nullVar";
 
@@ -180,7 +180,7 @@ public class DAQAlerterTest
         alerter.setLive("localhost", logRdr.getPort());
 
         try {
-            alerter.send(type, prio, date, condition, vars);
+            alerter.send(prio, date, condition, desc, vars);
             fail("Unknown value should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
@@ -199,19 +199,19 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final String type = "droppedDom";
         final int prio = DAQAlerter.PRIO_ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Test Alert";
+        final String desc = "Testing DAQ alerts";
 
         final Map<String, Object> vars = null;
 
-        addExpectedAlert(logRdr, type, prio, date, condition, vars);
+        addExpectedAlert(logRdr, prio, date, condition, desc, vars);
 
         DAQAlerter alerter = new DAQAlerter();
         alerter.setLive("localhost", logRdr.getPort());
 
-        alerter.send(type, prio, date, condition, vars);
+        alerter.send(prio, date, condition, desc, vars);
 
         logRdr.waitForMessages();
 
@@ -227,22 +227,22 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final String type = "droppedDom";
         final int prio = DAQAlerter.PRIO_ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Test Alert";
+        final String desc = "Test Alert";
 
         final Map<String, Object> vars = new HashMap<String, Object>();
         vars.put("int", 123);
         vars.put("real", 123.456);
         vars.put("str", "foo");
 
-        addExpectedAlert(logRdr, type, prio, date, condition, vars);
+        addExpectedAlert(logRdr, prio, date, condition, desc, vars);
 
         DAQAlerter alerter = new DAQAlerter();
         alerter.setLive("localhost", logRdr.getPort());
 
-        alerter.send(type, prio, date, condition, vars);
+        alerter.send(prio, date, condition, desc, vars);
 
         logRdr.waitForMessages();
 
