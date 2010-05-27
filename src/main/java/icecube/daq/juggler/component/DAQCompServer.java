@@ -1384,8 +1384,8 @@ public class DAQCompServer
      */
     private static void setServerId(int newId)
     {
-        if (serverIdSet) {
-            LOG.error("Changing server ID from " + serverId + " to " + newId);
+        if (serverIdSet && LOG.isDebugEnabled()) {
+            LOG.debug("Changing server ID from " + serverId + " to " + newId);
         }
 
         serverId = newId;
