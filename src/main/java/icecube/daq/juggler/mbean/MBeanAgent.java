@@ -370,8 +370,8 @@ public class MBeanAgent
         htmlAdapter.start();
         xmlRpcAdapter.start();
 
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Started MBean agent: HTML port " + htmlPort +
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Started MBean agent: HTML port " + htmlPort +
                      ", XML-RPC port " + xmlRpcPort);
         }
     }

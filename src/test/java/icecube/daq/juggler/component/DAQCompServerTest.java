@@ -559,8 +559,8 @@ public class DAQCompServerTest
         LogReader dfltLog = new LogReader("dflt");
         LogReader runLog = new LogReader("run");
 
-        final String endResetMsg = "Logging has been reset";
-        final String startResetMsg = "Resetting logging";
+        //final String endResetMsg = "Logging has been reset";
+        //final String startResetMsg = "Resetting logging";
 
         boolean succeeded = false;
         try {
@@ -568,7 +568,7 @@ public class DAQCompServerTest
 
             MockServer srvr = new MockServer(mockComp, new String[0]);
 
-            dfltLog.addExpected(endResetMsg);
+            //dfltLog.addExpected(endResetMsg);
 
             srvr.initializeLogging("localhost", dfltLog.getPort(), null, 0);
 
@@ -580,8 +580,8 @@ public class DAQCompServerTest
 
             String rtnVal;
 
-            dfltLog.addExpected(startResetMsg);
-            runLog.addExpected(endResetMsg);
+            //dfltLog.addExpected(startResetMsg);
+            //runLog.addExpected(endResetMsg);
 
             rtnVal = srvr.logTo("localhost", runLog.getPort(), null, 0);
             assertEquals("Bad logTo() return value", "OK", rtnVal);
@@ -592,8 +592,8 @@ public class DAQCompServerTest
             waitForLogMessages(dfltLog);
             waitForLogMessages(runLog);
 
-            runLog.addExpected(startResetMsg);
-            dfltLog.addExpected(endResetMsg);
+            //runLog.addExpected(startResetMsg);
+            //dfltLog.addExpected(endResetMsg);
 
             srvr.resetLogging();
 
@@ -631,8 +631,8 @@ public class DAQCompServerTest
         LogReader dfltLog = new LogReader("dflt", true);
         LogReader runLog = new LogReader("run", true);
 
-        final String endResetMsg = "Logging has been reset";
-        final String startResetMsg = "Resetting logging";
+        //final String endResetMsg = "Logging has been reset";
+        //final String startResetMsg = "Resetting logging";
 
         boolean succeeded = false;
         try {
@@ -640,7 +640,7 @@ public class DAQCompServerTest
 
             MockServer srvr = new MockServer(mockComp, new String[0]);
 
-            dfltLog.addExpected(endResetMsg);
+            //dfltLog.addExpected(endResetMsg);
 
             srvr.initializeLogging(null, 0, "localhost", dfltLog.getPort());
 
@@ -652,8 +652,8 @@ public class DAQCompServerTest
 
             String rtnVal;
 
-            dfltLog.addExpected(startResetMsg);
-            runLog.addExpected(endResetMsg);
+            //dfltLog.addExpected(startResetMsg);
+            //runLog.addExpected(endResetMsg);
 
             rtnVal = srvr.logTo(null, 0, "localhost", runLog.getPort());
             assertEquals("Bad logTo() return value", "OK", rtnVal);
@@ -664,8 +664,8 @@ public class DAQCompServerTest
             waitForLogMessages(dfltLog);
             waitForLogMessages(runLog);
 
-            runLog.addExpected(startResetMsg);
-            dfltLog.addExpected(endResetMsg);
+            //runLog.addExpected(startResetMsg);
+            //dfltLog.addExpected(endResetMsg);
 
             srvr.resetLogging();
 

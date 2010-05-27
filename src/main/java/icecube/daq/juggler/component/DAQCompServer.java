@@ -1144,8 +1144,8 @@ public class DAQCompServer
         throws DAQCompException
     {
         WebServer webServer = startServer();
-        if (LOG.isInfoEnabled()) {
-            LOG.info("XML-RPC on port " + webServer.getPort());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("XML-RPC on port " + webServer.getPort());
         }
 
         try {
@@ -1320,7 +1320,9 @@ public class DAQCompServer
      */
     private static void setLoggingConfiguration(LoggingConfiguration logConfig)
     {
-        LOG.info("Resetting logging");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Resetting logging");
+        }
 
         if (logConfig.equals(defaultLogConfig)) {
             if (REDIRECT_STDOUT && !STDOUT.equals(System.out)) {
@@ -1370,7 +1372,9 @@ public class DAQCompServer
             }
         }
 
-        LOG.info("Logging has been reset");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Logging has been reset");
+        }
     }
 
     /**
