@@ -44,9 +44,10 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 5055 2010-06-16 22:20:37Z dglo $
+ * @version $Id: DAQComponent.java 5056 2010-06-16 22:29:26Z dglo $
  */
 public abstract class DAQComponent
+    implements IComponent
 {
     private static final Log LOG = LogFactory.getLog(DAQComponent.class);
 
