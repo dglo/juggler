@@ -611,7 +611,6 @@ public class DAQComponentTest
         mockComp.setGlobalConfigurationDir("bogus");
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         mockComp.connect();
         mockComp.waitForStateChange(DAQState.CONNECTING);
@@ -652,7 +651,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", mockOut);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         assertEquals("Bad number of log messages",
                      0, getNumberOfMessages());
@@ -681,7 +679,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", mockOut);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         Connection[] badList = new Connection[] {
             new Connection("bleh", COMPONENT_NAME, 0,
@@ -718,7 +715,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", mockOut);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -759,7 +755,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", mockOut, true);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -789,7 +784,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", mockOut);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -830,7 +824,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", badOut);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -869,7 +862,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", mockOut);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -958,7 +950,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", badOut);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -1021,7 +1012,6 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", badOut);
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -1108,7 +1098,6 @@ public class DAQComponentTest
             mockComp.setGlobalConfigurationDir("bogus");
 
             mockComp.start();
-            mockComp.waitForStateChange(DAQState.UNKNOWN);
 
             if (i > 0) {
                 MockInputEngine outTarget = new MockInputEngine();
@@ -1204,7 +1193,6 @@ public class DAQComponentTest
         mockComp.setGlobalConfigurationDir("bogus");
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -1279,7 +1267,6 @@ public class DAQComponentTest
         mockComp.setGlobalConfigurationDir("bogus");
 
         mockComp.start();
-        mockComp.waitForStateChange(DAQState.UNKNOWN);
 
         MockInputEngine outTarget = new MockInputEngine();
 
@@ -1369,7 +1356,6 @@ public class DAQComponentTest
             mockComp.addEngine("gunk", badOut);
 
             mockComp.start();
-            mockComp.waitForStateChange(DAQState.UNKNOWN);
 
             MockInputEngine outTarget = new MockInputEngine();
 

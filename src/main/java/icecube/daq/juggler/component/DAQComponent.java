@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 5053 2010-06-16 21:50:12Z dglo $
+ * @version $Id: DAQComponent.java 5054 2010-06-16 21:53:43Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -128,7 +128,7 @@ public abstract class DAQComponent
         implements Runnable
     {
         /** current component state */
-        private DAQState state;
+        private DAQState state = DAQState.IDLE;
 
         private boolean running;
         private boolean caughtError;
@@ -142,7 +142,6 @@ public abstract class DAQComponent
 
         StateTask()
         {
-            state = DAQState.UNKNOWN;
         }
 
         private void changeState(DAQState newState)
@@ -588,8 +587,6 @@ public abstract class DAQComponent
 
         public void run()
         {
-            state = DAQState.IDLE;
-
             running = true;
             while (running) {
                 synchronized (this) {

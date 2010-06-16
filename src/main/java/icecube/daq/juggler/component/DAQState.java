@@ -4,7 +4,7 @@ package icecube.daq.juggler.component;
  * Define all DAQ component states.
  */
 public enum DAQState {
-    UNKNOWN, IDLE, CONNECTING, CONNECTED, CONFIGURING, READY, STARTING,
+    IDLE, CONNECTING, CONNECTED, CONFIGURING, READY, STARTING,
         RUNNING, STOPPING, DISCONNECTING, DESTROYED, FORCING_STOP, DESTROYING,
         RESETTING;
 
