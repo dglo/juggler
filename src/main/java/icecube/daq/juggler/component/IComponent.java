@@ -23,6 +23,11 @@ public interface IComponent
         throws DAQCompException;
 
     /**
+     * Flush buffer caches
+     */
+    void flushCaches();
+
+    /**
      * Get the buffer cache for the specified data type.
      *
      * @param type data type of buffer cache
@@ -33,6 +38,13 @@ public interface IComponent
      */
     IByteBufferCache getByteBufferCache(String type)
         throws DAQCompException;
+
+    /**
+     * Get component name (and ID, for non-hub components.)
+     *
+     * @return full name
+     */
+    String getFullName();
 
     /**
      * Are all connectors stopped?
@@ -86,6 +98,19 @@ public interface IComponent
      */
     void starting()
         throws DAQCompException;
+
+    /**
+     * Stop the MBean agent associated with this component.
+     *
+     * @throws DAQCompException if MBean agent was not stopped
+     */
+    void stopMBeanAgent()
+        throws DAQCompException;
+
+    /**
+     * Stop the state task associated with this component.
+     */
+    void stopStateTask();
 
     /**
      * Perform any clean-up after all connectors have stopped.

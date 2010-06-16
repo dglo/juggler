@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 5056 2010-06-16 22:29:26Z dglo $
+ * @version $Id: DAQComponent.java 5057 2010-06-16 23:06:06Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -128,12 +128,15 @@ public abstract class DAQComponent
     class StateTask
         implements Runnable
     {
+        /** DAQ component */
+        private IComponent comp;
         /** current component state */
         private DAQState state = DAQState.IDLE;
+        /** previous component state */
+        private DAQState prevState;
 
         private boolean running;
         private boolean caughtError;
-        private DAQState prevState;
         private boolean stateChanged;
         private boolean calledStopping;
 
@@ -141,8 +144,9 @@ public abstract class DAQComponent
         private String configName;
         private int startNumber;
 
-        StateTask()
+        StateTask(IComponent comp)
         {
+            this.comp = comp;
         }
 
         private void changeState(DAQState newState)
@@ -244,7 +248,7 @@ public abstract class DAQComponent
             throws DAQCompException
         {
             if (configName != null) {
-                configuring(configName);
+                comp.configuring(configName);
             }
 
             state = DAQState.READY;
@@ -253,7 +257,7 @@ public abstract class DAQComponent
         private synchronized void doConnect()
             throws DAQCompException
         {
-            for (DAQConnector dc : connectors) {
+            for (DAQConnector dc : comp.listConnectors()) {
                 if (dc.isOutput() &&
                     !((DAQOutputConnector) dc).isConnected())
                 {
@@ -274,7 +278,7 @@ public abstract class DAQComponent
             for (int i = 0; compEx == null && i < list.length; i++) {
                 DAQOutputConnector conn = null;
 
-                for (DAQConnector dc : connectors) {
+                for (DAQConnector dc : comp.listConnectors()) {
                     if (dc.isOutput() && list[i].matches(dc.getType())) {
                         if (conn != null) {
                             final String errMsg = "Component " + getName() +
@@ -308,7 +312,7 @@ public abstract class DAQComponent
                 }
 
                 try {
-                    conn.connect(getByteBufferCache(conn.getType()), list[i]);
+                    conn.connect(comp.getByteBufferCache(conn.getType()), list[i]);
                 } catch (IOException ioe) {
                     compEx = new DAQCompException("Cannot connect " + conn +
                                                   " to connection #" + i +
@@ -337,7 +341,7 @@ public abstract class DAQComponent
         {
             DAQCompException compEx = null;
 
-            for (DAQConnector conn : connectors) {
+            for (DAQConnector conn : comp.listConnectors()) {
                 try {
                     conn.destroy();
                 } catch (Exception ex) {
@@ -347,19 +351,15 @@ public abstract class DAQComponent
                 }
             }
 
-            if (mbeanAgent != null) {
-                try {
-                    mbeanAgent.stop();
-                } catch (MBeanAgentException mae) {
-                    compEx = new DAQCompException("Couldn't stop MBean agent",
-                                                  mae);
+            try {
+                comp.stopMBeanAgent();
+            } catch (DAQCompException dce) {
+                if (compEx == null) {
+                    compEx = dce;
                 }
             }
 
-            if (stateTask != null) {
-                stateTask.stop();
-                stateTask = null;
-            }
+            comp.stopStateTask();
 
             state = DAQState.DESTROYED;
 
@@ -372,7 +372,7 @@ public abstract class DAQComponent
             throws DAQCompException, IOException
         {
             IOException ioEx = null;
-            for (DAQConnector dc : connectors) {
+            for (DAQConnector dc : comp.listConnectors()) {
                 if (dc.isOutput()) {
                     try {
                         ((DAQOutputConnector) dc).disconnect();
@@ -386,7 +386,7 @@ public abstract class DAQComponent
                 throw ioEx;
             }
 
-            disconnected();
+            comp.disconnected();
         }
 
         /**
@@ -402,7 +402,7 @@ public abstract class DAQComponent
 
             DAQCompException compEx = null;
 
-            for (DAQConnector conn : connectors) {
+            for (DAQConnector conn : comp.listConnectors()) {
                 // skip stopped connectors
                 if (conn.isStopped()) {
                     continue;
@@ -421,29 +421,32 @@ public abstract class DAQComponent
                 throw compEx;
             }
 
-            return isStopped();
+            return comp.isStopped();
         }
 
         private void doReset()
             throws DAQCompException, IOException
         {
             if (prevState == DAQState.STARTING || prevState == DAQState.RUNNING ||
-                prevState == DAQState.STOPPING || prevState == DAQState.FORCING_STOP)
+                prevState == DAQState.STOPPING ||
+                prevState == DAQState.FORCING_STOP)
             {
                 if (!calledStopping) {
-                    stopping();
+                    comp.stopping();
                 }
 
                 if (doForcedStop()) {
-                    stopped();
+                    comp.stopped();
                     prevState = DAQState.READY;
                 }
             }
 
-            resetting();
+            comp.resetting();
 
-            if (prevState == DAQState.CONNECTING || prevState == DAQState.CONNECTED ||
-                prevState == DAQState.CONFIGURING || prevState == DAQState.READY ||
+            if (prevState == DAQState.CONNECTING ||
+                prevState == DAQState.CONNECTED ||
+                prevState == DAQState.CONFIGURING ||
+                prevState == DAQState.READY ||
                 prevState == DAQState.DISCONNECTING)
             {
                 doDisconnect();
@@ -453,7 +456,7 @@ public abstract class DAQComponent
                 state = prevState;
             }
 
-            flushCaches();
+            comp.flushCaches();
 
             if (state != DAQState.IDLE) {
                 throw new DAQCompException("Reset expected IDLE, not " +
@@ -467,13 +470,13 @@ public abstract class DAQComponent
             // haven't yet called stopping() for this run
             calledStopping = false;
 
-            setRunNumber(startNumber);
+            comp.setRunNumber(startNumber);
 
-            starting();
+            comp.starting();
 
-            startEngines();
+            comp.startEngines();
 
-            started();
+            comp.started();
 
             state = DAQState.RUNNING;
         }
@@ -482,24 +485,13 @@ public abstract class DAQComponent
             throws DAQCompException
         {
             if (!calledStopping) {
-                stopping();
+                comp.stopping();
                 calledStopping = true;
             }
 
-            if (state == DAQState.STOPPING && isStopped()) {
-                stopped();
+            if (state == DAQState.STOPPING && comp.isStopped()) {
+                comp.stopped();
                 state = DAQState.READY;
-            }
-        }
-
-        /**
-         * Flush buffer caches
-         */
-        private void flushCaches()
-        {
-            Iterator iter = caches.values().iterator();
-            while (iter.hasNext()) {
-                ((IByteBufferCache) iter.next()).flush();
             }
         }
 
@@ -535,11 +527,7 @@ public abstract class DAQComponent
          */
         public String getName()
         {
-            if (num == 0 && !name.endsWith("Hub")) {
-                return name;
-            }
-
-            return name + "#" + num;
+            return comp.getFullName();
         }
 
         /**
@@ -567,10 +555,9 @@ public abstract class DAQComponent
          * cleanup.
          *
          * @throws DAQCompException if the component cannot be reset
-         * @throws IOException if there is a problem disconnecting anything
          */
         final void reset()
-            throws DAQCompException, IOException
+            throws DAQCompException
         {
             synchronized (this) {
                 changeState(DAQState.RESETTING);
@@ -693,7 +680,7 @@ public abstract class DAQComponent
                     try {
                         success = doForcedStop();
                         if (success) {
-                            stopped();
+                            comp.stopped();
                             state = DAQState.READY;
                         }
                     } catch (DAQCompException dce) {
@@ -824,7 +811,6 @@ public abstract class DAQComponent
                 "]";
         }
     }
-
     /**
      * Create a component.
      *
@@ -836,7 +822,7 @@ public abstract class DAQComponent
         this.name = name;
         this.num = num;
 
-        stateTask = new StateTask();
+        stateTask = new StateTask(this);
 
         Thread thread = new Thread(stateTask);
         thread.setName("StateTask");
@@ -1186,6 +1172,17 @@ public abstract class DAQComponent
     }
 
     /**
+     * Flush buffer caches
+     */
+    public void flushCaches()
+    {
+        Iterator iter = caches.values().iterator();
+        while (iter.hasNext()) {
+            ((IByteBufferCache) iter.next()).flush();
+        }
+    }
+
+    /**
      * Emergency stop of component.
      *
      * @throws DAQCompException if there is a problem
@@ -1257,6 +1254,20 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         return -1L;
+    }
+
+    /**
+     * Get component name (and ID, for non-hub components.)
+     *
+     * @return full name
+     */
+    public String getFullName()
+    {
+        if (num == 0 && !name.endsWith("Hub")) {
+            return name;
+        }
+
+        return name + "#" + num;
     }
 
     /**
@@ -1727,6 +1738,23 @@ public abstract class DAQComponent
     }
 
     /**
+     * Stop the MBean agent associated with this component.
+     *
+     * @throws DAQCompException if MBean agent was not stopped
+     */
+    public void stopMBeanAgent()
+        throws DAQCompException
+    {
+        if (mbeanAgent != null) {
+            try {
+                mbeanAgent.stop();
+            } catch (MBeanAgentException mae) {
+                throw new DAQCompException("Couldn't stop MBean agent", mae);
+            }
+        }
+    }
+
+    /**
      * Stop a run.
      *
      * @throws DAQCompException if there is a problem
@@ -1747,7 +1775,18 @@ public abstract class DAQComponent
     }
 
     /**
-     * Override this method to perform any clean-up after all connectors
+     * Stop the state task associated with this component.
+     */
+    public void stopStateTask()
+    {
+        if (stateTask != null) {
+            stateTask.stop();
+            stateTask = null;
+        }
+    }
+
+    /**
+     * Override this method to 1 clean-up after all connectors
      * have stopped.
      *
      * @throws DAQCompException if there is a problem stopping the component
