@@ -12,12 +12,17 @@ public class StateTask
 
     /** DAQ component */
     private IComponent comp;
+    /** <tt>true</tt> if setState() method should be enabled for testing */
+    private boolean testing;
     /** current component state */
     private DAQState state = DAQState.IDLE;
     /** previous component state */
-    private DAQState prevState;
+    private DAQState prevState = state;
 
+    /** is the task thread running? */
     private boolean running;
+    /** has the task thread stopped? */
+    private boolean stopped = true;
     private boolean caughtError;
     private boolean stateChanged;
     private boolean calledStopping;
@@ -28,7 +33,13 @@ public class StateTask
 
     StateTask(IComponent comp)
     {
+        this(comp, false);
+    }
+
+    StateTask(IComponent comp, boolean testing)
+    {
         this.comp = comp;
+        this.testing = testing;
     }
 
     private void changeState(DAQState newState)
@@ -50,7 +61,9 @@ public class StateTask
     void configure(String cfgName)
         throws DAQCompException
     {
-        if (state != DAQState.CONNECTED && state != DAQState.READY) {
+        if (state != DAQState.CONFIGURING && state != DAQState.CONNECTED &&
+            state != DAQState.READY)
+        {
             throw new DAQCompException("Cannot configure component " +
                                        getName() + " from state " +
                                        getState());
@@ -73,7 +86,7 @@ public class StateTask
         if (state != DAQState.IDLE) {
             throw new DAQCompException("Cannot connect component " +
                                        getName() + " from state " +
-                                       getState());
+                                       getState() + " (should be idle)");
         }
 
         synchronized (this) {
@@ -269,6 +282,8 @@ public class StateTask
         }
 
         comp.disconnected();
+
+        comp.flushCaches();
     }
 
     /**
@@ -309,6 +324,10 @@ public class StateTask
     private void doReset()
         throws DAQCompException, IOException
     {
+        if (prevState == DAQState.RESETTING) {
+            prevState = DAQState.RUNNING;
+        }
+
         if (prevState == DAQState.STARTING || prevState == DAQState.RUNNING ||
             prevState == DAQState.STOPPING ||
             prevState == DAQState.FORCING_STOP)
@@ -338,11 +357,12 @@ public class StateTask
             state = prevState;
         }
 
-        comp.flushCaches();
-
-        if (state != DAQState.IDLE) {
-            throw new DAQCompException("Reset expected IDLE, not " +
-                                       getState());
+        if (state != DAQState.IDLE && state != DAQState.DESTROYED &&
+            state != DAQState.DESTROYING)
+        {
+            throw new DAQCompException("Bad state " + getState() +
+                                       " after reset (prevState was " +
+                                       prevState + ")");
         }
     }
 
@@ -385,13 +405,11 @@ public class StateTask
     void forcedStop()
         throws DAQCompException
     {
-        if (state == DAQState.READY) {
+        if (state == DAQState.READY || state == DAQState.FORCING_STOP) {
             return;
         }
 
-        if (state != DAQState.RUNNING && state != DAQState.STOPPING &&
-            state != DAQState.FORCING_STOP)
-        {
+        if (state != DAQState.RUNNING && state != DAQState.STOPPING) {
             throw new DAQCompException("Cannot force-stop component " +
                                        getName() + " from state " +
                                        getState());
@@ -432,6 +450,11 @@ public class StateTask
         return running;
     }
 
+    public boolean isStopped()
+    {
+        return stopped;
+    }
+
     /**
      * Reset the component back to the idle state, doing any necessary
      * cleanup.
@@ -441,14 +464,19 @@ public class StateTask
     final void reset()
         throws DAQCompException
     {
-        synchronized (this) {
-            changeState(DAQState.RESETTING);
+        if (state != DAQState.IDLE && state != DAQState.DESTROYING &&
+            state != DAQState.DESTROYED)
+        {
+            synchronized (this) {
+                changeState(DAQState.RESETTING);
+            }
         }
     }
 
     public void run()
     {
         running = true;
+        stopped = false;
         while (running) {
             synchronized (this) {
                 if (stateChanged) {
@@ -635,11 +663,28 @@ public class StateTask
                 break;
             }
         }
+
+        stopped = true;
+    }
+
+    void setState(DAQState state)
+        throws DAQCompException
+    {
+        if (!testing) {
+            throw new DAQCompException("Cannot directly set the current state");
+        }
+
+        this.state = state;
     }
 
     void startRun(int runNumber)
         throws DAQCompException
     {
+        // ignore start command if already starting or running
+        if (state == DAQState.STARTING || state == DAQState.RUNNING) {
+            return;
+        }
+
         if (state != DAQState.READY) {
             throw new DAQCompException("Cannot start component " +
                                        getName() + " from state " +
@@ -668,12 +713,14 @@ public class StateTask
     void stopRun()
         throws DAQCompException
     {
-        if (state != DAQState.READY) {
-            if (state != DAQState.RUNNING) {
-                throw new DAQCompException("Cannot stop component " +
-                                           getName() + " from state " +
-                                           getState());
-            }
+        // ignore stop command if already stopped
+        if (state == DAQState.READY || state == DAQState.STOPPING) {
+            return;
+        }
+
+        if (state != DAQState.RUNNING) {
+            throw new DAQCompException("Cannot stop component " + getName() +
+                                       " from state " + getState());
         }
 
         synchronized (this) {

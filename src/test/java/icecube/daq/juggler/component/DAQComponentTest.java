@@ -403,14 +403,6 @@ public class DAQComponentTest
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
         assertFalse("Unexpected error after startRun", mockComp.isError());
-
-        try {
-            mockComp.startRun(2);
-            fail("Shouldn't be able to start running component");
-        } catch (DAQCompException dce) {
-            // expect failure
-        }
-        assertFalse("Unexpected error after bad startRun", mockComp.isError());
     }
 
     public void testBadStop()
