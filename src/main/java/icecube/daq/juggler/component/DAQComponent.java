@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 5058 2010-06-16 23:07:36Z dglo $
+ * @version $Id: DAQComponent.java 5059 2010-06-16 23:09:46Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -1100,7 +1100,7 @@ public abstract class DAQComponent
     }
 
     /**
-     * Override this method to 1 clean-up after all connectors
+     * Override this method to perform clean-up after all connectors
      * have stopped.
      *
      * @throws DAQCompException if there is a problem stopping the component
