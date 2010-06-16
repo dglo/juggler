@@ -735,7 +735,7 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
-        return comp.getStateString();
+        return comp.getState().toString();
     }
 
     /**
