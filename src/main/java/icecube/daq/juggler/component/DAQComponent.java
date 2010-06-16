@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 5054 2010-06-16 21:53:43Z dglo $
+ * @version $Id: DAQComponent.java 5055 2010-06-16 22:20:37Z dglo $
  */
 public abstract class DAQComponent
 {
@@ -105,7 +105,7 @@ public abstract class DAQComponent
     private Level logLevel = Level.INFO;
 
     /** list of connectors */
-    private ArrayList connectors = new ArrayList();
+    private ArrayList<DAQConnector> connectors = new ArrayList<DAQConnector>();
     /** has list of connectors been sorted? */
     private boolean connSorted;
 
@@ -252,8 +252,7 @@ public abstract class DAQComponent
         private synchronized void doConnect()
             throws DAQCompException
         {
-            for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-                DAQConnector dc = (DAQConnector) iter.next();
+            for (DAQConnector dc : connectors) {
                 if (dc.isOutput() &&
                     !((DAQOutputConnector) dc).isConnected())
                 {
@@ -274,8 +273,7 @@ public abstract class DAQComponent
             for (int i = 0; compEx == null && i < list.length; i++) {
                 DAQOutputConnector conn = null;
 
-                for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-                    DAQConnector dc = (DAQConnector) iter.next();
+                for (DAQConnector dc : connectors) {
                     if (dc.isOutput() && list[i].matches(dc.getType())) {
                         if (conn != null) {
                             final String errMsg = "Component " + getName() +
@@ -338,10 +336,7 @@ public abstract class DAQComponent
         {
             DAQCompException compEx = null;
 
-            Iterator iter = connectors.iterator();
-            while (iter.hasNext()) {
-                DAQConnector conn = (DAQConnector) iter.next();
-
+            for (DAQConnector conn : connectors) {
                 try {
                     conn.destroy();
                 } catch (Exception ex) {
@@ -376,8 +371,7 @@ public abstract class DAQComponent
             throws DAQCompException, IOException
         {
             IOException ioEx = null;
-            for (Iterator iter = connectors.iterator(); iter.hasNext();) {
-                DAQConnector dc = (DAQConnector) iter.next();
+            for (DAQConnector dc : connectors) {
                 if (dc.isOutput()) {
                     try {
                         ((DAQOutputConnector) dc).disconnect();
@@ -407,10 +401,7 @@ public abstract class DAQComponent
 
             DAQCompException compEx = null;
 
-            Iterator iter = connectors.iterator();
-            while (iter.hasNext()) {
-                DAQConnector conn = (DAQConnector) iter.next();
-
+            for (DAQConnector conn : connectors) {
                 // skip stopped connectors
                 if (conn.isStopped()) {
                     continue;
@@ -1394,10 +1385,7 @@ public abstract class DAQComponent
      */
     public boolean isRunning()
     {
-        Iterator iter = connectors.iterator();
-        while (iter.hasNext()) {
-            DAQConnector conn = (DAQConnector) iter.next();
-
+        for (DAQConnector conn : connectors) {
             if (conn.isRunning()) {
                 return true;
             }
@@ -1413,10 +1401,7 @@ public abstract class DAQComponent
      */
     public boolean isStopped()
     {
-        Iterator iter = connectors.iterator();
-        while (iter.hasNext()) {
-            DAQConnector conn = (DAQConnector) iter.next();
-
+        for (DAQConnector conn : connectors) {
             if (!conn.isStopped()) {
                 return false;
             }
@@ -1430,9 +1415,9 @@ public abstract class DAQComponent
      *
      * @return connection iterator
      */
-    public final Iterator listConnectors()
+    public final Iterable<DAQConnector> listConnectors()
     {
-        return connectors.iterator();
+        return connectors;
     }
 
     /**
@@ -1618,10 +1603,7 @@ public abstract class DAQComponent
             connSorted = true;
         }
 
-        Iterator iter = connectors.iterator();
-        while (iter.hasNext()) {
-            DAQConnector conn = (DAQConnector) iter.next();
-
+        for (DAQConnector conn : connectors) {
             try {
                 conn.start();
             } catch (IllegalThreadStateException itse) {
@@ -1666,10 +1648,7 @@ public abstract class DAQComponent
     {
         DAQCompException compEx = null;
 
-        Iterator iter = connectors.iterator();
-        while (iter.hasNext()) {
-            DAQConnector conn = (DAQConnector) iter.next();
-
+        for (DAQConnector conn : connectors) {
             try {
                 conn.startProcessing();
             } catch (Exception ex) {
@@ -1839,14 +1818,14 @@ public abstract class DAQComponent
             buf.append(" [");
 
             boolean first = true;
-            for (Iterator iter = connectors.iterator(); iter.hasNext(); ) {
+            for (DAQConnector conn : connectors) {
                 if (first) {
                     first = false;
                 } else {
                     buf.append(',');
                 }
 
-                buf.append(iter.next());
+                buf.append(conn);
             }
             buf.append(']');
         }

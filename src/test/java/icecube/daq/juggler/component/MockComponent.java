@@ -175,8 +175,7 @@ public class MockComponent
         calledStopping = true;
 
         if (stopEngines) {
-            for (Iterator iter = listConnectors(); iter.hasNext(); ) {
-                DAQConnector conn = (DAQConnector) iter.next();
+            for (DAQConnector conn : listConnectors()) {
                 try {
                     conn.forcedStopProcessing();
                 } catch (Exception ex) {

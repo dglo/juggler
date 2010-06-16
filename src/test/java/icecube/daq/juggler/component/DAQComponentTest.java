@@ -1069,8 +1069,7 @@ public class DAQComponentTest
         mockComp.addEngine("gunk", mockOut);
 
         int numFound = 0;
-        for (Iterator iter = mockComp.listConnectors(); iter.hasNext(); ) {
-            iter.next();
+        for (DAQConnector conn : mockComp.listConnectors()) {
             numFound++;
         }
         assertEquals("Bad number of connectors", 3, numFound);

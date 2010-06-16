@@ -791,9 +791,7 @@ public class DAQCompServer
 
         ArrayList list = new ArrayList();
 
-        for (Iterator iter = comp.listConnectors(); iter.hasNext(); ) {
-            DAQConnector conn = (DAQConnector) iter.next();
-
+        for (DAQConnector conn : comp.listConnectors()) {
             HashMap map = new HashMap();
             map.put("type", conn.getType());
             map.put("state", conn.getState().toLowerCase());
@@ -1241,8 +1239,7 @@ public class DAQCompServer
     {
         ArrayList connList = new ArrayList();
 
-        for (Iterator iter = comp.listConnectors(); iter.hasNext();) {
-            DAQConnector conn = (DAQConnector) iter.next();
+        for (DAQConnector conn : comp.listConnectors()) {
             if (!conn.isInput() && !conn.isOutput()) {
                 continue;
             }
