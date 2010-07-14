@@ -478,193 +478,202 @@ public class StateTask
         running = true;
         stopped = false;
         while (running) {
-            synchronized (this) {
-                if (stateChanged) {
-                    stateChanged = false;
-                } else {
-                    try {
-                        if (state == DAQState.STOPPING) {
-                            wait(100);
-                        } else {
-                            wait();
-                        }
-                    } catch (InterruptedException ie) {
-                        continue;
-                    }
-                }
-            }
-
-            boolean success;
-            switch (state) {
-            case CONFIGURING:
-                try {
-                    doConfigure();
-                    success = true;
-                } catch (DAQCompException dce) {
-                    caughtError = true;
-                    LOG.error("Configure failed", dce);
-                    success = false;
-                }
-
-                if (!success) {
-                    // revert to the previous state if configure failed
-                    state = prevState;
-                }
-
-                break;
-            case CONNECTED:
-                // nothing to be done
-                break;
-            case CONNECTING:
-                try {
-                    if (connectList == null) {
-                        doConnect();
-                    } else {
-                        doConnect(connectList);
-                    }
-                    success = true;
-                } catch (DAQCompException dce) {
-                    caughtError = true;
-                    LOG.error("Connect failed", dce);
-                    success = false;
-                } catch (IOException ioe) {
-                    caughtError = true;
-                    LOG.error("Connect failed", ioe);
-                    success = false;
-                }
-
-                if (!success) {
-                    try {
-                        doDisconnect();
-                        state = DAQState.IDLE;
-                    } catch (DAQCompException dce) {
-                        LOG.error("Couldn't disconnect after" +
-                                  " failed connect", dce);
-                    } catch (IOException ioe) {
-                        LOG.error("Couldn't disconnect after" +
-                                  " failed connect", ioe);
-                    }
-                }
-                break;
-            case DESTROYING:
-                try {
-                    doDestroy();
-                    success = true;
-                } catch (DAQCompException dce) {
-                    caughtError = true;
-                    LOG.error("Destroy failed", dce);
-                    success = false;
-                }
-
-                if (!success) {
-                    // pretend we were destroyed
-                    state = DAQState.DESTROYED;
-                }
-
-                break;
-            case DESTROYED:
-                running = false;
-                break;
-            case DISCONNECTING:
-                try {
-                    doDisconnect();
-                    state = DAQState.IDLE;
-                    success = true;
-                } catch (DAQCompException dce) {
-                    caughtError = true;
-                    LOG.error("Disconnect failed", dce);
-                    success = false;
-                } catch (IOException ioe) {
-                    caughtError = true;
-                    LOG.error("Disconnect failed", ioe);
-                    success = false;
-                }
-
-                if (!success) {
-                    // revert to the previous state if disconnect failed
-                    state = prevState;
-                }
-
-                break;
-            case FORCING_STOP:
-                try {
-                    success = doForcedStop();
-                    if (success) {
-                        comp.stopped();
-                        state = DAQState.READY;
-                    }
-                } catch (DAQCompException dce) {
-                    caughtError = true;
-                    LOG.error("Forced stop failed", dce);
-                    success = false;
-                }
-
-                if (!success) {
-                    // revert to the previous state if forced stop failed
-                    state = prevState;
-                }
-
-                break;
-            case IDLE:
-                // nothing to be done
-                break;
-            case READY:
-                // nothing to be done
-                break;
-            case RESETTING:
-                try {
-                    doReset();
-                } catch (DAQCompException dce) {
-                    caughtError = true;
-                    LOG.error("Reset failed", dce);
-                } catch (IOException ioe) {
-                    caughtError = true;
-                    LOG.error("Reset failed", ioe);
-                }
-
-                break;
-            case RUNNING:
-                // nothing to be done
-                break;
-            case STARTING:
-                try {
-                    doStartRun();
-                    success = true;
-                } catch (DAQCompException dce) {
-                    caughtError = true;
-                    LOG.error("Start run failed", dce);
-                    success = false;
-                }
-
-                if (!success) {
-                    // revert to the previous state if startRun failed
-                    state = prevState;
-                }
-
-                break;
-            case STOPPING:
-                try {
-                    doStopRun();
-                    success = true;
-                } catch (DAQCompException dce) {
-                    caughtError = true;
-                    LOG.error("Stop run failed", dce);
-                    success = false;
-                }
-
-                if (!success) {
-                    // revert to the previous state if stopRun failed
-                    state = prevState;
-                }
-
-                break;
-            default:
-                LOG.error("StateTask not handling " + getState());
-                break;
+            try {
+                runInternal();
+            } catch (Throwable t) {
+                LOG.error("StateTask thread error", t);
             }
         }
 
         stopped = true;
+    }
+
+    private void runInternal()
+    {
+        synchronized (this) {
+            if (stateChanged) {
+                stateChanged = false;
+            } else {
+                try {
+                    if (state == DAQState.STOPPING) {
+                        wait(100);
+                    } else {
+                        wait();
+                    }
+                } catch (InterruptedException ie) {
+                    return;
+                }
+            }
+        }
+
+        boolean success;
+        switch (state) {
+        case CONFIGURING:
+            try {
+                doConfigure();
+                success = true;
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Configure failed", dce);
+                success = false;
+            }
+
+            if (!success) {
+                // revert to the previous state if configure failed
+                state = prevState;
+            }
+
+            break;
+        case CONNECTED:
+            // nothing to be done
+            break;
+        case CONNECTING:
+            try {
+                if (connectList == null) {
+                    doConnect();
+                } else {
+                    doConnect(connectList);
+                }
+                success = true;
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Connect failed", dce);
+                success = false;
+            } catch (IOException ioe) {
+                caughtError = true;
+                LOG.error("Connect failed", ioe);
+                success = false;
+            }
+
+            if (!success) {
+                try {
+                    doDisconnect();
+                    state = DAQState.IDLE;
+                } catch (DAQCompException dce) {
+                    LOG.error("Couldn't disconnect after" +
+                              " failed connect", dce);
+                } catch (IOException ioe) {
+                    LOG.error("Couldn't disconnect after" +
+                              " failed connect", ioe);
+                }
+            }
+            break;
+        case DESTROYING:
+            try {
+                doDestroy();
+                success = true;
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Destroy failed", dce);
+                success = false;
+            }
+
+            if (!success) {
+                // pretend we were destroyed
+                state = DAQState.DESTROYED;
+            }
+
+            break;
+        case DESTROYED:
+            running = false;
+            break;
+        case DISCONNECTING:
+            try {
+                doDisconnect();
+                state = DAQState.IDLE;
+                success = true;
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Disconnect failed", dce);
+                success = false;
+            } catch (IOException ioe) {
+                caughtError = true;
+                LOG.error("Disconnect failed", ioe);
+                success = false;
+            }
+
+            if (!success) {
+                // revert to the previous state if disconnect failed
+                state = prevState;
+            }
+
+            break;
+        case FORCING_STOP:
+            try {
+                success = doForcedStop();
+                if (success) {
+                    comp.stopped();
+                    state = DAQState.READY;
+                }
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Forced stop failed", dce);
+                success = false;
+            }
+
+            if (!success) {
+                // revert to the previous state if forced stop failed
+                state = prevState;
+            }
+
+            break;
+        case IDLE:
+            // nothing to be done
+            break;
+        case READY:
+            // nothing to be done
+            break;
+        case RESETTING:
+            try {
+                doReset();
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Reset failed", dce);
+            } catch (IOException ioe) {
+                caughtError = true;
+                LOG.error("Reset failed", ioe);
+            }
+
+            break;
+        case RUNNING:
+            // nothing to be done
+            break;
+        case STARTING:
+            try {
+                doStartRun();
+                success = true;
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Start run failed", dce);
+                success = false;
+            }
+
+            if (!success) {
+                // revert to the previous state if startRun failed
+                state = prevState;
+            }
+
+            break;
+        case STOPPING:
+            try {
+                doStopRun();
+                success = true;
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Stop run failed", dce);
+                success = false;
+            }
+
+            if (!success) {
+                // revert to the previous state if stopRun failed
+                state = prevState;
+            }
+
+            break;
+        default:
+            LOG.error("StateTask not handling " + getState());
+            break;
+        }
     }
 
     void setState(DAQState state)
