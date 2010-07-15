@@ -31,6 +31,8 @@ public abstract class DAQConnector
     public static final String TYPE_TEST_HIT = "testHit";
     /** General payload data connector. */
     public static final String TYPE_TEST_DATA = "testData";
+    /** stringHub-&gt;trackEngine hit connector. */
+    public static final String TYPE_TRACKENG_HIT = "trackEngineHit";
     /** icetopTrigger/iniceTrigger-&gt;globalTrigger trigger connector. */
     public static final String TYPE_TRIGGER = "trigger";
     /** self-contained connector which doesn't need any external connections */
@@ -40,15 +42,18 @@ public abstract class DAQConnector
     public static final String TYPE_GENERIC_CACHE = "genericCache";
 
     private String type;
+    private boolean optional;
 
     /**
      * Create a DAQ connector.
      *
      * @param type connector type
+     * @param optional <tt>true</tt> if this is an optional connector
      */
-    public DAQConnector(String type)
+    public DAQConnector(String type, boolean optional)
     {
         this.type = type;
+        this.optional = optional;
     }
 
     /**
@@ -66,6 +71,23 @@ public abstract class DAQConnector
      */
     public abstract void forcedStopProcessing()
         throws Exception;
+
+    /**
+     * Get description character.
+     *
+     * @return one of <tt>I</tt> (optional input), <tt>i</tt> (required input),
+     *         <tt>O</tt> (optional output), or <tt>o</tt> (required output).
+     */
+    public char getDescriptionChar()
+    {
+        if (isInput()) {
+            return optional ? 'I' : 'i';
+        } else if (isOutput()) {
+            return optional ? 'O' : 'o';
+        }
+
+        return '?';
+    }
 
     /**
      * Get connector port.

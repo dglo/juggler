@@ -43,7 +43,21 @@ public class DAQOutputConnector
     DAQOutputConnector(String type, DAQComponentOutputProcess engine,
                        boolean allowMultipleConnections)
     {
-        super(type);
+        this(type, engine, allowMultipleConnections, false);
+    }
+
+    /**
+     * Create a DAQ output connector.
+     *
+     * @param type connector type
+     * @param engine output engine
+     * @param allowMultipleConnections <tt>true</tt> if this output connector
+     *                                 can connect to multiple input engines
+     */
+    DAQOutputConnector(String type, DAQComponentOutputProcess engine,
+                       boolean allowMultipleConnections, boolean optional)
+    {
+        super(type, optional);
 
         this.engine = engine;
         this.allowMulti = allowMultipleConnections;

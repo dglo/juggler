@@ -1251,7 +1251,7 @@ public class DAQCompServer
 
             Object[] row = new Object[3];
             row[0] = type;
-            row[1] = conn.isInput() ? Boolean.TRUE : Boolean.FALSE;
+            row[1] = Character.toString(conn.getDescriptionChar());
             row[2] = new Integer(conn.getPort());
 
             connList.add(row);

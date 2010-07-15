@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 5059 2010-06-16 23:09:46Z dglo $
+ * @version $Id: DAQComponent.java 5097 2010-07-15 20:17:09Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -181,7 +181,7 @@ public abstract class DAQComponent
      *
      * @param conn connector
      */
-    public final void addConnector(DAQConnector conn)
+    private final void addConnector(DAQConnector conn)
     {
         connectors.add(conn);
         connSorted = false;
@@ -258,7 +258,23 @@ public abstract class DAQComponent
     public final void addMonitoredEngine(String type,
                                          DAQComponentInputProcessor engine)
     {
-        addConnector(new DAQInputConnector(type, engine));
+        addMonitoredEngine(type, engine, false);
+    }
+
+    /**
+     * Add an input engine with the specified type,
+     * and supply a monitoring MBean .
+     *
+     * @param type engine type
+     * @param engine input engine
+     *
+     * @throws Error if 'engine' is not a PayloadReader
+     */
+    private final void addMonitoredEngine(String type,
+                                          DAQComponentInputProcessor engine,
+                                          boolean optional)
+    {
+        addConnector(new DAQInputConnector(type, engine, optional));
 
         if (engine instanceof SpliceableSimpleReader) {
             addMBean(type, new MBeanWrapper(engine,
@@ -287,7 +303,7 @@ public abstract class DAQComponent
     public final void addMonitoredEngine(String type,
                                          DAQComponentOutputProcess engine)
     {
-        addMonitoredEngine(type, engine, false);
+        addMonitoredEngine(type, engine, false, false);
     }
 
     /**
@@ -302,11 +318,31 @@ public abstract class DAQComponent
      * @throws Error if 'engine' is not a PayloadOutputEngine
      */
     public final void addMonitoredEngine(String type,
-                                         DAQComponentOutputProcess engine,
-                                         boolean allowMultipleConnections)
+                                          DAQComponentOutputProcess engine,
+                                          boolean allowMultipleConnections)
+    {
+        addMonitoredEngine(type, engine, allowMultipleConnections, false);
+    }
+
+    /**
+     * Add an output engine with the specified type,
+     * and supply a monitoring MBean .
+     *
+     * @param type engine type
+     * @param engine output engine
+     * @param allowMultipleConnections <tt>true</tt> if this output connector
+     *                                 can connect to multiple input connectors
+     *
+     * @throws Error if 'engine' is not a PayloadOutputEngine
+     */
+    private final void addMonitoredEngine(String type,
+                                          DAQComponentOutputProcess engine,
+                                          boolean allowMultipleConnections,
+                                          boolean optional)
     {
         addConnector(new DAQOutputConnector(type, engine,
-                                            allowMultipleConnections));
+                                            allowMultipleConnections,
+                                            optional));
 
         if (engine instanceof PayloadOutputEngine) {
             addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
@@ -319,6 +355,54 @@ public abstract class DAQComponent
         } else {
             throw new Error("Cannot monitor " + engine.getClass().getName());
         }
+    }
+
+    /**
+     * Add an optional input engine with the specified type,
+     * and supply a monitoring MBean.
+     *
+     * @param type engine type
+     * @param engine input engine
+     *
+     * @throws Error if 'engine' is not a PayloadReader
+     */
+    public final void addOptionalEngine(String type,
+                                        DAQComponentInputProcessor engine)
+    {
+        addMonitoredEngine(type, engine, true);
+    }
+
+    /**
+     * Add an optional output engine with the specified type,
+     * and supply a monitoring MBean.
+     *
+     * @param type engine type
+     * @param engine output engine
+     *
+     * @throws Error if 'engine' is not a PayloadOutputEngine
+     */
+    public final void addOptionalEngine(String type,
+                                        DAQComponentOutputProcess engine)
+    {
+        addOptionalEngine(type, engine, false);
+    }
+
+    /**
+     * Add an optional output engine with the specified type,
+     * and supply a monitoring MBean.
+     *
+     * @param type engine type
+     * @param engine output engine
+     * @param allowMultipleConnections <tt>true</tt> if this output connector
+     *                                 can connect to multiple input connectors
+     *
+     * @throws Error if 'engine' is not a PayloadOutputEngine
+     */
+    public final void addOptionalEngine(String type,
+                                        DAQComponentOutputProcess engine,
+                                        boolean allowMultipleConnections)
+    {
+        addMonitoredEngine(type, engine, allowMultipleConnections, true);
     }
 
     /**

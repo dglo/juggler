@@ -18,7 +18,7 @@ public class DAQSplicer
      */
     DAQSplicer(Splicer splicer)
     {
-        super("splicer");
+        super("splicer", false);
 
         this.splicer = splicer;
     }
