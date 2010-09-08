@@ -1202,7 +1202,17 @@ public class DAQCompServer
                 announce(client, comp, addr.getHostAddress(), port);
                 break;
             } catch (XmlRpcException xre) {
-                if (!(xre.linkedException instanceof ConnectException)) {
+                final String timeoutMsg = "socket.timeout:timed out";
+
+                if (xre.linkedException instanceof ConnectException) {
+                    // ignore connection exceptions
+                } else if (xre.getMessage().endsWith(timeoutMsg)) {
+                    if (xre.linkedException == null) {
+                        LOG.error("Got timeout message");
+                    } else {
+                        LOG.error("Got timeout message", xre.linkedException);
+                    }
+                } else {
                     final String errMsg = "Couldn't announce component";
                     throw new DAQCompException(errMsg, xre);
                 }
