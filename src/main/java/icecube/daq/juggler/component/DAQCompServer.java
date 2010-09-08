@@ -1263,9 +1263,9 @@ public class DAQCompServer
             connList.toArray(),
         };
 
-        Object rtnObj = client.execute("rpc_register_component", params);
+        Object rtnObj = client.execute("rpc_component_register", params);
         if (rtnObj == null) {
-            throw new XmlRpcException("rpc_register_component returned null");
+            throw new XmlRpcException("rpc_component_register returned null");
         } else if (!(rtnObj instanceof Map)) {
             throw new XmlRpcException("Unexpected return object [ " + rtnObj +
                                       "] (type " +
