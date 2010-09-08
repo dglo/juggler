@@ -69,6 +69,16 @@ public class DAQInputConnector
     }
 
     /**
+     * Get number of active channels.
+     *
+     * @return number of channels
+     */
+    public int getNumberOfChannels()
+    {
+        return engine.getNumberOfChannels();
+    }
+
+    /**
      * Get connector port.
      *
      * @return port

@@ -46,6 +46,16 @@ public class DAQSplicer
     }
 
     /**
+     * Get number of active channels.
+     *
+     * @return number of channels
+     */
+    public int getNumberOfChannels()
+    {
+        return splicer.getStrandCount();
+    }
+
+    /**
      * Get splicer associated with this connector.
      *
      * @return splicer

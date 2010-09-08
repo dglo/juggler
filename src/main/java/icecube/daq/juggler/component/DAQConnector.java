@@ -90,6 +90,13 @@ public abstract class DAQConnector
     }
 
     /**
+     * Get number of active channels.
+     *
+     * @return number of channels
+     */
+    public abstract int getNumberOfChannels();
+
+    /**
      * Get connector port.
      *
      * @return <tt>0</tt>

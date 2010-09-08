@@ -149,6 +149,16 @@ public class DAQOutputConnector
     }
 
     /**
+     * Get number of active channels.
+     *
+     * @return number of channels
+     */
+    public int getNumberOfChannels()
+    {
+        return engine.getNumberOfChannels();
+    }
+
+    /**
      * Get current engine state.
      *
      * @return state string

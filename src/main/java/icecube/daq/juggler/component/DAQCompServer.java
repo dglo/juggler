@@ -795,6 +795,7 @@ public class DAQCompServer
             HashMap map = new HashMap();
             map.put("type", conn.getType());
             map.put("state", conn.getState().toLowerCase());
+            map.put("numChan", conn.getNumberOfChannels());
             list.add(map);
         }
 
