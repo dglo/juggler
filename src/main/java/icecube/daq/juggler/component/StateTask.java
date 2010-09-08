@@ -296,7 +296,6 @@ public class StateTask
     private boolean doForcedStop()
         throws DAQCompException
     {
-
         DAQCompException compEx = null;
 
         for (DAQConnector conn : comp.listConnectors()) {
