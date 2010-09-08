@@ -63,7 +63,7 @@ public class MockOutputEngine
 
     public int getNumberOfChannels()
     {
-        throw new Error("Unimplemented");
+        return 1;
     }
 
     public String getPresentState()
