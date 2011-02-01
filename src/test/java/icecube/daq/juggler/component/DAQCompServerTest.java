@@ -320,7 +320,7 @@ public class DAQCompServerTest
         connMap.put("compNum", new Integer(0));
         connMap.put("host", "localhost");
         connMap.put("port", new Integer(port));
-        
+
         String rtnVal;
 
         rtnVal = srvr.connect(new Object[] { connMap });
