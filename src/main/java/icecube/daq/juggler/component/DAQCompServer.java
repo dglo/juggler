@@ -1531,7 +1531,14 @@ public class DAQCompServer
             }
 
             try {
-                String mbid = (String) array[0];
+                long rawVal;
+                try {
+                    rawVal = Long.parseLong((String) array[0], 16);
+                } catch (NumberFormatException nfe) {
+                    throw new DAQCompException("Bad mainboard ID \"" +
+                                               array[0] + "\" in " + array);
+                }
+                String mbid = String.format("%012x", rawVal);
 
                 int[] vals = new int[5];
                 for (int i = 0; i < vals.length; i++) {
