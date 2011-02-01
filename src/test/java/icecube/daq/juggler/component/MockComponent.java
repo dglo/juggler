@@ -150,7 +150,17 @@ public class MockComponent
     }
 
     public long startSubrun(List<FlasherboardConfiguration> data)
+        throws DAQCompException
     {
+        for (FlasherboardConfiguration fb : data) {
+            if (fb.getMainboardID().length() != 12 ||
+                fb.getMainboardID().startsWith(" "))
+            {
+                throw new DAQCompException("Bad MBID \"" +
+                                           fb.getMainboardID() +
+                                           "\" in " + fb);
+            }
+        }
         calledStartSubrun = true;
         return subrunStartTime;
     }
