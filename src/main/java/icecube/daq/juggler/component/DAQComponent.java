@@ -2,12 +2,9 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
-import icecube.daq.io.MultiOutputEngine;
-import icecube.daq.io.PayloadOutputEngine;
 import icecube.daq.io.PayloadReader;
 import icecube.daq.io.SimpleOutputEngine;
 import icecube.daq.io.SimpleReader;
-import icecube.daq.io.SingleOutputEngine;
 import icecube.daq.io.SpliceablePayloadReader;
 import icecube.daq.io.SpliceableSimpleReader;
 import icecube.daq.juggler.alert.Alerter;
@@ -44,7 +41,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 5097 2010-07-15 20:17:09Z dglo $
+ * @version $Id: DAQComponent.java 12874 2011-04-13 22:45:30Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -65,27 +62,6 @@ public abstract class DAQComponent
         "StrandDepth",
         "TotalRecordsReceived",
         "TotalStrandDepth",
-    };
-
-    /** Methods names for PayloadOutputEngine MBean */
-    private static final String[] outputEngineMethods = new String[] {
-        "BytesSent",
-        "Depth",
-        "RecordsSent",
-    };
-
-    /** Methods names for SingleOutputEngine MBean */
-    private static final String[] singleEngineMethods = new String[] {
-        "BytesSent",
-        "Depth",
-        "RecordsSent",
-    };
-
-    /** Methods names for MultiOutputEngine MBean */
-    private static final String[] multiEngineMethods = new String[] {
-        "BytesSent",
-        "Depth",
-        "RecordsSent",
     };
 
     /** Methods names for SimpleOutputEngine MBean */
@@ -298,7 +274,7 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine output engine
      *
-     * @throws Error if 'engine' is not a PayloadOutputEngine
+     * @throws Error if 'engine' is not a known output engine
      */
     public final void addMonitoredEngine(String type,
                                          DAQComponentOutputProcess engine)
@@ -315,7 +291,7 @@ public abstract class DAQComponent
      * @param allowMultipleConnections <tt>true</tt> if this output connector
      *                                 can connect to multiple input connectors
      *
-     * @throws Error if 'engine' is not a PayloadOutputEngine
+     * @throws Error if 'engine' is not a known output engine
      */
     public final void addMonitoredEngine(String type,
                                           DAQComponentOutputProcess engine,
@@ -333,7 +309,7 @@ public abstract class DAQComponent
      * @param allowMultipleConnections <tt>true</tt> if this output connector
      *                                 can connect to multiple input connectors
      *
-     * @throws Error if 'engine' is not a PayloadOutputEngine
+     * @throws Error if 'engine' is not a known output engine
      */
     private final void addMonitoredEngine(String type,
                                           DAQComponentOutputProcess engine,
@@ -344,13 +320,7 @@ public abstract class DAQComponent
                                             allowMultipleConnections,
                                             optional));
 
-        if (engine instanceof PayloadOutputEngine) {
-            addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
-        } else if (engine instanceof SingleOutputEngine) {
-            addMBean(type, new MBeanWrapper(engine, singleEngineMethods));
-        } else if (engine instanceof MultiOutputEngine) {
-            addMBean(type, new MBeanWrapper(engine, multiEngineMethods));
-        } else if (engine instanceof SimpleOutputEngine) {
+        if (engine instanceof SimpleOutputEngine) {
             addMBean(type, new MBeanWrapper(engine, simpleEngineMethods));
         } else {
             throw new Error("Cannot monitor " + engine.getClass().getName());
@@ -379,7 +349,7 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine output engine
      *
-     * @throws Error if 'engine' is not a PayloadOutputEngine
+     * @throws Error if 'engine' is not a known output engine
      */
     public final void addOptionalEngine(String type,
                                         DAQComponentOutputProcess engine)
@@ -396,7 +366,7 @@ public abstract class DAQComponent
      * @param allowMultipleConnections <tt>true</tt> if this output connector
      *                                 can connect to multiple input connectors
      *
-     * @throws Error if 'engine' is not a PayloadOutputEngine
+     * @throws Error if 'engine' is not a known output engine
      */
     public final void addOptionalEngine(String type,
                                         DAQComponentOutputProcess engine,
