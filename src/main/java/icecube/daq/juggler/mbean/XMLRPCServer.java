@@ -86,9 +86,10 @@ class XMLRPCServer
         return newArray;
     }
 
-    private static AbstractMap fixMap(AbstractMap map) {
+    private static AbstractMap fixMap(AbstractMap map) 
+    {
 
-        for(Object key : map.keySet()) {
+        for (Object key : map.keySet()) {
             map.put(key, fixValue(map.get(key)));
         }
         return map;
@@ -114,7 +115,7 @@ class XMLRPCServer
         } else if (val instanceof Byte) {
             return new Integer(((Byte) val).intValue());
         } else if (val instanceof Character) {
-            char[] array = new char[] { ((Character) val).charValue() };
+            char[] array = new char[] {((Character) val).charValue() };
             return new String(array);
         } else if (val instanceof Short) {
             return new Integer(((Short) val).intValue());

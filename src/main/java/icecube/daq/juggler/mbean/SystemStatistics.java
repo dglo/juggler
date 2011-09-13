@@ -213,7 +213,7 @@ public class SystemStatistics
                 LOG.error("Problem reading io stats: " + ioe);
             }
 
-            if (line == null) { // End of output
+            if (line == null) { 
                 break;
             }
 
@@ -237,15 +237,15 @@ public class SystemStatistics
                 map = new TreeMap<String, String>();
             }
             data = dataPattern.split(line.trim());
-            String iface = data[0];  // one interface per line
+            String iface = data[0]; 
             int rx_i;
             int tx_i;
             // The recieve data for this interface
-            for(rx_i = 0; rx_i < rx_headers.length; rx_i++) {
+            for (rx_i = 0; rx_i < rx_headers.length; rx_i++) {
                 map.put(iface + "_rx_" + rx_headers[rx_i], data[rx_i + 1]);
             }
             // The transmit data for this interface
-            for(tx_i = 0; tx_i < tx_headers.length; tx_i++) {
+            for (tx_i = 0; tx_i < tx_headers.length; tx_i++) {
                 map.put(iface + "_tx_" + tx_headers[tx_i],
                         data[rx_i + tx_i + 1]);
             }
@@ -325,7 +325,8 @@ public class SystemStatistics
     /**
      * This is intended for unit testing
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) 
+    {
         System.out.println("SystemStats: in");
         SystemStatistics ss = new SystemStatistics();
 

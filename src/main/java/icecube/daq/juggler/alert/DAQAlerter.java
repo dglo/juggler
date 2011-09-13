@@ -196,7 +196,7 @@ public class DAQAlerter
             try {
                 socket.send(packet);
                 break;
-            } catch(IOException ioe) {
+            } catch (IOException ioe) {
                 if (retry) {
                     // silently drop the log message and retry
                     socket = null;
@@ -212,6 +212,7 @@ public class DAQAlerter
      *
      * @param host - host name for IceCube Live server
      * @param port - port number for IceCube Live server
+     * @throws AlertException if there is a problem with one of the parameters
      */
     public void setLive(String host, int port)
         throws AlertException
@@ -226,3 +227,4 @@ public class DAQAlerter
         livePort = port;
     }
 }
+

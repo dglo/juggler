@@ -41,7 +41,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 12874 2011-04-13 22:45:30Z dglo $
+ * @version $Id: DAQComponent.java 13354 2011-09-13 17:59:24Z seshadrivija $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -169,8 +169,6 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine input engine
      *
-     * @throws DAQCompException if 'enableMonitoring' is <tt>true</tt> but
-     *                          'engine' is not a PayloadReader
      */
     public final void addEngine(String type, DAQComponentInputProcessor engine)
     {
@@ -228,8 +226,6 @@ public abstract class DAQComponent
      *
      * @param type engine type
      * @param engine input engine
-     *
-     * @throws Error if 'engine' is not a PayloadReader
      */
     public final void addMonitoredEngine(String type,
                                          DAQComponentInputProcessor engine)
@@ -274,7 +270,6 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine output engine
      *
-     * @throws Error if 'engine' is not a known output engine
      */
     public final void addMonitoredEngine(String type,
                                          DAQComponentOutputProcess engine)
@@ -291,7 +286,6 @@ public abstract class DAQComponent
      * @param allowMultipleConnections <tt>true</tt> if this output connector
      *                                 can connect to multiple input connectors
      *
-     * @throws Error if 'engine' is not a known output engine
      */
     public final void addMonitoredEngine(String type,
                                           DAQComponentOutputProcess engine,
@@ -334,7 +328,6 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine input engine
      *
-     * @throws Error if 'engine' is not a PayloadReader
      */
     public final void addOptionalEngine(String type,
                                         DAQComponentInputProcessor engine)
@@ -349,7 +342,6 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine output engine
      *
-     * @throws Error if 'engine' is not a known output engine
      */
     public final void addOptionalEngine(String type,
                                         DAQComponentOutputProcess engine)
@@ -366,7 +358,6 @@ public abstract class DAQComponent
      * @param allowMultipleConnections <tt>true</tt> if this output connector
      *                                 can connect to multiple input connectors
      *
-     * @throws Error if 'engine' is not a known output engine
      */
     public final void addOptionalEngine(String type,
                                         DAQComponentOutputProcess engine,
@@ -895,9 +886,11 @@ public abstract class DAQComponent
      * Override this method to set the destination directory where the
      * dispatch files will be saved.
      *
-     * @param dirName The absolute path of directory where the dispatch files will be stored.
+     * @param dirName The absolute path of directory where the 
+     * dispatch files will be stored.
      */
-    public void setDispatchDestStorage(String dirName) {
+    public void setDispatchDestStorage(String dirName) 
+    {
         // Override me!
     }
 
@@ -927,7 +920,8 @@ public abstract class DAQComponent
      *
      * @param maxFileSize the maximum size of the dispatch file.
      */
-    public void setMaxFileSize(long maxFileSize) {
+    public void setMaxFileSize(long maxFileSize)
+    {
         // Override me!
     }
 
@@ -1210,7 +1204,7 @@ public abstract class DAQComponent
             buf.append(" [");
 
             boolean first = true;
-            for (Iterator iter = caches.keySet().iterator(); iter.hasNext(); ) {
+            for (Iterator iter = caches.keySet().iterator(); iter.hasNext();) {
                 if (first) {
                     first = false;
                 } else {

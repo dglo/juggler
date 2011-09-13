@@ -50,7 +50,10 @@ public interface Alerter
      *
      * @param host - host name for IceCube Live server
      * @param port - port number for IceCube Live server
+     *
+     * @throws AlertException if there is a problem with one of the parameters
      */
-    public void setLive(String host, int port)
+    void setLive(String host, int port)
         throws AlertException;
 }
+

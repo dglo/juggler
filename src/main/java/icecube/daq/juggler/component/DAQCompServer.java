@@ -144,11 +144,11 @@ class LogOptions
             levelStr = "ERROR";
             il = addrStr.length();
         } else {
-            levelStr = addrStr.substring(il+1);
+            levelStr = addrStr.substring(il + 1);
         }
 
         Level level = getLogLevel(levelStr);
-        if(level == null) {
+        if (level == null) {
             System.err.println("Bad log level: '" + levelStr + "'");
             return false;
         }
@@ -1314,7 +1314,6 @@ public class DAQCompServer
      *
      * @param appender mock appender
      * @param handler mock handler
-     * @param logLevel log level
      */
     public static void setDefaultLoggingConfiguration(IDAQAppender appender,
                                                       Handler handler)
@@ -1499,7 +1498,6 @@ public class DAQCompServer
      * XML-RPC method requesting the specified component to start a subrun.
      * Note that an empty list signals the end of the subrun.
      *
-     * @param subrunNumber subrun number
      * @param rawData Python-formatted subrun data
      *
      * @return start time

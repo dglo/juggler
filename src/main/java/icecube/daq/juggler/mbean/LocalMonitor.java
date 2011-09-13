@@ -191,7 +191,7 @@ public class LocalMonitor
         } else if (obj.getClass().equals(HashMap.class)) {
             StringBuffer strBuf = new StringBuffer("{");
             HashMap map = (HashMap) obj;
-            for (Object key: map.keySet()) {
+            for (Object key : map.keySet()) {
                 if (strBuf.length() > 1) {
                     strBuf.append(", ");
                 }

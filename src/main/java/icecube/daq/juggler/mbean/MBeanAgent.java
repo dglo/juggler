@@ -120,15 +120,15 @@ public class MBeanAgent
         throws MBeanAgentException
     {
         if (isRunning()) {
-	    // allow late bind of MBeans
-	    try {
-		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-		mbs.registerMBean(bean, new ObjectName(getDomain(), "name", name));
-	    }
-	    catch (JMException jmx) {
-		throw new MBeanAgentException(jmx);
-	    }
-	}
+            // allow late bind of MBeans
+            try {
+                MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+                mbs.registerMBean(bean, new ObjectName(getDomain(), 
+                    "name", name));
+            } catch (JMException jmx) {
+                throw new MBeanAgentException(jmx);
+            }
+        }
 
         if (beans.containsKey(name)) {
             throw new MBeanAgentException("MBean \"" + name + "\" has" +
