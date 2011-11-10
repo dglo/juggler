@@ -27,6 +27,7 @@ class StateComponent
     private boolean didStartEngines;
     private boolean didStarting;
     private boolean didStarted;
+    private boolean didSwitching;
     private boolean didStopping;
     private boolean didStopped;
     private boolean didDisconnected;
@@ -65,6 +66,7 @@ class StateComponent
     boolean didStopStateTask() { return didStopStateTask; }
     boolean didStopped() { return didStopped; }
     boolean didStopping() { return didStopping; }
+    boolean didSwitching() { return didSwitching; }
 
     /**
      * Perform any actions after all output connectors have been disconnected.
@@ -137,6 +139,7 @@ class StateComponent
         didStartEngines = false;
         didStarting = false;
         didStarted = false;
+        didSwitching = false;
         didStopping = false;
         didStopped = false;
         didDisconnected = false;
@@ -240,6 +243,19 @@ class StateComponent
     {
         didStopping = true;
     }
+
+    /**
+     * Perform any actions related to switching to a new run.
+     *
+     * @param runNumber new run number
+     *
+     * @throws DAQCompException if there is a problem switching the component
+     */
+    public void switching(int runNumber)
+        throws DAQCompException
+    {
+        didSwitching = true;
+    }
 }
 
 enum StateAction
@@ -293,6 +309,8 @@ public class StateTaskTest
                      "started", trans);
         checkOneFunc(CompFunc.didStarting(bitmap), comp.didStarting(),
                      "starting", trans);
+        checkOneFunc(CompFunc.didSwitching(bitmap), comp.didSwitching(),
+                     "switching", trans);
         checkOneFunc(CompFunc.didStopMBeanAgent(bitmap),
                      comp.didStopMBeanAgent(),
                      "stopMBeanAgent", trans);
@@ -397,7 +415,7 @@ public class StateTaskTest
             }
 
             assertEquals("Unexpected final state for " + trans.getOldState() +
-                         "->" + trans.getAction(), 
+                         "->" + trans.getAction(),
                          trans.getEndState(), st.getState());
 
             checkFunctions(comp, trans, trans.getFunctionBitmap());

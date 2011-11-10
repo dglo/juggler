@@ -38,10 +38,11 @@ import org.apache.log4j.Level;
  * <li>connect()
  * <li>configure()
  * <li>startRun()
+ * <li><i>optional</i> switchToNewRun()
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 13400 2011-11-11 02:44:51Z dglo $
+ * @version $Id: DAQComponent.java 13401 2011-11-11 04:23:13Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -616,6 +617,29 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the run data for a builder.
+     *
+     * @param runnum run number
+     *
+     * @return list of run data values
+     */
+    public long[] getRunData(int runnum)
+        throws DAQCompException
+    {
+        return new long[0];
+    }
+
+    /**
+     * Get the current run number.
+     *
+     * @return current run number
+     */
+    public int getRunNumber()
+    {
+        return -1;
+    }
+
+    /**
      * Get component name (and ID, for non-hub components.)
      *
      * @return full name
@@ -1166,6 +1190,38 @@ public abstract class DAQComponent
      * @throws DAQCompException if there is a problem stopping the component
      */
     public void stopping()
+        throws DAQCompException
+    {
+        // Override me!
+    }
+
+    /**
+     * Switch to a new run.
+     *
+     * @param runNumber run number
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public final void switchToNewRun(int runNumber)
+        throws DAQCompException
+    {
+        if (stateTask == null) {
+            throw new DAQCompException("Component " + getName() +
+                                       " has been destroyed");
+        }
+
+        stateTask.switchToNewRun(runNumber);
+    }
+
+    /**
+     * Override this method to perform any actions related to switching to
+     * a new run.
+     *
+     * @param runNumber new run number
+     *
+     * @throws DAQCompException if there is a problem switching the component
+     */
+    public void switching(int runNumber)
         throws DAQCompException
     {
         // Override me!

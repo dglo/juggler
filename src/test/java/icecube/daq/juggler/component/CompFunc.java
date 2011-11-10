@@ -15,6 +15,7 @@ public final class CompFunc
     public static final int STOP_STATE_TASK = 0x0200;
     public static final int RESETTING = 0x0400;
     public static final int FLUSH_CACHES = 0x0800;
+    public static final int SWITCHING = 0x1000;
 
     private static final boolean checkBitmap(int bitmap, int bit)
     {
@@ -68,5 +69,9 @@ public final class CompFunc
     public static boolean didStopping(int bitmap)
     {
         return checkBitmap(bitmap, CompFunc.STOPPING);
+    }
+    public static boolean didSwitching(int bitmap)
+    {
+        return checkBitmap(bitmap, CompFunc.SWITCHING);
     }
 }

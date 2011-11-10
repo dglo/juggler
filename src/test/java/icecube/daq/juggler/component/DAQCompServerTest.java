@@ -949,6 +949,20 @@ public class DAQCompServerTest
         }
     }
 
+    public void testSwitchRunNull()
+        throws DAQCompException, IOException
+    {
+        MockServer srvr = new MockServer();
+
+        try {
+            srvr.switchToNewRun(1);
+            fail("Should have failed due to null component");
+        } catch (DAQCompException dce) {
+            assertEquals("Unexpected exception",
+                         "Component not found", dce.getMessage());
+        }
+    }
+
     public void testRun()
         throws DAQCompException, IOException
     {
@@ -996,6 +1010,18 @@ public class DAQCompServerTest
         assertTrue("started() was not called",
                    mockComp.wasStartedCalled());
         assertFalse("Unexpected error after startRun", mockComp.isError());
+
+        int switchNum = runNum + 10;
+
+        rtnVal = srvr.switchToNewRun(switchNum);
+        assertEquals("Bad switchToNewRun() return value", "OK", rtnVal);
+
+        mockComp.waitForStateChange(DAQState.SWITCHING);
+        assertEquals("Bad state after switchRun",
+                     DAQState.RUNNING, mockComp.getState());
+        assertTrue("switching() was not called",
+                   mockComp.wasSwitchingCalled());
+        assertFalse("Unexpected error after switchRun", mockComp.isError());
 
         rtnVal = srvr.stopRun();
         assertEquals("Bad stopRun() return value", "OK", rtnVal);

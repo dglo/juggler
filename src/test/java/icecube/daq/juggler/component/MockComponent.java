@@ -22,6 +22,7 @@ public class MockComponent
     private boolean calledStarting;
     private boolean calledStopped;
     private boolean calledStopping;
+    private boolean calledSwitching;
     private boolean stopEngines;
 
     private String version;
@@ -47,6 +48,7 @@ public class MockComponent
         calledStarting = false;
         calledStopped = false;
         calledStopping = false;
+        calledSwitching = false;
     }
 
     public void commitSubrun(int subrunNumber, long startTime)
@@ -195,6 +197,11 @@ public class MockComponent
         }
     }
 
+    public void switching(int runNumber)
+    {
+        calledSwitching = true;
+    }
+
     boolean wasConfiguringCalled()
     {
         return calledConfiguring;
@@ -238,5 +245,10 @@ public class MockComponent
     boolean wasStoppingCalled()
     {
         return calledStopping;
+    }
+
+    boolean wasSwitchingCalled()
+    {
+        return calledSwitching;
     }
 }

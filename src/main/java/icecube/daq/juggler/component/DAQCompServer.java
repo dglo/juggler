@@ -722,6 +722,48 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to get the run data from a builder
+     *
+     * @param runnum run number
+     *
+     * @return list of builder-specific event counts and times
+     *
+     * @throws DAQCompException if component or subrun does not exist
+     */
+    public ArrayList getRunData(int runnum)
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        long[] vals = comp.getRunData(runnum);
+        ArrayList list = new ArrayList(vals.length);
+        for (int i = 0; i < vals.length; i++) {
+            list.add(Long.toString(vals[i]) + "L");
+        }
+
+        return list;
+    }
+
+    /**
+     * XML-RPC method to get the current run number from a component.
+     *
+     * @return current run number
+     *
+     * @throws DAQCompException if component or subrun does not exist
+     */
+    public int getRunNumber()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return comp.getRunNumber();
+    }
+
+    /**
      * XML-RPC method to return component state.
      *
      * @return component state
@@ -1570,6 +1612,29 @@ public class DAQCompServer
         }
 
         comp.stopRun();
+        return "OK";
+    }
+
+    /**
+     * XML-RPC method requesting the specified component to switch to a new
+     * run.
+     *
+     * @param runNumber run number
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String switchToNewRun(int runNumber)
+        throws DAQCompException, IOException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.switchToNewRun(runNumber);
+
         return "OK";
     }
 }

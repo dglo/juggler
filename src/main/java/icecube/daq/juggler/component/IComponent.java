@@ -127,4 +127,14 @@ public interface IComponent
      */
     void stopping()
         throws DAQCompException;
+
+    /**
+     * Perform any actions related to switching to a new run.
+     *
+     * @param runNumber new run number
+     *
+     * @throws DAQCompException if there is a problem switching the component
+     */
+    void switching(int runNumber)
+        throws DAQCompException;
 }

@@ -30,6 +30,7 @@ public class StateTask
     private Connection[] connectList;
     private String configName;
     private int startNumber;
+    private int switchNumber;
 
     StateTask(IComponent comp)
     {
@@ -156,7 +157,6 @@ public class StateTask
             if (dc.isOutput() &&
                 !((DAQOutputConnector) dc).isConnected())
             {
-                state = DAQState.IDLE;
                 throw new DAQCompException("Component " + getName() +
                                            " has unconnected " +
                                            dc.getType() + " output");
@@ -169,8 +169,7 @@ public class StateTask
     private synchronized void doConnect(Connection[] list)
         throws DAQCompException, IOException
     {
-        DAQCompException compEx = null;
-        for (int i = 0; compEx == null && i < list.length; i++) {
+        for (int i = 0; i < list.length; i++) {
             DAQOutputConnector conn = null;
 
             for (DAQConnector dc : comp.listConnectors()) {
@@ -180,8 +179,7 @@ public class StateTask
                             " has multiple " + list[i].getType() +
                             " outputs";
 
-                        compEx = new DAQCompException(errMsg);
-                        break;
+                        throw new DAQCompException(errMsg);
                     }
 
                     conn = (DAQOutputConnector) dc;
@@ -192,40 +190,24 @@ public class StateTask
                             " output " + list[i].getType() +
                             " is already connected";
 
-                        compEx = new DAQCompException(errMsg);
-                        break;
+                        throw new DAQCompException(errMsg);
                     }
                 }
             }
 
             if (conn == null) {
-                compEx = new DAQCompException("Component " + getName() +
-                                              " does not contain " +
-                                              list[i].getType() +
-                                              " output");
-                break;
+                throw new DAQCompException("Component " + getName() +
+                                           " does not contain " +
+                                           list[i].getType() + " output");
             }
 
             try {
                 conn.connect(comp.getByteBufferCache(conn.getType()), list[i]);
             } catch (IOException ioe) {
-                compEx = new DAQCompException("Cannot connect " + conn +
-                                              " to connection #" + i +
-                                              ": " + list[i], ioe);
-                break;
+                throw new DAQCompException("Cannot connect " + conn +
+                                           " to connection #" + i + ": " +
+                                           list[i], ioe);
             }
-        }
-
-        if (compEx != null) {
-            try {
-                doDisconnect();
-            } catch (Throwable thr) {
-                LOG.warn("Couldn't disconnect after failed connect", thr);
-            }
-
-            state = DAQState.IDLE;
-
-            throw compEx;
         }
 
         state = DAQState.CONNECTED;
@@ -284,16 +266,16 @@ public class StateTask
         comp.disconnected();
 
         comp.flushCaches();
+
+        state = DAQState.IDLE;
     }
 
     /**
      * Emergency stop of component.
      *
-     * @return <tt>true</tt> if all connectors have stopped
-     *
      * @throws DAQCompException if there is a problem
      */
-    private boolean doForcedStop()
+    private void doForcedStop()
         throws DAQCompException
     {
         DAQCompException compEx = null;
@@ -317,7 +299,10 @@ public class StateTask
             throw compEx;
         }
 
-        return comp.isStopped();
+        if (comp.isStopped()) {
+            comp.stopped();
+            state = DAQState.READY;
+        }
     }
 
     private void doReset()
@@ -331,14 +316,14 @@ public class StateTask
             prevState == DAQState.STOPPING ||
             prevState == DAQState.FORCING_STOP)
         {
+            // if we haven't called the component's stopping() method yet...
             if (!calledStopping) {
                 comp.stopping();
+                calledStopping = true;
             }
 
-            if (doForcedStop()) {
-                comp.stopped();
-                prevState = DAQState.READY;
-            }
+            doForcedStop();
+            prevState = DAQState.READY;
         }
 
         comp.resetting();
@@ -350,14 +335,11 @@ public class StateTask
             prevState == DAQState.DISCONNECTING)
         {
             doDisconnect();
-
-            state = DAQState.IDLE;
         } else {
             state = prevState;
         }
 
-        if (state != DAQState.IDLE && state != DAQState.DESTROYED &&
-            state != DAQState.DESTROYING)
+        if (state != DAQState.IDLE)
         {
             throw new DAQCompException("Bad state " + getState() +
                                        " after reset (prevState was " +
@@ -394,6 +376,13 @@ public class StateTask
             comp.stopped();
             state = DAQState.READY;
         }
+    }
+
+    private void doSwitchRun()
+        throws DAQCompException
+    {
+        comp.switching(switchNumber);
+        state = DAQState.RUNNING;
     }
 
     /**
@@ -545,9 +534,9 @@ public class StateTask
             }
 
             if (!success) {
+                state = DAQState.IDLE;
                 try {
                     doDisconnect();
-                    state = DAQState.IDLE;
                 } catch (DAQCompException dce) {
                     LOG.error("Couldn't disconnect after" +
                               " failed connect", dce);
@@ -579,7 +568,6 @@ public class StateTask
         case DISCONNECTING:
             try {
                 doDisconnect();
-                state = DAQState.IDLE;
                 success = true;
             } catch (DAQCompException dce) {
                 caughtError = true;
@@ -599,11 +587,8 @@ public class StateTask
             break;
         case FORCING_STOP:
             try {
-                success = doForcedStop();
-                if (success) {
-                    comp.stopped();
-                    state = DAQState.READY;
-                }
+                doForcedStop();
+                success = true;
             } catch (DAQCompException dce) {
                 caughtError = true;
                 LOG.error("Forced stop failed", dce);
@@ -665,6 +650,22 @@ public class StateTask
 
             if (!success) {
                 // revert to the previous state if stopRun failed
+                state = prevState;
+            }
+
+            break;
+        case SWITCHING:
+            try {
+                doSwitchRun();
+                success = true;
+            } catch (DAQCompException dce) {
+                caughtError = true;
+                LOG.error("Switch run failed", dce);
+                success = false;
+            }
+
+            if (!success) {
+                // revert to the previous state if switchRun failed
                 state = prevState;
             }
 
@@ -733,6 +734,30 @@ public class StateTask
 
         synchronized (this) {
             changeState(DAQState.STOPPING);
+        }
+    }
+
+    /**
+     * Switch to a new run.
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    void switchToNewRun(int runNumber)
+        throws DAQCompException
+    {
+        // ignore command if already switching
+        if (state == DAQState.SWITCHING) {
+            return;
+        }
+
+        if (state != DAQState.RUNNING) {
+            throw new DAQCompException("Cannot switch component " + getName() +
+                                       " from state " + getState());
+        }
+
+        synchronized (this) {
+            switchNumber = runNumber;
+            changeState(DAQState.SWITCHING);
         }
     }
 

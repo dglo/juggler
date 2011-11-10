@@ -6,7 +6,7 @@ package icecube.daq.juggler.component;
 public enum DAQState {
     IDLE, CONNECTING, CONNECTED, CONFIGURING, READY, STARTING,
         RUNNING, STOPPING, DISCONNECTING, DESTROYED, FORCING_STOP, DESTROYING,
-        RESETTING;
+        RESETTING, SWITCHING;
 
     /**
      * Convert Java constant name to "camel case" readable name.
