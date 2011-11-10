@@ -41,7 +41,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 13354 2011-09-13 17:59:24Z seshadrivija $
+ * @version $Id: DAQComponent.java 13400 2011-11-11 02:44:51Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -886,10 +886,10 @@ public abstract class DAQComponent
      * Override this method to set the destination directory where the
      * dispatch files will be saved.
      *
-     * @param dirName The absolute path of directory where the 
+     * @param dirName The absolute path of directory where the
      * dispatch files will be stored.
      */
-    public void setDispatchDestStorage(String dirName) 
+    public void setDispatchDestStorage(String dirName)
     {
         // Override me!
     }
