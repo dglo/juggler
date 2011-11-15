@@ -42,7 +42,6 @@ public class SystemStatistics
 
     /** Network IO reading stuff */
     private static String PNDfilename = "/proc/net/dev";
-    private BufferedReader PNDreader = null;
     private Pattern barPattern   = Pattern.compile("\\|");
     private Pattern dataPattern  = Pattern.compile("[:\\s]+");
     private Pattern spacePattern = Pattern.compile("\\s+");
@@ -62,6 +61,18 @@ public class SystemStatistics
         } catch (IOException ioe) {
             LOG.error("Couldn't get uptime", ioe);
             return null;
+        }
+
+        try {
+            proc.getOutputStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        try {
+            proc.getErrorStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
         }
 
         BufferedReader out =
@@ -99,6 +110,18 @@ public class SystemStatistics
             }
         }
 
+        try {
+            out.close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        try {
+            proc.waitFor();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
         return null;
     }
 
@@ -110,6 +133,18 @@ public class SystemStatistics
         } catch (IOException ioe) {
             LOG.error("Couldn't get df", ioe);
             return null;
+        }
+
+        try {
+            proc.getOutputStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        try {
+            proc.getErrorStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
         }
 
         BufferedReader out =
@@ -178,6 +213,18 @@ public class SystemStatistics
             }
         }
 
+        try {
+            out.close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        try {
+            proc.waitFor();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
         return map;
     }
 
@@ -198,6 +245,7 @@ public class SystemStatistics
         String[] data;
 
         // Network IO reading set-up
+        BufferedReader PNDreader;
         try {
             PNDreader = new BufferedReader(new FileReader(PNDfilename));
         } catch (FileNotFoundException fnfe) {
@@ -213,7 +261,7 @@ public class SystemStatistics
                 LOG.error("Problem reading io stats: " + ioe);
             }
 
-            if (line == null) { 
+            if (line == null) {
                 break;
             }
 
@@ -237,7 +285,7 @@ public class SystemStatistics
                 map = new TreeMap<String, String>();
             }
             data = dataPattern.split(line.trim());
-            String iface = data[0]; 
+            String iface = data[0];
             int rx_i;
             int tx_i;
             // The recieve data for this interface
@@ -249,6 +297,12 @@ public class SystemStatistics
                 map.put(iface + "_tx_" + tx_headers[tx_i],
                         data[rx_i + tx_i + 1]);
             }
+        }
+
+        try {
+            PNDreader.close();
+        } catch (Throwable thr) {
+            // ignore errors on close
         }
 
         return map;
@@ -325,7 +379,7 @@ public class SystemStatistics
     /**
      * This is intended for unit testing
      */
-    public static void main(String[] args) 
+    public static void main(String[] args)
     {
         System.out.println("SystemStats: in");
         SystemStatistics ss = new SystemStatistics();
