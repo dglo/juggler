@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 13541 2012-03-08 21:28:30Z dglo $
+ * @version $Id: DAQComponent.java 13548 2012-03-08 21:57:35Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -908,6 +908,18 @@ public abstract class DAQComponent
     }
 
     /**
+     * Override this method to receive the first "good" time for the current
+     * run.
+     *
+     * @param firstTime first "good" time
+     */
+    public void setFirstGoodTime(long firstTime)
+        throws DAQCompException, IOException
+    {
+        // Override me!
+    }
+
+    /**
      * Override this method to receive the name of the directory holding the
      * XML configuration tree.
      *
@@ -927,6 +939,18 @@ public abstract class DAQComponent
     final void setId(int id)
     {
         this.id = id;
+    }
+
+    /**
+     * Override this method to receive the last "good" time for the current
+     * run.
+     *
+     * @param lastTime last "good" time
+     */
+    public void setLastGoodTime(long lastTime)
+        throws DAQCompException, IOException
+    {
+        // Override me!
     }
 
     /**

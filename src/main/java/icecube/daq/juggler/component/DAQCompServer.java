@@ -1365,6 +1365,124 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method setting first "good" time in the specified component.
+     * run.
+     *
+     * @param firstTime first "good" time
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String setFirstGoodTime(String firstTimeStr)
+        throws DAQCompException, IOException
+    {
+        if (firstTimeStr == null) {
+            throw new DAQCompException("Time cannot be null");
+        }
+
+        String str;
+        if (!firstTimeStr.endsWith("L")) {
+            str = firstTimeStr;
+        } else {
+            str = firstTimeStr.substring(0, firstTimeStr.length() - 1);
+        }
+
+        long val;
+        try {
+            val = Long.parseLong(str);
+        } catch (NumberFormatException nfe) {
+            throw new DAQCompException("Bad time string \"" + firstTimeStr +
+                                       "\"");
+        }
+
+        return setFirstGoodTime(val);
+    }
+
+    /**
+     * XML-RPC method setting first "good" time in the specified component.
+     * run.
+     *
+     * @param firstTime first "good" time
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String setFirstGoodTime(long firstTime)
+        throws DAQCompException, IOException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.setFirstGoodTime(firstTime);
+
+        return "OK";
+    }
+
+    /**
+     * XML-RPC method setting last "good" time in the specified component.
+     * run.
+     *
+     * @param lastTime last "good" time
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String setLastGoodTime(String lastTimeStr)
+        throws DAQCompException, IOException
+    {
+        if (lastTimeStr == null) {
+            throw new DAQCompException("Time cannot be null");
+        }
+
+        String str;
+        if (!lastTimeStr.endsWith("L")) {
+            str = lastTimeStr;
+        } else {
+            str = lastTimeStr.substring(0, lastTimeStr.length() - 1);
+        }
+
+        long val;
+        try {
+            val = Long.parseLong(str);
+        } catch (NumberFormatException nfe) {
+            throw new DAQCompException("Bad time string \"" + lastTimeStr +
+                                       "\"");
+        }
+
+        return setLastGoodTime(val);
+    }
+
+    /**
+     * XML-RPC method setting last "good" time in the specified component.
+     * run.
+     *
+     * @param lastTime last "good" time
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String setLastGoodTime(long lastTime)
+        throws DAQCompException, IOException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.setLastGoodTime(lastTime);
+
+        return "OK";
+    }
+
+    /**
      * Set logging to the specified configuration.
      */
     private static void setLoggingConfiguration(LoggingConfiguration logConfig)
