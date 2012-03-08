@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 13401 2011-11-11 04:23:13Z dglo $
+ * @version $Id: DAQComponent.java 13541 2012-03-08 21:28:30Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -896,17 +896,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Override this method to receive the name of the directory holding the
-     * XML configuration tree.
-     *
-     * @param dirName directory name
-     */
-    public void setGlobalConfigurationDir(String dirName)
-    {
-        // Override me!
-    }
-
-    /**
      * Override this method to set the destination directory where the
      * dispatch files will be saved.
      *
@@ -914,6 +903,17 @@ public abstract class DAQComponent
      * dispatch files will be stored.
      */
     public void setDispatchDestStorage(String dirName)
+    {
+        // Override me!
+    }
+
+    /**
+     * Override this method to receive the name of the directory holding the
+     * XML configuration tree.
+     *
+     * @param dirName directory name
+     */
+    public void setGlobalConfigurationDir(String dirName)
     {
         // Override me!
     }
