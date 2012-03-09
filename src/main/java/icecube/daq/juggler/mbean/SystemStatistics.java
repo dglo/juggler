@@ -38,10 +38,10 @@ public class SystemStatistics
     /** pattern for parsing 'df' output. */
     private Pattern dfPat =
         Pattern.compile("^\\s*(\\S+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)" +
-                        "\\s+(\\d+)%\\s+(\\S+)\\s*$");
+                        "\\s+(\\d+)%\\s+(\\S.*)\\s*$");
 
     /** Network IO reading stuff */
-    private static String PNDfilename = "/proc/net/dev";
+    public static String PNDfilename = "/proc/net/dev";
     private Pattern barPattern   = Pattern.compile("\\|");
     private Pattern dataPattern  = Pattern.compile("[:\\s]+");
     private Pattern spacePattern = Pattern.compile("\\s+");
