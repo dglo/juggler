@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 13548 2012-03-08 21:57:35Z dglo $
+ * @version $Id: DAQComponent.java 13742 2012-06-08 21:52:15Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -133,7 +133,7 @@ public abstract class DAQComponent
      *
      * @param cache buffer cache
      */
-    public final void addCache(IByteBufferCache cache)
+    public void addCache(IByteBufferCache cache)
     {
         addCache(DAQConnector.TYPE_GENERIC_CACHE, cache);
     }
@@ -144,7 +144,7 @@ public abstract class DAQComponent
      * @param type buffer cache type
      * @param cache buffer cache
      */
-    public final void addCache(String type, IByteBufferCache cache)
+    public void addCache(String type, IByteBufferCache cache)
     {
         if (caches.containsKey(type)) {
             LOG.error("Overwriting buffer cache for type \"" + type + "\"");
@@ -208,7 +208,7 @@ public abstract class DAQComponent
      * @param name short MBean name
      * @param mbean MBean object
      */
-    public final void addMBean(String name, Object mbean)
+    public void addMBean(String name, Object mbean)
     {
         if (mbeanAgent == null) {
             mbeanAgent = new MBeanAgent();
@@ -228,8 +228,8 @@ public abstract class DAQComponent
      * @param type engine type
      * @param engine input engine
      */
-    public final void addMonitoredEngine(String type,
-                                         DAQComponentInputProcessor engine)
+    public void addMonitoredEngine(String type,
+                                   DAQComponentInputProcessor engine)
     {
         addMonitoredEngine(type, engine, false);
     }
@@ -272,8 +272,8 @@ public abstract class DAQComponent
      * @param engine output engine
      *
      */
-    public final void addMonitoredEngine(String type,
-                                         DAQComponentOutputProcess engine)
+    public void addMonitoredEngine(String type,
+                                   DAQComponentOutputProcess engine)
     {
         addMonitoredEngine(type, engine, false, false);
     }
@@ -330,8 +330,8 @@ public abstract class DAQComponent
      * @param engine input engine
      *
      */
-    public final void addOptionalEngine(String type,
-                                        DAQComponentInputProcessor engine)
+    public void addOptionalEngine(String type,
+                                  DAQComponentInputProcessor engine)
     {
         addMonitoredEngine(type, engine, true);
     }
@@ -344,8 +344,8 @@ public abstract class DAQComponent
      * @param engine output engine
      *
      */
-    public final void addOptionalEngine(String type,
-                                        DAQComponentOutputProcess engine)
+    public void addOptionalEngine(String type,
+                                  DAQComponentOutputProcess engine)
     {
         addOptionalEngine(type, engine, false);
     }
