@@ -983,6 +983,9 @@ public class DAQCompServer
     {
         LogOptions logOpt = new LogOptions();
 
+	// get the configuration directory from a system property
+	String propConfigDir = System.getProperty("icecube.daq.component.configDir");
+
         boolean usage = false;
         for (int i = 0; i < args.length; i++) {
             if (args[i].length() > 1 && args[i].charAt(0) == '-') {
@@ -1032,8 +1035,18 @@ public class DAQCompServer
                     break;
                 case 'g':
                     i++;
-                    String glDir = args[i];
-                    comp.setGlobalConfigurationDir(glDir);
+
+		    // if the system property was set ignore
+		    // the -g option
+		    if (propConfigDir==null) {
+			propConfigDir = args[i];
+		    } else {
+			System.err.println("Both the configuration file property " +
+					   "and the -g option where specified.");
+			usage = true;
+			break;
+		    }
+
                     break;
                 case 'l':
                     i++;
@@ -1071,6 +1084,12 @@ public class DAQCompServer
             }
         }
 
+	// if the configuration directory has been set, call the
+	// setGlobalConfigurationDir directory
+	if(propConfigDir!=null) {
+	    comp.setGlobalConfigurationDir(propConfigDir);
+	}
+
         if (configURL == null) {
             try {
                 configURL = new URL("http", "localhost", 8080, "");
@@ -1090,7 +1109,8 @@ public class DAQCompServer
                 " [-S(howSpinner)]" +
                 " [-c configServerURL]" +
                 " [-d dispatchDestPath]" +
-                " [-g globalConfigPath]" +
+                " [-g globalConfigPath - note deprecated, " +
+		"     use -Dicecube.daq.component.configDir]" +
                 " [-l logAddress:logPort,logLevel]" +
                 " [-s maxDispatchFileSize]" +
                 comp.getOptionUsage();
