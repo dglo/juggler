@@ -76,22 +76,66 @@ class Spinner
     }
 }
 
-/**
- * Logging options
- */
-class LogOptions
-{
-    private String logHost;
-    private int logPort;
-    private Level logLevel;
-    private String liveHost;
-    private int livePort;
-    private Level liveLevel;
-    private boolean isSet;
+enum LogType {
+    DAQLOG, LIVELOG, LIVEMONI
+}
 
-    boolean isSet()
+class LogOptionException
+    extends Exception
+{
+    LogOptionException(String msg)
     {
-        return isSet;
+        super(msg);
+    }
+}
+
+class LogTarget
+{
+    String host;
+    int port;
+    Level level;
+
+    LogTarget(String addrStr)
+        throws LogOptionException
+    {
+        int ic = addrStr.indexOf(':');
+        int il = addrStr.indexOf(',');
+        if (ic < 0 && il < 0) {
+            throw new LogOptionException("Bad log argument '" + addrStr + "'");
+        }
+
+        String levelStr;
+        if (il < 0) {
+            levelStr = "ERROR";
+            il = addrStr.length();
+        } else {
+            levelStr = addrStr.substring(il + 1);
+        }
+
+        level = getLogLevel(levelStr);
+        if (level == null) {
+            throw new LogOptionException("Bad log level '" + levelStr + "'");
+        }
+
+        if (ic < 0) {
+            host = null;
+            port = 0;
+        } else {
+            if (ic == 0) {
+                host = "localhost";
+            } else {
+                host = addrStr.substring(0, ic);
+            }
+
+            String portStr  = addrStr.substring(ic + 1, il);
+
+            try {
+                port = Integer.parseInt(portStr);
+            } catch (NumberFormatException e) {
+                throw new LogOptionException("Bad log port '" + portStr +
+                                             "' in '" + addrStr + "'");
+            }
+        }
     }
 
     /**
@@ -129,101 +173,84 @@ class LogOptions
 
         return logLevel;
     }
+}
 
-    boolean process(String addrStr, boolean isLive)
+/**
+ * Logging options
+ */
+class LogOptions
+{
+    private LogTarget daqLog;
+    private LogTarget liveLog;
+    private LogTarget liveMoni;
+
+    void configure(DAQCompServer server, DAQComponent comp)
+        throws LogOptionException
     {
-        int ic = addrStr.indexOf(':');
-        int il = addrStr.indexOf(',');
-        if (ic < 0 && il < 0) {
-            System.err.println("Bad log argument '" + addrStr + "'");
-            return false;
+        if (daqLog != null || liveLog != null) {
+            configureLogging(server, comp);
         }
 
-        String levelStr;
-        if (il < 0) {
-            levelStr = "ERROR";
-            il = addrStr.length();
-        } else {
-            levelStr = addrStr.substring(il + 1);
+        if (liveMoni != null) {
+            configureMonitoring(server, comp);
         }
-
-        Level level = getLogLevel(levelStr);
-        if (level == null) {
-            System.err.println("Bad log level: '" + levelStr + "'");
-            return false;
-        }
-
-        String host;
-        int port;
-
-        if (ic < 0) {
-            host = null;
-            port = 0;
-        } else {
-            if (ic == 0) {
-                host = "localhost";
-            } else {
-                host = addrStr.substring(0, ic);
-            }
-
-            String portStr  = addrStr.substring(ic + 1, il);
-
-            try {
-                port = Integer.parseInt(portStr);
-            } catch (NumberFormatException e) {
-                System.err.println("Bad log port '" + portStr + "' in '" +
-                                   addrStr + "'");
-                return false;
-            }
-        }
-
-        if (isLive) {
-            liveHost = host;
-            livePort = port;
-            liveLevel = level;
-        } else {
-            logHost = host;
-            logPort = port;
-            logLevel = level;
-        }
-
-        if (logLevel != null && liveLevel != null &&
-            !logLevel.equals(liveLevel))
-        {
-            System.err.println("I3Live logging level " + liveLevel +
-                               " does not match pDAQ logging level " +
-                               logLevel);
-            return false;
-        }
-
-        isSet = true;
-        return true;
     }
 
-    boolean configure(DAQCompServer server, DAQComponent comp)
+    private void configureLogging(DAQCompServer server, DAQComponent comp)
+        throws LogOptionException
     {
-        comp.setLogLevel(logLevel);
+        if (daqLog.level != null && liveLog.level != null &&
+            !daqLog.level.equals(liveLog.level))
+        {
+            throw new LogOptionException("I3Live logging level " +
+                                         liveLog.level +
+                                         " does not match pDAQ logging level " +
+                                         daqLog.level);
+        }
+
+        comp.setLogLevel(daqLog.level);
         try {
-            server.setDefaultLoggingConfiguration(logLevel, logHost, logPort,
-                                                  liveHost, livePort);
+            server.setDefaultLoggingConfiguration(daqLog.level, daqLog.host,
+                                                  daqLog.port,
+                                                  liveLog.host, liveLog.port);
         } catch (UnknownHostException uhe) {
-            System.err.println("Bad log host '" + logHost + "' or live host '" +
-                               liveHost + "'");
-            return false;
+            throw new LogOptionException("Bad log host '" + daqLog.host +
+                               "' or live host '" + liveLog.host + "'");
         } catch (SocketException se) {
-            System.err.println("Couldn't set logging to '" + logHost +
-                               "' or '" + liveHost + "'");
-            return false;
+            throw new LogOptionException("Couldn't set logging to '" +
+                                         daqLog.host + "' or '" +
+                                         liveLog.host + "'");
         }
+    }
 
+    private void configureMonitoring(DAQCompServer server, DAQComponent comp)
+        throws LogOptionException
+    {
         try {
-            comp.getAlerter().setLive(liveHost, livePort);
+            comp.getAlerter().setAddress(liveMoni.host, liveMoni.port);
         } catch (AlertException ae) {
-            System.err.println("Couldn't set alerter to '" + liveHost +
-                               ":" + livePort + "'");
+            throw new LogOptionException("Couldn't set alerter to '" +
+                                         liveMoni.host + ":" + liveMoni.port +
+                                         "'");
         }
+    }
 
-        return true;
+    public void setDAQLog(String addrStr)
+        throws LogOptionException
+    {
+        daqLog = new LogTarget(addrStr);
+    }
+
+    public void setLiveLog(String addrStr)
+        throws LogOptionException
+    {
+        liveLog = new LogTarget(addrStr);
+    }
+
+    public void setLiveMoni(String addrStr)
+        throws LogOptionException
+    {
+        liveMoni = new LogTarget(addrStr);
     }
 }
 
@@ -983,8 +1010,9 @@ public class DAQCompServer
     {
         LogOptions logOpt = new LogOptions();
 
-	// get the configuration directory from a system property
-	String propConfigDir = System.getProperty("icecube.daq.component.configDir");
+        // get the configuration directory from a system property
+        String propConfigDir =
+            System.getProperty("icecube.daq.component.configDir");
 
         boolean usage = false;
         for (int i = 0; i < args.length; i++) {
@@ -992,24 +1020,21 @@ public class DAQCompServer
                 switch(args[i].charAt(1)) {
                 case 'L':
                     i++;
-                    if (!logOpt.process(args[i], true)) {
+                    try {
+                        logOpt.setLiveLog(args[i]);
+                    } catch (LogOptionException loe) {
+                        System.err.println(loe.getMessage());
                         usage = true;
                     }
                     break;
                 case 'M':
                     i++;
-
-                    int secs;
                     try {
-                        secs = Integer.parseInt(args[i]);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Bad monitoring interval '" +
-                                           args[i] + "'");
+                        logOpt.setLiveMoni(args[i]);
+                    } catch (LogOptionException loe) {
+                        System.err.println(loe.getMessage());
                         usage = true;
-                        break;
                     }
-
-                    comp.enableLocalMonitoring(secs);
                     break;
                 case 'S':
                     showSpinner = true;
@@ -1036,23 +1061,41 @@ public class DAQCompServer
                 case 'g':
                     i++;
 
-		    // if the system property was set ignore
-		    // the -g option
-		    if (propConfigDir==null) {
-			propConfigDir = args[i];
-		    } else {
-			System.err.println("Both the configuration file property " +
-					   "and the -g option where specified.");
-			usage = true;
-			break;
-		    }
+                    // if the system property was set ignore
+                    // the -g option
+                    if (propConfigDir==null) {
+                        propConfigDir = args[i];
+                    } else {
+                        System.err.println("Both the configuration file property " +
+                                           "and the -g option where specified.");
+                        usage = true;
+                        break;
+                    }
 
                     break;
                 case 'l':
                     i++;
-                    if (!logOpt.process(args[i], false)) {
+                    try {
+                        logOpt.setDAQLog(args[i]);
+                    } catch (LogOptionException loe) {
+                        System.err.println(loe.getMessage());
                         usage = true;
                     }
+                    break;
+                case 'm':
+                    i++;
+
+                    int secs;
+                    try {
+                        secs = Integer.parseInt(args[i]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Bad monitoring interval '" +
+                                           args[i] + "'");
+                        usage = true;
+                        break;
+                    }
+
+                    comp.enableLocalMonitoring(secs);
                     break;
                 case 's':
                     i++;
@@ -1084,11 +1127,11 @@ public class DAQCompServer
             }
         }
 
-	// if the configuration directory has been set, call the
-	// setGlobalConfigurationDir directory
-	if(propConfigDir!=null) {
-	    comp.setGlobalConfigurationDir(propConfigDir);
-	}
+        // if the configuration directory has been set, call the
+        // setGlobalConfigurationDir directory
+        if(propConfigDir!=null) {
+            comp.setGlobalConfigurationDir(propConfigDir);
+        }
 
         if (configURL == null) {
             try {
@@ -1099,19 +1142,24 @@ public class DAQCompServer
             }
         }
 
-        if (logOpt.isSet()) {
+        try {
             logOpt.configure(this, comp);
+        } catch (LogOptionException loe) {
+            System.err.println(loe.getMessage());
+            usage = true;
         }
 
         if (usage) {
             String usageMsg = "java " + comp.getClass().getName() + " " +
+                " [-L liveAddress:livePort,liveLevel]" +
                 " [-M localMoniSeconds]" +
                 " [-S(howSpinner)]" +
                 " [-c configServerURL]" +
                 " [-d dispatchDestPath]" +
                 " [-g globalConfigPath - note deprecated, " +
-		"     use -Dicecube.daq.component.configDir]" +
+                "     use -Dicecube.daq.component.configDir]" +
                 " [-l logAddress:logPort,logLevel]" +
+                " [-m moniAddress:moniPort,moniLevel]" +
                 " [-s maxDispatchFileSize]" +
                 comp.getOptionUsage();
             throw new IllegalArgumentException(usageMsg);

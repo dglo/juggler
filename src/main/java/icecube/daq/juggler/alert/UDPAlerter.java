@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
 /**
  * Handle DAQ alerts
  */
-public class DAQAlerter
+public class UDPAlerter
     implements Alerter
 {
     /** Logging object */
@@ -34,7 +34,7 @@ public class DAQAlerter
     /**
      * Create an alerter
      */
-    public DAQAlerter()
+    public UDPAlerter()
     {
         this(DEFAULT_SERVICE);
     }
@@ -44,7 +44,7 @@ public class DAQAlerter
      *
      * @param service service name
      */
-    public DAQAlerter(String service)
+    public UDPAlerter(String service)
     {
         this.service = service;
     }
@@ -61,6 +61,16 @@ public class DAQAlerter
     }
 
     /**
+     * Get the service name
+     *
+     * @return service name
+     */
+    public String getService()
+    {
+        return service;
+    }
+
+    /**
      * If <tt>true</tt>, alerts will be sent to one or more recipients.
      *
      * @return <tt>true</tt> if this alerter will send messages
@@ -74,69 +84,63 @@ public class DAQAlerter
      * Send an alert.
      *
      * @param priority priority level
-     * @param condition condition name for alert
-     * @param desc description of alert
+     * @param condition I3Live condition
      * @param vars map of variable names to values
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(int priority, String condition, String desc,
+    public void send(Priority priority, String condition,
                      Map<String, Object> vars)
         throws AlertException
     {
-        send(priority, Calendar.getInstance(), condition, desc, vars);
+        send(priority, condition, null, vars);
     }
 
     /**
      * Send an alert.
      *
      * @param priority priority level
-     * @param dateTime date and time for alert
-     * @param condition condition name for alert
-     * @param desc description of alert
+     * @param condition I3Live condition
+     * @param notify list of email addresses which receive notification
      * @param vars map of variable names to values
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(int priority, Calendar dateTime, String condition,
-                     String desc, Map<String, Object> vars)
+    public void send(Priority priority, String condition, String notify,
+                     Map<String, Object> vars)
         throws AlertException
     {
-        if (liveAddr != null) {
-            sendLive(priority, dateTime, condition, desc, vars);
-        }
+        send(Calendar.getInstance(), priority, condition, notify, vars);
     }
 
     /**
      * Send an alert to IceCube Live.
      *
+     * @param date date and time for alert
      * @param priority priority level
-     * @param dateTime date and time for alert
-     * @param condition condition name for alert
-     * @param desc description of alert
+     * @param condition I3Live condition
+     * @param notify list of email addresses which receive notification
      * @param vars map of variable names to values
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    private void sendLive(int priority, Calendar date, String condition,
-                          String desc, Map<String, Object> vars)
+    public void send(Calendar date, Priority priority, String condition,
+                     String notify, Map<String, Object> vars)
         throws AlertException
     {
         if (condition == null || condition.indexOf("\"") >= 0) {
             throw new AlertException("Bad alert condition \"" + condition +
                                      "\"");
         }
-        if (desc == null || desc.indexOf("\"") >= 0) {
-            throw new AlertException("Bad alert description \"" + desc + "\"");
-        }
 
         String header =
             String.format("%s(alert:json) %d [%tF %tT.%tL000] \"\"\"\n",
-                          service, priority, date, date, date);
+                          service, priority.value(), date, date, date);
         StringBuilder buf = new StringBuilder(header);
         buf.append(" { \"condition\" : \"").append(condition).append("\"");
-        buf.append(", \"desc\" : \"").append(desc).append("\"");
-        buf.append(", \"notify\" : \"\"");
+        if (notify != null && notify.length() > 0) {
+            buf.append(", \"notify\" : \"").append(notify).append("\"");
+        }
 
         if (vars != null && vars.size() > 0) {
             boolean declared = false;
@@ -214,7 +218,7 @@ public class DAQAlerter
      * @param port - port number for IceCube Live server
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void setLive(String host, int port)
+    public void setAddress(String host, int port)
         throws AlertException
     {
         try {

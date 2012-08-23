@@ -11,25 +11,26 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-public class DAQAlerterTest
+public class UDPAlerterTest
     extends TestCase
 {
     private LogReader logRdr;
 
-    public DAQAlerterTest(String name)
+    public UDPAlerterTest(String name)
     {
         super(name);
     }
 
-    private static void addExpectedAlert(LogReader logRdr, int prio,
-                                         Calendar date, String condition,
-                                         String desc, Map<String, Object> vars)
+    private static void addExpectedAlert(LogReader logRdr, Calendar date,
+                                         UDPAlerter.Priority prio,
+                                         String condition,
+                                         String notify,
+                                         Map<String, Object> vars)
     {
         final String startStr =
             String.format("pdaq(alert:json) %d [%tF %tT.%tL000] \"\"\"\n" +
-                          " { \"condition\" : \"%s\", \"desc\" : \"%s\"," +
-                          " \"notify\" : \"\"", prio, date, date, date,
-                          condition, desc);
+                          " { \"condition\" : \"%s\", \"notify\" : \"%s\"",
+                          prio.value(), date, date, date, condition, notify);
 
         StringBuilder buf = new StringBuilder(startStr);
 
@@ -63,7 +64,7 @@ public class DAQAlerterTest
 
     public static Test suite()
     {
-        return new TestSuite(DAQAlerterTest.class);
+        return new TestSuite(UDPAlerterTest.class);
     }
 
     protected void tearDown()
@@ -79,17 +80,17 @@ public class DAQAlerterTest
 
     public void testSimple()
     {
-        DAQAlerter alerter = new DAQAlerter();
+        UDPAlerter alerter = new UDPAlerter();
         assertFalse("New Alerter should not be active", alerter.isActive());
         alerter.close();
     }
 
     public void testBadLiveHost()
     {
-        DAQAlerter alerter = new DAQAlerter();
+        UDPAlerter alerter = new UDPAlerter();
 
         try {
-            alerter.setLive("impossible host name", 9999);
+            alerter.setAddress("impossible host name", 9999);
             fail("bad host name; should not succeed");
         } catch (AlertException ae) {
             // ignore exception
@@ -105,18 +106,18 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final int prio = DAQAlerter.PRIO_ITS;
+        final UDPAlerter.Priority prio = UDPAlerter.Priority.ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Bad \" Condition";
-        final String desc = "";
+        final String notify = "foo@bar.baz";
 
         final Map<String, Object> vars = null;
 
-        DAQAlerter alerter = new DAQAlerter();
-        alerter.setLive("localhost", logRdr.getPort());
+        UDPAlerter alerter = new UDPAlerter();
+        alerter.setAddress("localhost", logRdr.getPort());
 
         try {
-            alerter.send(prio, date, condition, desc, vars);
+            alerter.send(date, prio, condition, notify, vars);
             fail("Bad condition should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
@@ -133,21 +134,21 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final int prio = DAQAlerter.PRIO_ITS;
+        final UDPAlerter.Priority prio = UDPAlerter.Priority.ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Bad Value";
-        final String desc = "foo";
+        final String notify = "foo@bar.baz";
 
         final String varName = "bad";
 
         final Map<String, Object> vars = new HashMap<String, Object>();
         vars.put(varName, new HashMap());
 
-        DAQAlerter alerter = new DAQAlerter();
-        alerter.setLive("localhost", logRdr.getPort());
+        UDPAlerter alerter = new UDPAlerter();
+        alerter.setAddress("localhost", logRdr.getPort());
 
         try {
-            alerter.send(prio, date, condition, desc, vars);
+            alerter.send(date, prio, condition, notify, vars);
             fail("Unknown value should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
@@ -166,21 +167,21 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final int prio = DAQAlerter.PRIO_ITS;
+        final UDPAlerter.Priority prio = UDPAlerter.Priority.ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Bad Value";
-        final String desc = "";
+        final String notify = "foo@bar.baz";
 
         final String varName = "nullVar";
 
         final Map<String, Object> vars = new HashMap<String, Object>();
         vars.put(varName, null);
 
-        DAQAlerter alerter = new DAQAlerter();
-        alerter.setLive("localhost", logRdr.getPort());
+        UDPAlerter alerter = new UDPAlerter();
+        alerter.setAddress("localhost", logRdr.getPort());
 
         try {
-            alerter.send(prio, date, condition, desc, vars);
+            alerter.send(date, prio, condition, notify, vars);
             fail("Unknown value should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
@@ -199,19 +200,19 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final int prio = DAQAlerter.PRIO_ITS;
+        final UDPAlerter.Priority prio = UDPAlerter.Priority.ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Test Alert";
-        final String desc = "Testing DAQ alerts";
+        final String notify = "foo@bar.baz";
 
         final Map<String, Object> vars = null;
 
-        addExpectedAlert(logRdr, prio, date, condition, desc, vars);
+        addExpectedAlert(logRdr, date, prio, condition, notify, vars);
 
-        DAQAlerter alerter = new DAQAlerter();
-        alerter.setLive("localhost", logRdr.getPort());
+        UDPAlerter alerter = new UDPAlerter();
+        alerter.setAddress("localhost", logRdr.getPort());
 
-        alerter.send(prio, date, condition, desc, vars);
+        alerter.send(date, prio, condition, notify, vars);
 
         logRdr.waitForMessages();
 
@@ -227,22 +228,22 @@ public class DAQAlerterTest
             fail("Couldn't create log reader: " + ioe.getMessage());
         }
 
-        final int prio = DAQAlerter.PRIO_ITS;
+        final UDPAlerter.Priority prio = UDPAlerter.Priority.ITS;
         final Calendar date = Calendar.getInstance();
         final String condition = "Test Alert";
-        final String desc = "Test Alert";
+        final String notify = "foo@bar.baz";
 
         final Map<String, Object> vars = new HashMap<String, Object>();
         vars.put("int", 123);
         vars.put("real", 123.456);
         vars.put("str", "foo");
 
-        addExpectedAlert(logRdr, prio, date, condition, desc, vars);
+        addExpectedAlert(logRdr, date, prio, condition, notify, vars);
 
-        DAQAlerter alerter = new DAQAlerter();
-        alerter.setLive("localhost", logRdr.getPort());
+        UDPAlerter alerter = new UDPAlerter();
+        alerter.setAddress("localhost", logRdr.getPort());
 
-        alerter.send(prio, date, condition, desc, vars);
+        alerter.send(date, prio, condition, notify, vars);
 
         logRdr.waitForMessages();
 

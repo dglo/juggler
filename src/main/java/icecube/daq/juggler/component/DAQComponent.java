@@ -8,7 +8,7 @@ import icecube.daq.io.SimpleReader;
 import icecube.daq.io.SpliceablePayloadReader;
 import icecube.daq.io.SpliceableSimpleReader;
 import icecube.daq.juggler.alert.Alerter;
-import icecube.daq.juggler.alert.DAQAlerter;
+import icecube.daq.juggler.alert.ZMQAlerter;
 import icecube.daq.juggler.mbean.LocalMonitor;
 import icecube.daq.juggler.mbean.MBeanAgent;
 import icecube.daq.juggler.mbean.MBeanAgentException;
@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 13742 2012-06-08 21:52:15Z dglo $
+ * @version $Id: DAQComponent.java 13867 2012-08-23 22:48:52Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -100,7 +100,7 @@ public abstract class DAQComponent
     private StateTask stateTask;
 
     /** Alert manager */
-    private Alerter alerter = new DAQAlerter();
+    private Alerter alerter = new ZMQAlerter();
 
     /**
      * Create a component.

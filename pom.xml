@@ -72,6 +72,16 @@
       <groupId>org.apache.xmlrpc</groupId>
       <artifactId>xmlrpc-server</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.zeromq</groupId>
+      <artifactId>jzmq</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

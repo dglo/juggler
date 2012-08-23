@@ -1,5 +1,6 @@
 package icecube.daq.juggler.alert;
 
+import java.util.Calendar;
 import java.util.Map;
 
 /**
@@ -10,19 +11,41 @@ public interface Alerter
     /** Default service name */
     String DEFAULT_SERVICE = "pdaq";
 
-    /** Send immediately over ITS */
-    int PRIO_ITS = 1;
-    /** Send quickly over email */
-    int PRIO_EMAIL = 2;
-    /** Cache and send via SPADE */
-    int PRIO_SCP = 3;
-    /** Send whenever we get a chance */
-    int PRIO_DEBUG = 4;
+    /** Alert priority */
+    public enum Priority {
+        /** Send immediately over ITS */
+        ITS(1),
+        /** Send quickly over email */
+        EMAIL(2),
+        /** Cache and send via SPADE */
+        SCP(3),
+        /** Send whenever we get a chance */
+        DEBUG(4);
+
+        private int value;
+
+        Priority(int value)
+        {
+            this.value = value;
+        }
+
+        public int value()
+        {
+            return value;
+        }
+    };
 
     /**
      * Close any open files/sockets.
      */
     void close();
+
+    /**
+     * Get the service name
+     *
+     * @return service name
+     */
+    String getService();
 
     /**
      * If <tt>true</tt>, alerts will be sent to one or more recipients.
@@ -35,25 +58,51 @@ public interface Alerter
      * Send an alert.
      *
      * @param priority priority level
-     * @param condition condition name for this alert
-     * @param desc description of alert
+     * @param condition I3Live condition
      * @param vars map of variable names to values
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    void send(int priority, String condition, String desc,
+    void send(Priority priority, String condition, Map<String, Object> vars)
+        throws AlertException;
+
+    /**
+     * Send an alert.
+     *
+     * @param priority priority level
+     * @param condition I3Live condition
+     * @param notify list of email addresses which receive notification
+     * @param vars map of variable names to values
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    void send(Priority priority, String condition, String notify,
               Map<String, Object> vars)
         throws AlertException;
 
     /**
-     * Set IceCube Live host and port
+     * Send an alert.
      *
-     * @param host - host name for IceCube Live server
-     * @param port - port number for IceCube Live server
+     * @param priority priority level
+     * @param condition I3Live condition
+     * @param notify list of email addresses which receive notification
+     * @param vars map of variable names to values
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    void setLive(String host, int port)
+    void send(Calendar dateTime, Priority priority, String condition,
+              String notify, Map<String, Object> vars)
+        throws AlertException;
+
+    /**
+     * Set monitoring server host and port
+     *
+     * @param host - server host name
+     * @param port - server port number
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    void setAddress(String host, int port)
         throws AlertException;
 }
 
