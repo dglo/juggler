@@ -228,7 +228,7 @@ public class ZMQAlerter
         }
 
         // sockets time out after .1 second
-        context.setLinger(100);
+        socket.setLinger(100);
     }
 }
 
