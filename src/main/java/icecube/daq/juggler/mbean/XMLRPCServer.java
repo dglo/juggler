@@ -137,7 +137,7 @@ class XMLRPCServer
         return val;
     }
 
-    Object get(String mbeanName, String attrName)
+    public Object get(String mbeanName, String attrName)
         throws MBeanAgentException
     {
         if (!beans.containsKey(mbeanName)) {
