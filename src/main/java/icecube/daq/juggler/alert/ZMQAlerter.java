@@ -2,7 +2,6 @@ package icecube.daq.juggler.alert;
 
 import com.google.gson.Gson;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Calendar;
