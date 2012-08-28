@@ -19,7 +19,7 @@ public class UDPAlerter
     implements Alerter
 {
     /** Logging object */
-    private static final Log LOG = LogFactory.getLog(Alerter.class);
+    private static final Log LOG = LogFactory.getLog(UDPAlerter.class);
 
     /** Service name */
     protected String service;

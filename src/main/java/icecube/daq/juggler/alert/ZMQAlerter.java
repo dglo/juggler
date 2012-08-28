@@ -24,7 +24,7 @@ public class ZMQAlerter
     implements Alerter
 {
     /** Logging object */
-    private static final Log LOG = LogFactory.getLog(Alerter.class);
+    private static final Log LOG = LogFactory.getLog(ZMQAlerter.class);
     /** Number of ZeroMQ I/O threads */
     private static final int NUMBER_OF_THREADS = 70;
 
