@@ -7,6 +7,8 @@ import icecube.daq.juggler.test.MockCache;
 import icecube.daq.juggler.test.MockHandler;
 import icecube.daq.juggler.test.MockOutputEngine;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -47,6 +49,7 @@ public class DAQCompServerTest
     private static final Log LOG = LogFactory.getLog(DAQCompServerTest.class);
 
     private MockHandler handler;
+    private File tmpDir;
 
     public DAQCompServerTest(String name)
     {
@@ -67,6 +70,23 @@ public class DAQCompServerTest
         return ssChan.socket().getLocalPort();
     }
 
+    private static boolean deleteRecursive(File path)
+        throws FileNotFoundException
+    {
+        if (!path.exists()) {
+            throw new FileNotFoundException(path.getAbsolutePath());
+        }
+
+        boolean ret = true;
+        if (path.isDirectory()){
+            for (File f : path.listFiles()){
+                ret = ret && deleteRecursive(f);
+            }
+        }
+
+        return ret && path.delete();
+    }
+
     protected void setUp()
         throws Exception
     {
@@ -81,6 +101,18 @@ public class DAQCompServerTest
     public static Test suite()
     {
         return new TestSuite(DAQCompServerTest.class);
+    }
+
+    public final void tearDown()
+        throws FileNotFoundException
+    {
+        if (tmpDir != null) {
+            try {
+                deleteRecursive(tmpDir);
+            } finally {
+                tmpDir = null;
+            }
+        }
     }
 
     private void waitForLogMessages(LogReader logRdr)
@@ -726,18 +758,34 @@ public class DAQCompServerTest
     {
         MockComponent mockComp = new MockComponent("tst", 0);
 
+        File testTmp = File.createTempFile("foo", "").getParentFile();
+
+        File tmpDir = new File(testTmp, "tmpTrunk");
+
+        File ddTop = new File(tmpDir, "dispatch");
+        ddTop.mkdirs();
+
+        File cfgTop = new File(tmpDir, "config");
+        cfgTop.mkdirs();
+
+        // create subdirectories used to validate config directory
+        new File(cfgTop, "trigger").mkdirs();
+        new File(cfgTop, "domconfigs").mkdirs();
+
         final int moniInterval = 543;
-        final String dispatchDir = "/tmp";
-        final String globalConfig = "/foo";
+        final String dispatchDir = ddTop.getAbsolutePath();
+        final String globalConfig = cfgTop.getAbsolutePath();
         final long maxFileSize = 678L;
 
         String[] args = new String[] {
-            "-M", Integer.toString(moniInterval),
+            "-M", "localhost:3",
             "-S",
             "-c", "foo",
             "-d", dispatchDir,
             "-g", globalConfig,
             "-l", "localhost:1,debug",
+            "-L", "localhost:2,debug",
+            "-m", Integer.toString(moniInterval),
             "-s", Long.toString(maxFileSize),
         };
 

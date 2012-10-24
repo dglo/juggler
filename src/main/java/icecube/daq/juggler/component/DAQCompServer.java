@@ -7,6 +7,7 @@ import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.DAQLogHandler;
 import icecube.daq.log.LoggingOutputStream;
 import icecube.daq.util.FlasherboardConfiguration;
+import icecube.daq.util.LocatePDAQ;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -1137,6 +1138,7 @@ public class DAQCompServer
         // setGlobalConfigurationDir directory
         if(propConfigDir!=null) {
             comp.setGlobalConfigurationDir(propConfigDir);
+            LocatePDAQ.setConfigDirectory(propConfigDir);
         }
 
         if (configURL == null) {
