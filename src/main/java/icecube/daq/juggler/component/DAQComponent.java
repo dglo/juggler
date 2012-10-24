@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 13867 2012-08-23 22:48:52Z dglo $
+ * @version $Id: DAQComponent.java 13971 2012-10-24 16:49:47Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -100,7 +100,7 @@ public abstract class DAQComponent
     private StateTask stateTask;
 
     /** Alert manager */
-    private Alerter alerter = new ZMQAlerter();
+    private Alerter alerter;
 
     /**
      * Create a component.
@@ -565,6 +565,10 @@ public abstract class DAQComponent
      */
     public Alerter getAlerter()
     {
+        if (alerter == null) {
+            alerter = new ZMQAlerter();
+        }
+
         return alerter;
     }
 
