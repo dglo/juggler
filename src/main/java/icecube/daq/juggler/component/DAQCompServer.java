@@ -199,7 +199,13 @@ class LogOptions
     private void configureLogging(DAQCompServer server, DAQComponent comp)
         throws LogOptionException
     {
-        if (daqLog.level != null && liveLog.level != null &&
+        if (daqLog == null) {
+            throw new LogOptionException("pDAQ logging level has not" +
+                                         " been set");
+        } else if (liveLog == null) {
+            throw new LogOptionException("I3Live logging level has not" +
+                                         " been set");
+        } else if (daqLog.level != null && liveLog.level != null &&
             !daqLog.level.equals(liveLog.level))
         {
             throw new LogOptionException("I3Live logging level " +
