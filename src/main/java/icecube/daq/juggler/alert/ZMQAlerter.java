@@ -165,15 +165,15 @@ public class ZMQAlerter
                           String notify, Map<String, Object> vars)
         throws AlertException
     {
-        HashMap payload = new HashMap();
+        HashMap values = new HashMap();
         if (condition != null && condition.length() > 0) {
-            payload.put("condition", condition);
+            values.put("condition", condition);
         }
         if (notify != null && notify.length() > 0) {
-            payload.put("notify", notify);
+            values.put("notify", notify);
         }
         if (vars != null && vars.size() > 0) {
-            payload.put("vars", vars);
+            values.put("vars", vars);
         }
 
         HashMap map = new HashMap();
@@ -181,8 +181,8 @@ public class ZMQAlerter
         map.put("varname", "alert");
         map.put("prio", priority.value());
         map.put("t", String.format("%tF %tT.%tL000", date, date, date));
-        if (payload.size() > 0) {
-            map.put("payload", payload);
+        if (values.size() > 0) {
+            map.put("value", values);
         }
 
         String json = gson.toJson(map);
