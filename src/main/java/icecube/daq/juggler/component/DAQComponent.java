@@ -42,7 +42,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 13971 2012-10-24 16:49:47Z dglo $
+ * @version $Id: DAQComponent.java 14083 2012-12-05 23:16:15Z mnewcomb $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -1345,7 +1345,7 @@ public abstract class DAQComponent
                 return -1;
             }
 
-            if (!(o1 instanceof DAQConnector && o1 instanceof DAQConnector)) {
+            if (!(o1 instanceof DAQConnector && o2 instanceof DAQConnector)) {
                 String oName1 = o1.getClass().getName();
                 String oName2 = o2.getClass().getName();
 
