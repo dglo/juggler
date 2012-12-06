@@ -384,7 +384,7 @@ public class MBeanAgent
     public void stop()
         throws MBeanAgentException
     {
-        if (htmlAdapter == null && xmlRpcAdapter == null) {
+        if (htmlAdapter == null || xmlRpcAdapter == null) {
             throw new MBeanAgentException("Agent has not been started");
         }
 
