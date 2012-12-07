@@ -346,9 +346,9 @@ public class SystemStatistics
                     buf.append(", ");
                 }
 
-                Long avail = (Long) dfMap.get(mountPt);
+                long avail = (Long) dfMap.get(mountPt);
                 buf.append(String.format("%s: %d", mountPt,
-                                         avail.longValue()));
+                                         avail));
                 needComma = true;
             }
 
