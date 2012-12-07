@@ -78,16 +78,25 @@ public class SystemStatistics
         BufferedReader out =
             new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
-        String line;
-        try {
-            line = out.readLine();
-            if (line == null) {
-                LOG.error("No uptime output found");
-            }
-        } catch (IOException ioe) {
-            LOG.error("Couldn't read uptime output", ioe);
-            line = null;
-        }
+	String line;
+
+	try {
+	    try {
+		line = out.readLine();
+		if (line == null) {
+		    LOG.error("No uptime output found");
+		}
+	    } catch (IOException ioe) {
+		LOG.error("Couldn't read uptime output", ioe);
+		line = null;
+	    }
+	} finally {
+	    try {
+		out.close();
+	    } catch (Throwable thr) {
+		// ignore errors on close
+	    }
+	}
 
         if (line != null) {
             Matcher match = uptimePat.matcher(line);
@@ -108,12 +117,6 @@ public class SystemStatistics
 
                 return array;
             }
-        }
-
-        try {
-            out.close();
-        } catch (Throwable thr) {
-            // ignore errors on close
         }
 
         try {
@@ -201,7 +204,7 @@ public class SystemStatistics
                         LOG.error("Couldn't parse df avail bytes \"" +
                                   match.group(4) + "\" from \"" + line + "\"",
                                   nfe);
-                        avail = new Long(0);
+                        avail = Long.valueOf(0);
                     }
 
                     if (map == null) {
