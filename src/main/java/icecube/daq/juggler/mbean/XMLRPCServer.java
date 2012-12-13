@@ -5,6 +5,8 @@ import java.lang.reflect.Array;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import javax.management.Attribute;
 import javax.management.InstanceNotFoundException;
@@ -88,10 +90,10 @@ class XMLRPCServer
 
     private static AbstractMap fixMap(AbstractMap map) 
     {
+	for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
+	    entry.setValue(fixValue(entry.getValue()));
+	}
 
-        for (Object key : map.keySet()) {
-            map.put(key, fixValue(map.get(key)));
-        }
         return map;
     }
 

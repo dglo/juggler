@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -338,15 +340,14 @@ public class SystemStatistics
             StringBuffer buf = new StringBuffer("space: {");
 
             boolean needComma = false;
-            Iterator iter = dfMap.keySet().iterator();
-            while (iter.hasNext()) {
-                String mountPt = (String) iter.next();
+	    for(Map.Entry entry : (Set<Map.Entry>)dfMap.entrySet()) {
+                String mountPt = (String) entry.getKey();
 
                 if (needComma) {
                     buf.append(", ");
                 }
 
-                long avail = (Long) dfMap.get(mountPt);
+                long avail = (Long) entry.getValue();
                 buf.append(String.format("%s: %d", mountPt,
                                          avail));
                 needComma = true;
@@ -363,10 +364,10 @@ public class SystemStatistics
             StringBuffer buf = new StringBuffer("network: {");
 
             boolean needComma = false;
-            Iterator<String> iter = ioMap.keySet().iterator();
-            while (iter.hasNext()) {
-                String ioStat = iter.next();
-                String ioData = ioMap.get(ioStat);
+	    for(Map.Entry entry: ioMap.entrySet()) {
+		String ioStat = (String)entry.getKey();
+		String ioData = (String)entry.getValue();
+
                 if (needComma) {
                     buf.append(", ");
                 }
