@@ -144,7 +144,9 @@ public class UDPAlerter
 
         if (vars != null && vars.size() > 0) {
             boolean declared = false;
-            for (String key : vars.keySet()) {
+	    for (Map.Entry entry : vars.entrySet()) {
+		String key = (String) entry.getKey();
+		Object val = entry.getValue();
                 String front;
                 if (!declared) {
                     front = ", \"vars\" : { \"";
@@ -155,7 +157,6 @@ public class UDPAlerter
 
                 buf.append(front).append(key).append("\" : ");
 
-                Object val = vars.get(key);
                 if (val == null) {
                     throw new AlertException("Alert \"" + condition +
                                              "\" variable \"" + key +
