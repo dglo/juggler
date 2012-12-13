@@ -1770,7 +1770,7 @@ public class DAQCompServer
                     rawVal = Long.parseLong((String) array[0], 16);
                 } catch (NumberFormatException nfe) {
                     throw new DAQCompException("Bad mainboard ID \"" +
-                                               array[0] + "\" in " + array);
+                                               array[0] +"\"");
                 }
                 String mbid = String.format("%012x", rawVal);
 
