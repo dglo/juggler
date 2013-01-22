@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Set;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
@@ -87,7 +87,7 @@ public class MBeanAgent
     private static final Log LOG = LogFactory.getLog(MBeanAgent.class);
 
     /** Mapping from short name to MBean object */
-    private HashMap beans = new HashMap();
+    private HashMap<String, BeanBin> beans = new HashMap<String, BeanBin>();
 
     /** HTML port */
     private int htmlPort = Integer.MIN_VALUE;
@@ -123,7 +123,7 @@ public class MBeanAgent
             // allow late bind of MBeans
             try {
                 MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-                mbs.registerMBean(bean, new ObjectName(getDomain(), 
+                mbs.registerMBean(bean, new ObjectName(getDomain(),
                     "name", name));
             } catch (JMException jmx) {
                 throw new MBeanAgentException(jmx);
@@ -159,6 +159,24 @@ public class MBeanAgent
         }
 
         return port;
+    }
+
+    /**
+     * Return the requested bean
+     *
+     * @return bean
+     *
+     * @throws MBeanAgentException if there is no bean with the specified name
+     */
+    public Object getBean(String name)
+        throws MBeanAgentException
+    {
+        if (!beans.containsKey(name)) {
+            throw new MBeanAgentException("Bean \"" + name +
+                                          "\" does not exist");
+        }
+
+        return beans.get(name).getBean();
     }
 
     /**
@@ -271,6 +289,16 @@ public class MBeanAgent
     }
 
     /**
+     * Get list of bean names
+     *
+     * @return bean names
+     */
+    public Set<String> listBeans()
+    {
+        return beans.keySet();
+    }
+
+    /**
      * Register all known MBeans with the MBean server.
      */
     private void registerBeans()
@@ -278,9 +306,7 @@ public class MBeanAgent
         // Get the platform MBeanServer
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        for (Iterator iter = beans.values().iterator(); iter.hasNext();) {
-            BeanBin bin = (BeanBin) iter.next();
-
+        for (BeanBin bin : beans.values()) {
             // register MBean with the platform MBeanServer
             try {
                 mbs.registerMBean(bin.getBean(), bin.getBeanName(this));
@@ -312,7 +338,7 @@ public class MBeanAgent
                                           " been added to this agent");
         }
 
-        BeanBin bin = (BeanBin) beans.remove(name);
+        BeanBin bin = beans.remove(name);
         return bin.getBean();
     }
 
@@ -415,9 +441,7 @@ public class MBeanAgent
         // Get the platform MBeanServer
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-        for (Iterator iter = beans.values().iterator(); iter.hasNext();) {
-            BeanBin bin = (BeanBin) iter.next();
-
+        for (BeanBin bin : beans.values()) {
             try {
                 // unregister basic MBean
                 mbs.unregisterMBean(bin.getBeanName(this));

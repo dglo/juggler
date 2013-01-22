@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,7 +43,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 14083 2012-12-05 23:16:15Z mnewcomb $
+ * @version $Id: DAQComponent.java 14167 2013-01-22 20:17:07Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -621,6 +622,23 @@ public abstract class DAQComponent
     }
 
     /**
+     * Return the requested MBean.
+     *
+     * @return MBean
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public Object getMBean(String name)
+        throws DAQCompException
+    {
+        try {
+            return mbeanAgent.getBean(name);
+        } catch (MBeanAgentException mae) {
+            throw new DAQCompException("Bad MBean name \"" + name + "\"", mae);
+        }
+    }
+
+    /**
      * Get the run data for a builder.
      *
      * @param runnum run number
@@ -817,6 +835,16 @@ public abstract class DAQComponent
     public final Iterable<DAQConnector> listConnectors()
     {
         return connectors;
+    }
+
+    /**
+     * List all MBean names.
+     *
+     * @return list of MBean names
+     */
+    public Set<String> listMBeans()
+    {
+        return mbeanAgent.listBeans();
     }
 
     /**
@@ -1159,7 +1187,7 @@ public abstract class DAQComponent
     public void stopMBeanAgent()
         throws DAQCompException
     {
-        if (mbeanAgent != null) {
+        if (mbeanAgent != null && mbeanAgent.isRunning()) {
             try {
                 mbeanAgent.stop();
             } catch (MBeanAgentException mae) {

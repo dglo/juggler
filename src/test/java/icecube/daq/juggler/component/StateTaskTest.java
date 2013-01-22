@@ -4,6 +4,7 @@ import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.payload.IByteBufferCache;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -113,6 +114,19 @@ class StateComponent
     }
 
     /**
+     * Return the requested MBean.
+     *
+     * @return MBean
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public Object getMBean(String name)
+        throws DAQCompException
+    {
+        throw new UnimplementedException();
+    }
+
+    /**
      * Are all connectors stopped?
      *
      * @return <tt>true</tt> if all connectors have stopped
@@ -130,6 +144,16 @@ class StateComponent
     public Iterable<DAQConnector> listConnectors()
     {
         return connList;
+    }
+
+    /**
+     * List all MBean names.
+     *
+     * @return list of MBean names
+     */
+    public Set<String> listMBeans()
+    {
+        throw new UnimplementedException();
     }
 
     void resetInternalFlags()

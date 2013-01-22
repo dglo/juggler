@@ -2,6 +2,8 @@ package icecube.daq.juggler.component;
 
 import icecube.daq.payload.IByteBufferCache;
 
+import java.util.Set;
+
 public interface IComponent
 {
     /**
@@ -47,6 +49,16 @@ public interface IComponent
     String getFullName();
 
     /**
+     * Return the requested MBean.
+     *
+     * @return MBean
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    Object getMBean(String name)
+        throws DAQCompException;
+
+    /**
      * Are all connectors stopped?
      *
      * @return <tt>true</tt> if all connectors have stopped
@@ -59,6 +71,13 @@ public interface IComponent
      * @return connection iterator
      */
     Iterable<DAQConnector> listConnectors();
+
+    /**
+     * List all MBean names.
+     *
+     * @return list of MBean names
+     */
+    Set<String> listMBeans();
 
     /**
      * Reset internal state after a component has moved to idle.
