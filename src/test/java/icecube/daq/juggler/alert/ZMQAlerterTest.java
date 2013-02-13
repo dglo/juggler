@@ -104,17 +104,17 @@ class LiveRequest
             (notify != null && notify.length() > 0) ||
             (vars != null && vars.size() > 0);
 
-        if (!expectPayload && map.containsKey("payload"))
+        if (!expectPayload && map.containsKey("value"))
         {
-            if (DEBUG) System.err.println("--- Unexpected payload");
+            if (DEBUG) System.err.println("--- Unexpected value");
             return false;
-        } else if (expectPayload && !map.containsKey("payload")) {
-            if (DEBUG) System.err.println("--- Missing payload");
+        } else if (expectPayload && !map.containsKey("value")) {
+            if (DEBUG) System.err.println("--- Missing value");
             return false;
         }
 
         if (expectPayload) {
-            Map payload = (Map) map.get("payload");
+            Map payload = (Map) map.get("value");
 
             if (condition == null || condition.length() == 0) {
                 if (payload.containsKey("condition")) {
