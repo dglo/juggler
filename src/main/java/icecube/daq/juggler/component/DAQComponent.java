@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -43,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 14167 2013-01-22 20:17:07Z dglo $
+ * @version $Id: DAQComponent.java 14299 2013-03-06 02:14:30Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -636,6 +637,17 @@ public abstract class DAQComponent
         } catch (MBeanAgentException mae) {
             throw new DAQCompException("Bad MBean name \"" + name + "\"", mae);
         }
+    }
+
+    /**
+     * Get the most recent set of trigger counts to be used for
+     * detector monitoring.
+     *
+     * @return list of trigger count data.
+     */
+    public List<Map> getMoniCounts()
+    {
+        return new ArrayList<Map>();
     }
 
     /**

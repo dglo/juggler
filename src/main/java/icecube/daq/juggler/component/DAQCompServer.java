@@ -756,6 +756,23 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to get the trigger counts for detector monitoring.
+     *
+     * @return list of builder-specific event counts and times
+     *
+     * @throws DAQCompException if component or subrun does not exist
+     */
+    public List<Map> getMoniCounts()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return comp.getMoniCounts();
+    }
+
+    /**
      * XML-RPC method to get the run data from a builder
      *
      * @param runnum run number
