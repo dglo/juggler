@@ -63,7 +63,8 @@ public interface Alerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    void send(Priority priority, String condition, Map<String, Object> vars)
+    void sendAlert(Priority priority, String condition,
+                   Map<String, Object> vars)
         throws AlertException;
 
     /**
@@ -76,8 +77,8 @@ public interface Alerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    void send(Priority priority, String condition, String notify,
-              Map<String, Object> vars)
+    void sendAlert(Priority priority, String condition, String notify,
+                   Map<String, Object> vars)
         throws AlertException;
 
     /**
@@ -90,8 +91,30 @@ public interface Alerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    void send(Calendar dateTime, Priority priority, String condition,
-              String notify, Map<String, Object> vars)
+    void sendAlert(Calendar dateTime, Priority priority, String condition,
+                   String notify, Map<String, Object> vars)
+        throws AlertException;
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param values map of names to values
+     */
+    void send(String varname, Priority priority, Map<String, Object> values)
+        throws AlertException;
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param dateTime date and time for message
+     * @param values map of names to values
+     */
+    void send(String varname, Priority priority, Calendar dateTime,
+              Map<String, Object> values)
         throws AlertException;
 
     /**

@@ -117,7 +117,7 @@ public class UDPAlerterTest
         alerter.setAddress("localhost", logRdr.getPort());
 
         try {
-            alerter.send(date, prio, condition, notify, vars);
+            alerter.sendAlert(date, prio, condition, notify, vars);
             fail("Bad condition should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
@@ -148,7 +148,7 @@ public class UDPAlerterTest
         alerter.setAddress("localhost", logRdr.getPort());
 
         try {
-            alerter.send(date, prio, condition, notify, vars);
+            alerter.sendAlert(date, prio, condition, notify, vars);
             fail("Unknown value should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
@@ -181,7 +181,7 @@ public class UDPAlerterTest
         alerter.setAddress("localhost", logRdr.getPort());
 
         try {
-            alerter.send(date, prio, condition, notify, vars);
+            alerter.sendAlert(date, prio, condition, notify, vars);
             fail("Unknown value should not succeed");
         } catch (AlertException ae) {
             assertTrue("Unexpected exception: " + ae,
@@ -212,7 +212,7 @@ public class UDPAlerterTest
         UDPAlerter alerter = new UDPAlerter();
         alerter.setAddress("localhost", logRdr.getPort());
 
-        alerter.send(date, prio, condition, notify, vars);
+        alerter.sendAlert(date, prio, condition, notify, vars);
 
         logRdr.waitForMessages();
 
@@ -243,7 +243,7 @@ public class UDPAlerterTest
         UDPAlerter alerter = new UDPAlerter();
         alerter.setAddress("localhost", logRdr.getPort());
 
-        alerter.send(date, prio, condition, notify, vars);
+        alerter.sendAlert(date, prio, condition, notify, vars);
 
         logRdr.waitForMessages();
 

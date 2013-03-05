@@ -106,11 +106,11 @@ public class ZMQAlerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(Priority priority, String condition,
-                     Map<String, Object> vars)
+    public void sendAlert(Priority priority, String condition,
+                          Map<String, Object> vars)
         throws AlertException
     {
-        send(priority, condition, null, vars);
+        sendAlert(priority, condition, null, vars);
     }
 
     /**
@@ -123,31 +123,11 @@ public class ZMQAlerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(Priority priority, String condition, String notify,
-                     Map<String, Object> vars)
+    public void sendAlert(Priority priority, String condition, String notify,
+                          Map<String, Object> vars)
         throws AlertException
     {
-        send(Calendar.getInstance(), priority, condition, notify, vars);
-    }
-
-    /**
-     * Send an alert.
-     *
-     * @param dateTime date and time for alert
-     * @param priority priority level
-     * @param condition I3Live condition
-     * @param notify list of email addresses which receive notification
-     * @param vars map of variable names to values
-     *
-     * @throws AlertException if there is a problem with one of the parameters
-     */
-    public void send(Calendar dateTime, Priority priority, String condition,
-                     String notify, Map<String, Object> vars)
-        throws AlertException
-    {
-        if (liveAddr != null) {
-            sendLive(dateTime, priority, condition, notify, vars);
-        }
+        sendAlert(Calendar.getInstance(), priority, condition, notify, vars);
     }
 
     /**
@@ -161,11 +141,16 @@ public class ZMQAlerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    private void sendLive(Calendar date, Priority priority, String condition,
+    public void sendAlert(Calendar date, Priority priority, String condition,
                           String notify, Map<String, Object> vars)
         throws AlertException
     {
-        HashMap values = new HashMap();
+        if (liveAddr == null) {
+            // silently ignore alert if address has not been set
+            return;
+        }
+
+        HashMap<String, Object> values = new HashMap<String, Object>();
         if (condition != null && condition.length() > 0) {
             values.put("condition", condition);
         }
@@ -176,12 +161,46 @@ public class ZMQAlerter
             values.put("vars", vars);
         }
 
+        send("alert", priority, date, values);
+    }
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param values map of variable names to values
+     */
+    public void send(String varname, Priority priority,
+                     Map<String, Object> values)
+        throws AlertException
+    {
+        send(varname, priority, Calendar.getInstance(), values);
+    }
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param date date and time for message
+     * @param values map of variable names to values
+     */
+    public void send(String varname, Priority priority, Calendar date,
+                     Map<String, Object> values)
+        throws AlertException
+    {
+        if (liveAddr == null) {
+            // silently ignore alert if address has not been set
+            return;
+        }
+
         HashMap map = new HashMap();
         map.put("service", service);
-        map.put("varname", "alert");
+        map.put("varname", varname);
         map.put("prio", priority.value());
         map.put("t", String.format("%tF %tT.%tL000", date, date, date));
-        if (values.size() > 0) {
+        if (values != null && values.size() > 0) {
             map.put("value", values);
         }
 
@@ -230,4 +249,3 @@ public class ZMQAlerter
         socket.setLinger(100);
     }
 }
-

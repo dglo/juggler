@@ -81,6 +81,35 @@ public class UDPAlerter
     }
 
     /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param values map of variable names to values
+     */
+    public void send(String varname, Priority priority,
+                     Map<String, Object> values)
+        throws AlertException
+    {
+        send(varname, priority, Calendar.getInstance(), values);
+    }
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param date date and time for message
+     * @param values map of variable names to values
+     */
+    public void send(String varname, Priority priority, Calendar date,
+                     Map<String, Object> values)
+        throws AlertException
+    {
+        throw new Error("Unimplemented");
+    }
+
+    /**
      * Send an alert.
      *
      * @param priority priority level
@@ -89,11 +118,11 @@ public class UDPAlerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(Priority priority, String condition,
-                     Map<String, Object> vars)
+    public void sendAlert(Priority priority, String condition,
+                          Map<String, Object> vars)
         throws AlertException
     {
-        send(priority, condition, null, vars);
+        sendAlert(priority, condition, null, vars);
     }
 
     /**
@@ -106,11 +135,11 @@ public class UDPAlerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(Priority priority, String condition, String notify,
-                     Map<String, Object> vars)
+    public void sendAlert(Priority priority, String condition, String notify,
+                          Map<String, Object> vars)
         throws AlertException
     {
-        send(Calendar.getInstance(), priority, condition, notify, vars);
+        sendAlert(Calendar.getInstance(), priority, condition, notify, vars);
     }
 
     /**
@@ -124,8 +153,28 @@ public class UDPAlerter
      *
      * @throws AlertException if there is a problem with one of the parameters
      */
-    public void send(Calendar date, Priority priority, String condition,
-                     String notify, Map<String, Object> vars)
+    public void sendAlert(Calendar date, Priority priority, String condition,
+                          String notify, Map<String, Object> vars)
+        throws AlertException
+    {
+        sendAlert("alert", date, priority, condition, notify, vars);
+    }
+
+    /**
+     * Send an alert to IceCube Live.
+     *
+     * @param varname variable name
+     * @param date date and time for alert
+     * @param priority priority level
+     * @param condition I3Live condition
+     * @param notify list of email addresses which receive notification
+     * @param vars map of variable names to values
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    public void sendAlert(String varname, Calendar date, Priority priority,
+                          String condition, String notify,
+                          Map<String, Object> vars)
         throws AlertException
     {
         if (condition == null || condition.indexOf("\"") >= 0) {
@@ -134,8 +183,9 @@ public class UDPAlerter
         }
 
         String header =
-            String.format("%s(alert:json) %d [%tF %tT.%tL000] \"\"\"\n",
-                          service, priority.value(), date, date, date);
+            String.format("%s(%s:json) %d [%tF %tT.%tL000] \"\"\"\n",
+                          service, varname, priority.value(), date, date,
+                          date);
         StringBuilder buf = new StringBuilder(header);
         buf.append(" { \"condition\" : \"").append(condition).append("\"");
         if (notify != null && notify.length() > 0) {
@@ -144,9 +194,9 @@ public class UDPAlerter
 
         if (vars != null && vars.size() > 0) {
             boolean declared = false;
-	    for (Map.Entry entry : vars.entrySet()) {
-		String key = (String) entry.getKey();
-		Object val = entry.getValue();
+            for (Map.Entry entry : vars.entrySet()) {
+                String key = (String) entry.getKey();
+                Object val = entry.getValue();
                 String front;
                 if (!declared) {
                     front = ", \"vars\" : { \"";

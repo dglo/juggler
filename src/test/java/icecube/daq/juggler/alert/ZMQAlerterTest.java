@@ -450,7 +450,7 @@ public class ZMQAlerterTest
         addExpectedAlert(server, alerter.getService(), prio, date, condition,
                          notify, vars);
 
-        alerter.send(date, prio, condition, notify, vars);
+        alerter.sendAlert(date, prio, condition, notify, vars);
 
         server.waitForMessages();
 
@@ -505,7 +505,7 @@ public class ZMQAlerterTest
         addExpectedAlert(server, alerter.getService(), prio, date, condition,
                          notify, vars);
 
-        alerter.send(date, prio, condition, notify, vars);
+        alerter.sendAlert(date, prio, condition, notify, vars);
 
         server.waitForMessages();
 
@@ -534,7 +534,7 @@ public class ZMQAlerterTest
         addExpectedAlert(server, alerter.getService(), prio, date, condition,
                          notify, vars);
 
-        alerter.send(date, prio, condition, notify, vars);
+        alerter.sendAlert(date, prio, condition, notify, vars);
 
         server.waitForMessages();
 
@@ -566,7 +566,7 @@ public class ZMQAlerterTest
         addExpectedAlert(server, alerter.getService(), prio, date, condition,
                          notify, vars);
 
-        alerter.send(date, prio, condition, notify, vars);
+        alerter.sendAlert(date, prio, condition, notify, vars);
 
         server.waitForMessages();
 
