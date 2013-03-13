@@ -135,10 +135,10 @@ public class LocalMonitor
                 }
 
                 out.println(keys[i] + ": " + dateStr + ":");
-		for (Map.Entry entry: (Set<Map.Entry>)valMap.entrySet()) {
-		    out.println("\t" + entry.getKey() + ": " +
+                for (Map.Entry entry: (Set<Map.Entry>)valMap.entrySet()) {
+                    out.println("\t" + entry.getKey() + ": " +
                                 toString(entry.getValue()));
-		}
+                }
             }
             out.flush();
 
@@ -179,7 +179,9 @@ public class LocalMonitor
 
     private String toString(Object obj)
     {
-        if (obj.getClass().isArray()) {
+        if (obj == null) {
+            return "null";
+        } else if (obj.getClass().isArray()) {
             StringBuffer strBuf = new StringBuffer("[");
             final int len = Array.getLength(obj);
             for (int i = 0; i < len; i++) {
@@ -194,7 +196,7 @@ public class LocalMonitor
             StringBuffer strBuf = new StringBuffer("{");
             HashMap map = (HashMap) obj;
 
-	    for (Map.Entry entry: (Set<Map.Entry>)map.entrySet()) {
+            for (Map.Entry entry: (Set<Map.Entry>)map.entrySet()) {
                 if (strBuf.length() > 1) {
                     strBuf.append(", ");
                 }
