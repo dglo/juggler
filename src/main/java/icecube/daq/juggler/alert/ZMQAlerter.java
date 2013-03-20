@@ -34,12 +34,14 @@ public class ZMQAlerter
     private InetAddress liveAddr;
     /** I3Live port */
     private int livePort;
+    
+    // string zmq live address representation
+    private String fLiveAddr;
+
     /** Google JSON conversion object */
     private Gson gson = new Gson();
     /** ZeroMQ context */
     private Context context;
-    /** ZeroMQ socket */
-    private Socket socket;
 
     /**
      * Create an alerter
@@ -58,6 +60,8 @@ public class ZMQAlerter
     {
         this.service = service;
 
+	this.fLiveAddr = null;
+	
         context = ZMQ.context(NUMBER_OF_THREADS);
     }
 
@@ -66,15 +70,16 @@ public class ZMQAlerter
      */
     public void close()
     {
-        if (socket != null) {
-            socket.close();
-            socket = null;
-        }
-
-        if (context != null) {
-            context.term();
-            context = null;
-        }
+	// multiple threads can call alert
+	// and I see no guarentee that alert will not
+	// be called after close, so make 
+	// that operation thread safe
+	synchronized(this) {
+	    if (context != null) {
+		context.term();
+		context = null;
+	    }
+	}
     }
 
     /**
@@ -94,7 +99,7 @@ public class ZMQAlerter
      */
     public boolean isActive()
     {
-        return liveAddr != null && socket != null;
+        return liveAddr != null;
     }
 
     /**
@@ -145,69 +150,70 @@ public class ZMQAlerter
                           String notify, Map<String, Object> vars)
         throws AlertException
     {
-        if (liveAddr == null) {
-            // silently ignore alert if address has not been set
-            return;
-        }
+	
+	/** ZeroMQ socket:
+	 * These are not thread safe.. so create/connect/send/close on each alert
+	 * these should be fairly rare
+	 */
+	Socket socket=null;
 
-        HashMap<String, Object> values = new HashMap<String, Object>();
-        if (condition != null && condition.length() > 0) {
-            values.put("condition", condition);
-        }
-        if (notify != null && notify.length() > 0) {
-            values.put("notify", notify);
-        }
-        if (vars != null && vars.size() > 0) {
-            values.put("vars", vars);
-        }
+	String addr;
 
-        send("alert", priority, date, values);
-    }
+	synchronized(this) {
+	    addr = fLiveAddr;
+	}
 
-    /**
-     * Send a message to IceCube Live.
-     *
-     * @param varname variable name
-     * @param priority priority level
-     * @param values map of variable names to values
-     */
-    public void send(String varname, Priority priority,
-                     Map<String, Object> values)
-        throws AlertException
-    {
-        send(varname, priority, Calendar.getInstance(), values);
-    }
+	if (addr==null) {
+	    throw new AlertException("sendLive called before setAddr!");
+	}
 
-    /**
-     * Send a message to IceCube Live.
-     *
-     * @param varname variable name
-     * @param priority priority level
-     * @param date date and time for message
-     * @param values map of variable names to values
-     */
-    public void send(String varname, Priority priority, Calendar date,
-                     Map<String, Object> values)
-        throws AlertException
-    {
-        if (liveAddr == null) {
-            // silently ignore alert if address has not been set
-            return;
-        }
+	try {
+	    synchronized(this) {
+		if (context!=null) {
+		    socket = context.socket(ZMQ.PUSH);
+		} else {
+		    throw new AlertException("sendLive called with a null context");
+		}
+	    }
 
-        HashMap map = new HashMap();
-        map.put("service", service);
-        map.put("varname", varname);
-        map.put("prio", priority.value());
-        map.put("t", String.format("%tF %tT.%tL000", date, date, date));
-        if (values != null && values.size() > 0) {
-            map.put("value", values);
-        }
+	    socket.connect(addr);
 
-        String json = gson.toJson(map);
-        byte[] bytes = json.toString().getBytes();
+	    // sockets time out after .1 second
+	    socket.setLinger(100);	    
 
-        socket.send(bytes, 0);
+	    HashMap values = new HashMap();
+	    if (condition != null && condition.length() > 0) {
+		values.put("condition", condition);
+	    }
+	    if (notify != null && notify.length() > 0) {
+		values.put("notify", notify);
+	    }
+	    if (vars != null && vars.size() > 0) {
+		values.put("vars", vars);
+	    }
+	    
+	    HashMap map = new HashMap();
+	    map.put("service", service);
+	    map.put("varname", "alert");
+	    map.put("prio", priority.value());
+	    map.put("t", String.format("%tF %tT.%tL000", date, date, date));
+	    if (values.size() > 0) {
+		map.put("value", values);
+	    }
+
+	    String json = gson.toJson(map);
+	    byte[] bytes = json.toString().getBytes();
+
+	    socket.send(bytes, 0);
+	} catch (ZMQException ze) {
+	    throw new AlertException("Cannot set I3Live host \"" + addr + "\"",
+                                     ze);
+	} finally {
+	    if (socket!=null) {
+		socket.close();
+	    }
+	}
+
     }
 
     /**
@@ -234,18 +240,10 @@ public class ZMQAlerter
 
         livePort = port;
 
-        final String addr = "tcp://" + liveAddr.getHostAddress() + ":" +
-            livePort;
+	synchronized(this) {
+	    fLiveAddr = "tcp://" + liveAddr.getHostAddress() + ":" +
+		livePort;
+	}
 
-        try {
-            socket = context.socket(ZMQ.PUSH);
-            socket.connect(addr);
-        } catch (ZMQException ze) {
-            throw new AlertException("Cannot set I3Live host \"" + host + "\"",
-                                     ze);
-        }
-
-        // sockets time out after .1 second
-        socket.setLinger(100);
     }
 }
