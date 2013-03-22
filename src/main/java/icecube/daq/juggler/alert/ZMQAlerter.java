@@ -103,6 +103,35 @@ public class ZMQAlerter
     }
 
     /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param values map of variable names to values
+     */
+    public void send(String varname, Priority priority,
+                     Map<String, Object> values)
+        throws AlertException
+    {
+        send(varname, priority, Calendar.getInstance(), values);
+    }
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param date date and time for message
+     * @param values map of variable names to values
+     */
+    public void send(String varname, Priority priority, Calendar date,
+                     Map<String, Object> values)
+        throws AlertException
+    {
+        throw new Error("Unimplemented");
+    }
+
+    /**
      * Send an alert.
      *
      * @param priority priority level
