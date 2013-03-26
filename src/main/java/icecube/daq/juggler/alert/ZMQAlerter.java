@@ -128,56 +128,59 @@ public class ZMQAlerter
                      Map<String, Object> values)
         throws AlertException
     {
-        /** ZeroMQ socket:
-         * These are not thread safe.. so create/connect/send/close on each alert
-         * these should be fairly rare
-         */
-        Socket socket=null;
-
-        String addr;
-
-        synchronized(this) {
-            addr = fLiveAddr;
+        HashMap map = new HashMap();
+        map.put("service", service);
+        map.put("varname", varname);
+        map.put("prio", priority.value());
+        map.put("t", String.format("%tF %tT.%tL000", date, date, date));
+        if (values.size() > 0) {
+            map.put("value", values);
         }
 
-        if (addr==null) {
+        String json = gson.toJson(map);
+        byte[] bytes = json.toString().getBytes();
+
+        Socket socket;
+        String addr;
+
+        /*
+         * ZeroMQ sockets are not thread safe so create/connect/send/close on
+         * each alert.
+         * These should be fairly rare, so performance isn't a huge issue.
+         */
+
+        try {
+            synchronized(this) {
+                if (context == null) {
+                    final String msg = "sendLive called with a null context";
+                    throw new AlertException(msg);
+                }
+
+                socket = context.socket(ZMQ.PUSH);
+
+                addr = fLiveAddr;
+            }
+        } catch (ZMQException ze) {
+            throw new AlertException("Cannot create ZeroMQ socket", ze);
+        }
+
+        if (addr == null) {
             throw new AlertException("sendLive called before setAddr!");
         }
 
         try {
-            synchronized(this) {
-                if (context!=null) {
-                    socket = context.socket(ZMQ.PUSH);
-                } else {
-                    throw new AlertException("sendLive called with a null context");
-                }
-            }
-
             socket.connect(addr);
 
             // sockets time out after .1 second
             socket.setLinger(100);
 
-            HashMap map = new HashMap();
-            map.put("service", service);
-            map.put("varname", varname);
-            map.put("prio", priority.value());
-            map.put("t", String.format("%tF %tT.%tL000", date, date, date));
-            if (values.size() > 0) {
-                map.put("value", values);
-            }
-
-            String json = gson.toJson(map);
-            byte[] bytes = json.toString().getBytes();
-
             socket.send(bytes, 0);
         } catch (ZMQException ze) {
-            throw new AlertException("Cannot set I3Live host \"" + addr + "\"",
-                                     ze);
+            final String msg = String.format("Cannot send \"%s\" to I3Live" +
+                                             " host \"%s\"", varname, addr);
+            throw new AlertException(msg, ze);
         } finally {
-            if (socket!=null) {
-                socket.close();
-            }
+            socket.close();
         }
     }
 
