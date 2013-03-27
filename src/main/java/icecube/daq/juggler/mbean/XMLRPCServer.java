@@ -90,9 +90,9 @@ class XMLRPCServer
 
     private static AbstractMap fixMap(AbstractMap map) 
     {
-	for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
-	    entry.setValue(fixValue(entry.getValue()));
-	}
+        for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
+            entry.setValue(fixValue(entry.getValue()));
+        }
 
         return map;
     }

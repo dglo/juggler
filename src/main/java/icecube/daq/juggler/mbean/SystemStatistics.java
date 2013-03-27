@@ -80,25 +80,25 @@ public class SystemStatistics
         BufferedReader out =
             new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
-	String line;
+        String line;
 
-	try {
-	    try {
-		line = out.readLine();
-		if (line == null) {
-		    LOG.error("No uptime output found");
-		}
-	    } catch (IOException ioe) {
-		LOG.error("Couldn't read uptime output", ioe);
-		line = null;
-	    }
-	} finally {
-	    try {
-		out.close();
-	    } catch (Throwable thr) {
-		// ignore errors on close
-	    }
-	}
+        try {
+            try {
+                line = out.readLine();
+                if (line == null) {
+                    LOG.error("No uptime output found");
+                }
+            } catch (IOException ioe) {
+                LOG.error("Couldn't read uptime output", ioe);
+                line = null;
+            }
+        } finally {
+            try {
+                out.close();
+            } catch (Throwable thr) {
+                // ignore errors on close
+            }
+        }
 
         if (line != null) {
             Matcher match = uptimePat.matcher(line);
@@ -340,7 +340,7 @@ public class SystemStatistics
             StringBuffer buf = new StringBuffer("space: {");
 
             boolean needComma = false;
-	    for(Map.Entry entry : (Set<Map.Entry>)dfMap.entrySet()) {
+            for(Map.Entry entry : (Set<Map.Entry>)dfMap.entrySet()) {
                 String mountPt = (String) entry.getKey();
 
                 if (needComma) {
@@ -364,9 +364,9 @@ public class SystemStatistics
             StringBuffer buf = new StringBuffer("network: {");
 
             boolean needComma = false;
-	    for(Map.Entry entry: ioMap.entrySet()) {
-		String ioStat = (String)entry.getKey();
-		String ioData = (String)entry.getValue();
+            for(Map.Entry entry: ioMap.entrySet()) {
+                String ioStat = (String)entry.getKey();
+                String ioData = (String)entry.getValue();
 
                 if (needComma) {
                     buf.append(", ");
