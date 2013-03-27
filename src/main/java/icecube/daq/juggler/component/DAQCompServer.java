@@ -1177,14 +1177,14 @@ public class DAQCompServer
         if (usage) {
             String usageMsg = "java " + comp.getClass().getName() + " " +
                 " [-L liveAddress:livePort,liveLevel]" +
-                " [-M localMoniSeconds]" +
+                " [-M moniAddress:moniPort,moniLevel]" +
                 " [-S(howSpinner)]" +
                 " [-c configServerURL]" +
                 " [-d dispatchDestPath]" +
                 " [-g globalConfigPath - note deprecated, " +
                 "     use -Dicecube.daq.component.configDir]" +
                 " [-l logAddress:logPort,logLevel]" +
-                " [-m moniAddress:moniPort,moniLevel]" +
+                " [-m localMoniSeconds]" +
                 " [-s maxDispatchFileSize]" +
                 comp.getOptionUsage();
             throw new IllegalArgumentException(usageMsg);
