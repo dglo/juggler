@@ -17,6 +17,14 @@ public interface IComponent
         throws DAQCompException;
 
     /**
+     * Destroy all connections and threads.
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    void destroy()
+        throws DAQCompException;
+
+    /**
      * Perform any actions after all output connectors have been disconnected.
      *
      * @throws DAQCompException if there is a problem
@@ -28,6 +36,14 @@ public interface IComponent
      * Flush buffer caches
      */
     void flushCaches();
+
+    /**
+     * Emergency stop of component.
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    void forcedStop()
+        throws DAQCompException;
 
     /**
      * Get the buffer cache for the specified data type.
@@ -88,11 +104,28 @@ public interface IComponent
         throws DAQCompException;
 
     /**
+     * Set the location of the global configuration directory.
+     *
+     * @param dirName absolute path of configuration directory
+     */
+    void setGlobalConfigurationDir(String dirName);
+
+    /**
      * Set the run number inside this component.
      *
      * @param runNumber run number
      */
     void setRunNumber(int num);
+
+    /**
+     * Start background threads.
+     *
+     * @param startMBeanAgent if <tt>false</tt>, do not start MBean server
+     *
+     * @throws DAQCompException if input server cannot be started
+     */
+    void start(boolean startMBeanAgent)
+        throws DAQCompException;
 
     /**
      * Start connectors.

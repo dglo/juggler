@@ -55,6 +55,17 @@ class StateComponent
         didConfiguring = true;
     }
 
+     /**
+     * Destroy all connections and threads.
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public void destroy()
+        throws DAQCompException
+    {
+        throw new UnimplementedException();
+    }
+
     boolean didConfiguring() { return didConfiguring; }
     boolean didDisconnected() { return didDisconnected; }
     boolean didFlushCaches() { return didFlushCaches; }
@@ -86,6 +97,17 @@ class StateComponent
     public void flushCaches()
     {
         didFlushCaches = true;
+    }
+
+    /**
+     * Emergency stop of component.
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public void forcedStop()
+        throws DAQCompException
+    {
+        throw new UnimplementedException();
     }
 
     /**
@@ -184,6 +206,17 @@ class StateComponent
         didResetting = true;
     }
 
+
+    /**
+     * Set the location of the global configuration directory.
+     *
+     * @param dirName absolute path of configuration directory
+     */
+    public void setGlobalConfigurationDir(String dirName)
+    {
+        throw new UnimplementedException();
+    }
+
     /**
      * Set the run number inside this component.
      *
@@ -192,6 +225,19 @@ class StateComponent
     public void setRunNumber(int num)
     {
         didSetRunNumber = true;
+    }
+
+    /**
+     * Start background threads.
+     *
+     * @param startMBeanAgent if <tt>false</tt>, do not start MBean server
+     *
+     * @throws DAQCompException if input server cannot be started
+     */
+    public void start(boolean startMBeanAgent)
+        throws DAQCompException
+    {
+        throw new UnimplementedException();
     }
 
     /**
