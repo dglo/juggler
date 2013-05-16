@@ -84,6 +84,7 @@ public interface Alerter
     /**
      * Send an alert.
      *
+     * @param dateTime date and time for message
      * @param priority priority level
      * @param condition I3Live condition
      * @param notify list of email addresses which receive notification
@@ -128,4 +129,3 @@ public interface Alerter
     void setAddress(String host, int port)
         throws AlertException;
 }
-
