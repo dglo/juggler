@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 14506 2013-05-16 19:23:08Z dglo $
+ * @version $Id: DAQComponent.java 14510 2013-05-16 21:26:15Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -950,6 +950,10 @@ public abstract class DAQComponent
      */
     public void setAlerter(Alerter alerter)
     {
+        if (this.alerter != null) {
+            this.alerter.close();
+        }
+
         this.alerter = alerter;
     }
 
