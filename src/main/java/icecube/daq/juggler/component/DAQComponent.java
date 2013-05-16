@@ -44,7 +44,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 14299 2013-03-06 02:14:30Z dglo $
+ * @version $Id: DAQComponent.java 14506 2013-05-16 19:23:08Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -377,6 +377,20 @@ public abstract class DAQComponent
     public final void addSplicer(Splicer splicer)
     {
         addConnector(new DAQSplicer(splicer));
+    }
+
+    /**
+     * Close all open files, sockets, etc.
+     *
+     * @throws IOException if there is a problem
+     */
+    public void closeAll()
+        throws IOException
+    {
+        if (alerter != null) {
+            alerter.close();
+            alerter = null;
+        }
     }
 
     /**
