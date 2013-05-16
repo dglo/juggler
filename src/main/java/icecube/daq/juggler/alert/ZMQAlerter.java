@@ -60,8 +60,6 @@ public class ZMQAlerter
     {
         this.service = service;
 
-        this.fLiveAddr = null;
-
         context = ZMQ.context(NUMBER_OF_THREADS);
     }
 
@@ -128,6 +126,10 @@ public class ZMQAlerter
                      Map<String, Object> values)
         throws AlertException
     {
+        if (fLiveAddr == null) {
+            throw new AlertException("Address has not been set");
+        }
+
         HashMap map = new HashMap();
         map.put("service", service);
         map.put("varname", varname);
@@ -274,6 +276,16 @@ public class ZMQAlerter
             fLiveAddr = "tcp://" + liveAddr.getHostAddress() + ":" +
                 livePort;
         }
+    }
 
+    /**
+     * Return debugging string
+     *
+     * @return debugging string
+     */
+    public String toString()
+    {
+        return String.format("ZMQAlerter[%s]",
+                             fLiveAddr == null ? "" : fLiveAddr);
     }
 }
