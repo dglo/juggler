@@ -501,9 +501,9 @@ public class StateTask
                 doConfigure();
                 success = true;
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Configure failed", dce);
                 success = false;
+                caughtError = true;
             }
 
             if (!success) {
@@ -524,13 +524,13 @@ public class StateTask
                 }
                 success = true;
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Connect failed", dce);
                 success = false;
-            } catch (IOException ioe) {
                 caughtError = true;
+            } catch (IOException ioe) {
                 LOG.error("Connect failed", ioe);
                 success = false;
+                caughtError = true;
             }
 
             if (!success) {
@@ -551,9 +551,9 @@ public class StateTask
                 doDestroy();
                 success = true;
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Destroy failed", dce);
                 success = false;
+                caughtError = true;
             }
 
             if (!success) {
@@ -570,13 +570,13 @@ public class StateTask
                 doDisconnect();
                 success = true;
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Disconnect failed", dce);
                 success = false;
-            } catch (IOException ioe) {
                 caughtError = true;
+            } catch (IOException ioe) {
                 LOG.error("Disconnect failed", ioe);
                 success = false;
+                caughtError = true;
             }
 
             if (!success) {
@@ -590,9 +590,9 @@ public class StateTask
                 doForcedStop();
                 success = true;
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Forced stop failed", dce);
                 success = false;
+                caughtError = true;
             }
 
             if (!success) {
@@ -611,11 +611,11 @@ public class StateTask
             try {
                 doReset();
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Reset failed", dce);
-            } catch (IOException ioe) {
                 caughtError = true;
+            } catch (IOException ioe) {
                 LOG.error("Reset failed", ioe);
+                caughtError = true;
             }
 
             break;
@@ -627,9 +627,9 @@ public class StateTask
                 doStartRun();
                 success = true;
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Start run failed", dce);
                 success = false;
+                caughtError = true;
             }
 
             if (!success) {
@@ -643,9 +643,9 @@ public class StateTask
                 doStopRun();
                 success = true;
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Stop run failed", dce);
                 success = false;
+                caughtError = true;
             }
 
             if (!success) {
@@ -659,9 +659,9 @@ public class StateTask
                 doSwitchRun();
                 success = true;
             } catch (DAQCompException dce) {
-                caughtError = true;
                 LOG.error("Switch run failed", dce);
                 success = false;
+                caughtError = true;
             }
 
             if (!success) {
