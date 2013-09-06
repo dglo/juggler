@@ -30,7 +30,7 @@ public class ZMQThreadedAlerter
     /** Logging object */
     private static final Log LOG = LogFactory.getLog(ZMQThreadedAlerter.class);
     /** Number of ZeroMQ I/O threads */
-    private static final int NUMBER_OF_THREADS = 70;
+    private static final int NUMBER_OF_THREADS = 5;
 
     /** Service name */
     protected String service;
