@@ -17,6 +17,9 @@ import icecube.daq.payload.IByteBufferCache;
 import icecube.daq.splicer.Splicer;
 import icecube.daq.util.FlasherboardConfiguration;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +34,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 
+import org.dom4j.Attribute;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+
 /**
  * Generic DAQ component methods.
  *
@@ -44,7 +53,7 @@ import org.apache.log4j.Level;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 14510 2013-05-16 21:26:15Z dglo $
+ * @version $Id: DAQComponent.java 14617 2013-09-20 20:48:42Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -637,6 +646,47 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the file associated with the specified attribute.
+     *
+     * @param dataDir data directory
+     * @param elem XML element describing the file/directory
+     * @param attrName name of file/directory attribute
+     *
+     * @return data file
+     *
+     * @throws DAQCompException if the attribute or file cannot be found
+     */
+    public File getFile(String dataDir, Element elem, String attrName)
+        throws DAQCompException
+    {
+        // get attribute
+        Attribute fileAttr = elem.attribute(attrName);
+        if (fileAttr == null) {
+            return null;
+        }
+
+        // get attribute value
+        String name = fileAttr.getValue();
+
+        // build path for attribute
+        File file;
+        if (dataDir == null) {
+            file = new File(name);
+        } else {
+            file = new File(dataDir, name);
+        }
+
+        // make sure path exists
+        if (!file.exists()) {
+            throw new DAQCompException(attrName + " " + file +
+                                       " does not exist");
+        }
+
+        // return file path
+        return file;
+    }
+
+    /**
      * Return the requested MBean.
      *
      * @return MBean
@@ -861,6 +911,59 @@ public abstract class DAQComponent
     public final Iterable<DAQConnector> listConnectors()
     {
         return connectors;
+    }
+
+    /**
+     * Load a file as an XML document.
+     *
+     * @param dir directory path
+     * @param name XML file name
+     *
+     * @return XML Document object
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public Document loadXMLDocument(File dir, String name)
+        throws DAQCompException
+    {
+        // build config file path
+        File xmlFile = new File(dir, name);
+        if (!xmlFile.exists()) {
+            xmlFile = new File(dir, name + ".xml");
+            if (!xmlFile.exists()) {
+                throw new DAQCompException("Couldn't find " + name +
+                                           " in " + dir);
+            }
+        }
+
+        // open config file
+        FileInputStream fis;
+        try {
+            fis = new FileInputStream(xmlFile);
+        } catch (FileNotFoundException fnfe) {
+            throw new DAQCompException("Couldn't open " + xmlFile);
+        }
+
+        Document doc;
+        try {
+            // read in config XML
+            try {
+                doc = new SAXReader().read(fis);
+            } catch (DocumentException de) {
+                throw new DAQCompException("Couldn't read " + xmlFile + ": ",
+                                           de);
+            }
+        } finally {
+            // done with the fileinputstream
+            try {
+                fis.close();
+            } catch (IOException e) {
+                throw new DAQCompException("Could not close " + xmlFile +
+                                           " input stream");
+            }
+        }
+
+        return doc;
     }
 
     /**
