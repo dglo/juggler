@@ -346,6 +346,13 @@ class ZMQServer
             if (data == null) continue;
 
             HashMap map = gson.fromJson(new String(data), HashMap.class);
+            if (map == null) {
+                final String errMsg =
+                    String.format("Could not unpack %d byte string \"%s\"",
+                                  data.length, new String(data));
+                addError(errMsg);
+                continue;
+            }
 
             boolean found = false;
             if (expected != null) {
