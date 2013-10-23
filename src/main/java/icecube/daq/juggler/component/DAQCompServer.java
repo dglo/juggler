@@ -758,7 +758,7 @@ public class DAQCompServer
     /**
      * XML-RPC method to get the trigger counts for detector monitoring.
      *
-     * @return list of builder-specific event counts and times
+     * @return list of trigger-specific event counts and times
      *
      * @throws DAQCompException if component or subrun does not exist
      */
@@ -1847,5 +1847,14 @@ public class DAQCompServer
         comp.switchToNewRun(runNumber);
 
         return "OK";
+    }
+
+    /**
+     * XML-RPC method instructing the component to kill itself
+     */
+    public String terminate()
+    {
+        // XXX unimplemented
+        return "NOPE";
     }
 }
