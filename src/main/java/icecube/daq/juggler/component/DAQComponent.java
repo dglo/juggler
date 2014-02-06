@@ -53,7 +53,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 14617 2013-09-20 20:48:42Z dglo $
+ * @version $Id: DAQComponent.java 14830 2014-02-06 17:20:27Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -715,6 +715,19 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the time of the first hit being replayed.
+     *
+     * @return UTC time of first hit
+     *
+     * @throws DAQCompException if component is not a replay hub
+     */
+    public long getReplayStartTime()
+        throws DAQCompException
+    {
+        throw new DAQCompException("Component is not a ReplayHub");
+    }
+
+    /**
      * Get the run data for a builder.
      *
      * @param runnum run number
@@ -1136,6 +1149,19 @@ public abstract class DAQComponent
     public void setMaxFileSize(long maxFileSize)
     {
         // Override me!
+    }
+
+    /**
+     * Set the offset applied to each hit being replayed.
+     *
+     * @param offset offset to apply to hit times
+     *
+     * @throws DAQCompException if component is not a replay hub
+     */
+    public void setReplayOffset(long offset)
+        throws DAQCompException
+    {
+        throw new DAQCompException("Component is not a ReplayHub");
     }
 
     /**

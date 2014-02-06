@@ -773,6 +773,23 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to get the time of the first hit being replayed.
+     *
+     * @return UTC time of first hit
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String getReplayStartTime()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return Long.toString(comp.getReplayStartTime()) + "L";
+    }
+
+    /**
      * XML-RPC method to get the run data from a builder
      *
      * @param runnum run number
@@ -1650,6 +1667,61 @@ public class DAQCompServer
 
         serverId = newId;
         serverIdSet = true;
+    }
+
+    /**
+     * XML-RPC method to set the offset applied to each hit being replayed.
+     *
+     * @param offset offset to apply to hit times
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String setReplayOffset(String offsetStr)
+        throws DAQCompException
+    {
+        if (offsetStr == null) {
+            throw new DAQCompException("Time cannot be null");
+        }
+
+        String str;
+        if (!offsetStr.endsWith("L")) {
+            str = offsetStr;
+        } else {
+            str = offsetStr.substring(0, offsetStr.length() - 1);
+        }
+
+        long val;
+        try {
+            val = Long.parseLong(str);
+        } catch (NumberFormatException nfe) {
+            throw new DAQCompException("Bad time string \"" + offsetStr +
+                                       "\"");
+        }
+
+        return setReplayOffset(val);
+    }
+
+    /**
+     * XML-RPC method to set the offset applied to each hit being replayed.
+     *
+     * @param offset offset to apply to hit times
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String setReplayOffset(long offset)
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.setReplayOffset(offset);
+
+        return "OK";
     }
 
     /**
