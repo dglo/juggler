@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -53,7 +54,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 14830 2014-02-06 17:20:27Z dglo $
+ * @version $Id: DAQComponent.java 14921 2014-03-20 22:10:08Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -678,8 +679,14 @@ public abstract class DAQComponent
 
         // make sure path exists
         if (!file.exists()) {
+            String hostname;
+            try {
+                hostname = InetAddress.getLocalHost().getHostName();
+            } catch (Exception ex) {
+                hostname = "unknown";
+            }
             throw new DAQCompException(attrName + " " + file +
-                                       " does not exist");
+                                       " does not exist on " + hostname);
         }
 
         // return file path
