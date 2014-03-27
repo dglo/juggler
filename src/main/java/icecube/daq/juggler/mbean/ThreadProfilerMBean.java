@@ -1,13 +1,12 @@
-package icecube.daq.juggler.mbean;
+package icecube.daq.stringhub;
 
 import java.util.HashMap;
+import java.util.Map;
 
-/**
- * MBean methods for JVM thread statistics monitor.
- */
 public interface ThreadProfilerMBean
 {
-    HashMap<String, Long> getThreadCPUTime();
-    HashMap<String, Long> getThreadInfo();
-    //HashMap<String, Long> getThreadUserTime();
+    Map<String, Long> getBlockedTime();
+    Map<String, Long> getCPUTime();
+    Map<String, Long> getUserTime();
+    Map<String, Long> getWaitedTime();
 }

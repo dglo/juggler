@@ -1,44 +1,47 @@
-package icecube.daq.juggler.mbean;
+package icecube.daq.stringhub;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.HashMap;
 
-/**
- * JVM thread statistics monitor.
- */
+import java.util.HashMap;
+import java.util.Map;
+
 public class ThreadProfiler
     implements ThreadProfilerMBean
 {
-    /** Handle for thread management info */
-    private ThreadMXBean threadBean;
+    private ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 
-    /**
-     * Create a thread profiler.
-     */
     public ThreadProfiler()
     {
-        threadBean = ManagementFactory.getThreadMXBean();
-        if (!threadBean.isThreadCpuTimeSupported()) {
-            threadBean = null;
-        }
+        bean.setThreadContentionMonitoringEnabled(true);
+        bean.setThreadCpuTimeEnabled(true);
     }
 
-    /**
-     * Get current thread CPU usage info.
-     *
-     * @return map of threadName->cpuTime
-     */
-    public HashMap<String, Long> getThreadCPUTime()
+    public Map<String, Long> getBlockedTime()
     {
         HashMap<String, Long> map = new HashMap<String, Long>();
-        if (threadBean != null) {
-            for (long id : threadBean.getAllThreadIds()) {
-                ThreadInfo info = threadBean.getThreadInfo(id);
-                map.put(info.getThreadName(), threadBean.getThreadCpuTime(id));
-            }
+
+        for (long id : bean.getAllThreadIds()) {
+            ThreadInfo threadInfo = bean.getThreadInfo(id, 0);
+
+            map.put(threadInfo.getThreadName(), threadInfo.getBlockedTime());
         }
+
+        return map;
+    }
+
+    public Map<String, Long> getCPUTime()
+    {
+        HashMap<String, Long> map = new HashMap<String, Long>();
+
+        for (long id : bean.getAllThreadIds()) {
+            ThreadInfo threadInfo = bean.getThreadInfo(id, 0);
+
+            final long time = bean.getThreadCpuTime(id);
+            map.put(threadInfo.getThreadName(), time);
+        }
+
         return map;
     }
 
@@ -50,34 +53,41 @@ public class ThreadProfiler
     public HashMap<String, Long> getThreadInfo()
     {
         HashMap<String, Long> map = new HashMap<String, Long>();
-        if (threadBean != null) {
-            long numDaemons = threadBean.getDaemonThreadCount();
-            long numThreads = threadBean.getThreadCount();
-            map.put("ActiveTotal", numThreads);
-            map.put("ActiveDaemons", numDaemons);
-            map.put("ActiveNonDaemons", numThreads - numDaemons);
-            map.put("PeakActiveTotal", (long) threadBean.getPeakThreadCount());
-            map.put("TotalStarted", threadBean.getTotalStartedThreadCount());
-            threadBean.resetPeakThreadCount();
-        }
+        long numDaemons = bean.getDaemonThreadCount();
+        long numThreads = bean.getThreadCount();
+        map.put("ActiveTotal", numThreads);
+        map.put("ActiveDaemons", numDaemons);
+        map.put("ActiveNonDaemons", numThreads - numDaemons);
+        map.put("PeakActiveTotal", (long) bean.getPeakThreadCount());
+        map.put("TotalStarted", bean.getTotalStartedThreadCount());
+        bean.resetPeakThreadCount();
         return map;
     }
 
-    /**
-     * Get current thread user-level CPU usage info.
-     *
-     * @return map of threadName->userTime
-     */
-    public HashMap<String, Long> getThreadUserTime()
+    public Map<String, Long> getUserTime()
     {
         HashMap<String, Long> map = new HashMap<String, Long>();
-        if (threadBean != null) {
-            for (long id : threadBean.getAllThreadIds()) {
-                ThreadInfo info = threadBean.getThreadInfo(id);
-                map.put(info.getThreadName(),
-                        threadBean.getThreadUserTime(id));
-            }
+
+        for (long id : bean.getAllThreadIds()) {
+            ThreadInfo threadInfo = bean.getThreadInfo(id, 0);
+
+            final long time = bean.getThreadUserTime(id);
+            map.put(threadInfo.getThreadName(), time);
         }
+
+        return map;
+    }
+
+    public Map<String, Long> getWaitedTime()
+    {
+        HashMap<String, Long> map = new HashMap<String, Long>();
+
+        for (long id : bean.getAllThreadIds()) {
+            ThreadInfo threadInfo = bean.getThreadInfo(id, 0);
+
+            map.put(threadInfo.getThreadName(), threadInfo.getWaitedTime());
+        }
+
         return map;
     }
 }
