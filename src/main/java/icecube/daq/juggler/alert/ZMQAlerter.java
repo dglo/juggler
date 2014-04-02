@@ -24,24 +24,27 @@ public class ZMQAlerter
 {
     /** Logging object */
     private static final Log LOG = LogFactory.getLog(ZMQAlerter.class);
-    /** Number of ZeroMQ I/O threads */
+    /** Number of 0MQ I/O threads */
     private static final int NUMBER_OF_THREADS = 5;
 
     /** Service name */
     protected String service;
 
-    /** I3Live host */
-    private InetAddress liveAddr;
-    /** I3Live port */
-    private int livePort;
-
-    // string zmq live address representation
-    private String fLiveAddr;
+    /** 0MQ host */
+    private InetAddress zmqHost;
+    /** 0MQ port */
+    private int zmqPort;
+    /** Cached 0MQ URL */
+    private String zmqURL;
 
     /** Google JSON conversion object */
     private Gson gson = new Gson();
-    /** ZeroMQ context */
+    /** 0MQ context */
     private Context context;
+    /** 0MQ socket */
+    private Socket socket;
+    /** Have we logged an error after the socket was closed? */
+    private boolean socketWarned;
 
     /**
      * Create an alerter
@@ -68,11 +71,13 @@ public class ZMQAlerter
      */
     public void close()
     {
-        // multiple threads can call alert
-        // and I see no guarentee that alert will not
-        // be called after close, so make
-        // that operation thread safe
-        synchronized(this) {
+        synchronized (this) {
+            if (socket != null) {
+                socket.close();
+                socket = null;
+                socketWarned = false;
+            }
+
             if (context != null) {
                 context.term();
                 context = null;
@@ -97,7 +102,7 @@ public class ZMQAlerter
      */
     public boolean isActive()
     {
-        return liveAddr != null;
+        return zmqHost != null && context != null;
     }
 
     /**
@@ -126,11 +131,7 @@ public class ZMQAlerter
                      Map<String, Object> values)
         throws AlertException
     {
-        if (fLiveAddr == null) {
-            throw new AlertException("Address has not been set");
-        }
-
-        HashMap map = new HashMap();
+        HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("service", service);
         map.put("varname", varname);
         map.put("prio", priority.value());
@@ -139,50 +140,37 @@ public class ZMQAlerter
             map.put("value", values);
         }
 
-        String json = gson.toJson(map);
+        sendObject(map);
+    }
+
+    /**
+     * Send a Java object (as a JSON string) to a 0MQ server.
+     *
+     * @param obj object to send
+     */
+    public void sendObject(Object obj)
+        throws AlertException
+    {
+        String json;
+        synchronized (gson) {
+            json = gson.toJson(obj);
+        }
+
         byte[] bytes = json.toString().getBytes();
 
-        Socket socket;
-        String addr;
-
-        /*
-         * ZeroMQ sockets are not thread safe so create/connect/send/close on
-         * each alert.
-         * These should be fairly rare, so performance isn't a huge issue.
-         */
-
-        try {
-            synchronized(this) {
-                if (context == null) {
-                    final String msg = "sendLive called with a null context";
-                    throw new AlertException(msg);
-                }
-
-                socket = context.socket(ZMQ.PUSH);
-
-                addr = fLiveAddr;
+        synchronized (this) {
+            if (socket == null && !socketWarned) {
+                LOG.error("Cannot send alert; socket has been closed");
+                socketWarned = true;
             }
-        } catch (ZMQException ze) {
-            throw new AlertException("Cannot create ZeroMQ socket", ze);
-        }
 
-        if (addr == null) {
-            throw new AlertException("sendLive called before setAddr!");
-        }
-
-        try {
-            socket.connect(addr);
-
-            // sockets time out after .1 second
-            socket.setLinger(100);
-
-            socket.send(bytes, 0);
-        } catch (ZMQException ze) {
-            final String msg = String.format("Cannot send \"%s\" to I3Live" +
-                                             " host \"%s\"", varname, addr);
-            throw new AlertException(msg, ze);
-        } finally {
-            socket.close();
+            try {
+                socket.send(bytes, 0);
+            } catch (ZMQException ze) {
+                final String msg = String.format("Cannot send \"%s\" to 0MQ" +
+                                                 " host \"%s\"", obj, zmqURL);
+                throw new AlertException(msg, ze);
+            }
         }
     }
 
@@ -249,32 +237,51 @@ public class ZMQAlerter
     }
 
     /**
-     * Set IceCube Live host and port
+     * Set 0MQ host and port
      *
-     * @param host - host name for IceCube Live server
-     * @param port - port number for IceCube Live server
+     * @param host - host name for 0MQ server
+     * @param port - port number for 0MQ server
      * @throws AlertException if there is a problem with one of the parameters
      */
     public void setAddress(String host, int port)
         throws AlertException
     {
         try {
-            liveAddr = InetAddress.getByName(host);
+            zmqHost = InetAddress.getByName(host);
         } catch (UnknownHostException uhe) {
-            throw new AlertException("Cannot set I3Live host \"" + host + "\"",
+            throw new AlertException("Cannot set 0MQ host \"" + host + "\"",
                                      uhe);
         }
 
-        if (liveAddr == null) {
-            throw new AlertException("I3Live host \"" + host +
+        if (zmqHost == null) {
+            throw new AlertException("0MQ host \"" + host +
                                      "\" returned null address");
         }
 
-        livePort = port;
+        zmqPort = port;
 
-        synchronized(this) {
-            fLiveAddr = "tcp://" + liveAddr.getHostAddress() + ":" +
-                livePort;
+        synchronized (this) {
+            zmqURL = "tcp://" + zmqHost.getHostAddress() + ":" +
+                zmqPort;
+
+            if (context == null) {
+                throw new AlertException("Context is null" +
+                                         " (alerter was closed?)");
+            }
+
+            try {
+                socket = context.socket(ZMQ.PUSH);
+            } catch (ZMQException ze) {
+                throw new AlertException("Cannot create 0MQ socket", ze);
+            }
+
+            socket.connect(zmqURL);
+
+            // sockets time out after .1 second
+            socket.setLinger(100);
+
+            // haven't yet whined about socket being closed
+            socketWarned = false;
         }
     }
 
@@ -286,6 +293,6 @@ public class ZMQAlerter
     public String toString()
     {
         return String.format("ZMQAlerter[%s]",
-                             fLiveAddr == null ? "" : fLiveAddr);
+                             zmqURL == null ? "" : zmqURL);
     }
 }
