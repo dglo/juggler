@@ -129,16 +129,6 @@ public class ZMQThreadedAlerter
                           String notify, Map<String, Object> vars)
         throws AlertException
     {
-	String addr;
-
-	if (fLiveAddr==null) {
-	    throw new AlertException("sendLive called before setAddr!");
-	}
-
-	if (!running) {
-	    throw new AlertException("alerter already closed");
-	}
-
 	HashMap values = new HashMap();
 	if (condition != null && condition.length() > 0) {
 	    values.put("condition", condition);
@@ -159,7 +149,29 @@ public class ZMQThreadedAlerter
 	    map.put("value", values);
 	}
 
-	String json = gson.toJson(map);
+	sendObject(map);
+
+    }
+
+    /**
+     * Send a Java object (as a JSON string) to a 0MQ server.
+     *
+     * @param obj object to send
+     */
+    public void sendObject(Object obj)
+        throws AlertException
+    {
+	String addr;
+
+	if (fLiveAddr==null) {
+	    throw new AlertException("sendLive called before setAddr!");
+	}
+
+	if (!running) {
+	    throw new AlertException("alerter already closed");
+	}
+
+	String json = gson.toJson(obj);
 
 	synchronized(this) {
 	    try {
@@ -170,7 +182,6 @@ public class ZMQThreadedAlerter
 	    }
 	    this.notify();
 	}
-
     }
 
     /**

@@ -263,6 +263,17 @@ public class UDPAlerter
     }
 
     /**
+     * Send a Java object (as a JSON string) to a 0MQ server.
+     *
+     * @param obj object to send
+     */
+    public void sendObject(Object obj)
+        throws AlertException
+    {
+        throw new AlertException("Unimplemented");
+    }
+
+    /**
      * Set IceCube Live host and port
      *
      * @param host - host name for IceCube Live server
@@ -282,4 +293,3 @@ public class UDPAlerter
         livePort = port;
     }
 }
-

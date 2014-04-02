@@ -119,6 +119,14 @@ public interface Alerter
         throws AlertException;
 
     /**
+     * Send a Java object (as a JSON string) to a 0MQ server.
+     *
+     * @param obj object to send
+     */
+    void sendObject(Object obj)
+        throws AlertException;
+
+    /**
      * Set monitoring server host and port
      *
      * @param host - server host name
