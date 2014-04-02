@@ -130,7 +130,7 @@ public class ZMQThreadedAlerter
         throws AlertException
     {
 	String addr;
-	
+
 	if (fLiveAddr==null) {
 	    throw new AlertException("sendLive called before setAddr!");
 	}
@@ -149,7 +149,7 @@ public class ZMQThreadedAlerter
 	if (vars != null && vars.size() > 0) {
 	    values.put("vars", vars);
 	}
-	
+
 	HashMap map = new HashMap();
 	map.put("service", service);
 	map.put("varname", "alert");
@@ -158,14 +158,14 @@ public class ZMQThreadedAlerter
 	if (values.size() > 0) {
 	    map.put("value", values);
 	}
-	
+
 	String json = gson.toJson(map);
-	
+
 	synchronized(this) {
 	    try {
 		fMsgQueue.put(json);
 	    } catch (InterruptedException e) {
-		// the message queue size is 
+		// the message queue size is
 		// MAX_INT
 	    }
 	    this.notify();
@@ -214,7 +214,7 @@ public class ZMQThreadedAlerter
     {
 	// multiple threads can call alert
 	// and I see no guarentee that alert will not
-	// be called after close, so make 
+	// be called after close, so make
 	// that operation thread safe
 	synchronized(this) {
 	    this.running=false;
@@ -277,7 +277,7 @@ public class ZMQThreadedAlerter
 
 	try {
 	    while(true) {
-		
+
 		synchronized(this) {
 		    try {
 			this.wait();
@@ -293,13 +293,13 @@ public class ZMQThreadedAlerter
 			// loop back and wait again
 			continue;
 		    }
-		    
+
 		    if (myAddr!=fLiveAddr) {
 			myAddr=fLiveAddr;
 			update_socket=true;
 		    }
 		}
-		
+
 		if(update_socket) {
 		    if (socket!=null) {
 			socket.close();
@@ -310,13 +310,13 @@ public class ZMQThreadedAlerter
 		    socket.setLinger(100);
 		    update_socket=false;
 		}
-		
+
 		String msg = (String)fMsgQueue.poll();
 		while(msg!=null) {
 		    // got an item from the queue
 		    byte[] bytes = msg.toString().getBytes();
 		    socket.send(bytes,0);
-		    
+
 		    msg = (String)fMsgQueue.poll();
 		}
 	    }
@@ -333,4 +333,3 @@ public class ZMQThreadedAlerter
     }
 
 }
-
