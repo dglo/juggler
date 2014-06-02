@@ -1,5 +1,7 @@
 package icecube.daq.juggler.alert;
 
+import icecube.daq.payload.IUTCTime;
+
 import java.util.Calendar;
 import java.util.Map;
 
@@ -97,6 +99,21 @@ public interface Alerter
         throws AlertException;
 
     /**
+     * Send an alert.
+     *
+     * @param utcTime DAQ time
+     * @param priority priority level
+     * @param condition I3Live condition
+     * @param notify list of email addresses which receive notification
+     * @param vars map of variable names to values
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    void sendAlert(IUTCTime utcTime, Priority priority, String condition,
+                   String notify, Map<String, Object> vars)
+        throws AlertException;
+
+    /**
      * Send a message to IceCube Live.
      *
      * @param varname variable name
@@ -115,6 +132,18 @@ public interface Alerter
      * @param values map of names to values
      */
     void send(String varname, Priority priority, Calendar dateTime,
+              Map<String, Object> values)
+        throws AlertException;
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param utcTime DAQ time
+     * @param values map of names to values
+     */
+    void send(String varname, Priority priority, IUTCTime utcTime,
               Map<String, Object> values)
         throws AlertException;
 

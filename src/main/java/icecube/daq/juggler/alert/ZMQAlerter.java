@@ -2,6 +2,8 @@ package icecube.daq.juggler.alert;
 
 import com.google.gson.Gson;
 
+import icecube.daq.payload.IUTCTime;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Calendar;
@@ -131,11 +133,43 @@ public class ZMQAlerter
                      Map<String, Object> values)
         throws AlertException
     {
+        final String dateStr =
+            String.format("%tF %tT.%tL000", date, date, date);
+        send(varname, priority, dateStr, values);
+    }
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param utcTime DAQ time
+     * @param values map of variable names to values
+     */
+    public void send(String varname, Priority priority, IUTCTime utcTime,
+                     Map<String, Object> values)
+        throws AlertException
+    {
+        send(varname, priority, utcTime.toDateString(), values);
+    }
+
+    /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param date date and time for message
+     * @param values map of variable names to values
+     */
+    private void send(String varname, Priority priority, String dateStr,
+                      Map<String, Object> values)
+        throws AlertException
+    {
         HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("service", service);
         map.put("varname", varname);
         map.put("prio", priority.value());
-        map.put("t", String.format("%tF %tT.%tL000", date, date, date));
+        map.put("t", dateStr);
         if (values.size() > 0) {
             map.put("value", values);
         }
@@ -207,6 +241,23 @@ public class ZMQAlerter
         sendAlert(Calendar.getInstance(), priority, condition, notify, vars);
     }
 
+    private HashMap<String, Object> makeAlertValues(String condition,
+                                                    String notify,
+                                                    Map<String, Object> vars)
+    {
+        HashMap values = new HashMap();
+        if (condition != null && condition.length() > 0) {
+            values.put("condition", condition);
+        }
+        if (notify != null && notify.length() > 0) {
+            values.put("notify", notify);
+        }
+        if (vars != null && vars.size() > 0) {
+            values.put("vars", vars);
+        }
+        return values;
+    }
+
     /**
      * Send an alert to IceCube Live.
      *
@@ -222,18 +273,28 @@ public class ZMQAlerter
                           String notify, Map<String, Object> vars)
         throws AlertException
     {
-        HashMap values = new HashMap();
-        if (condition != null && condition.length() > 0) {
-            values.put("condition", condition);
-        }
-        if (notify != null && notify.length() > 0) {
-            values.put("notify", notify);
-        }
-        if (vars != null && vars.size() > 0) {
-            values.put("vars", vars);
-        }
+        send("alert", priority, date, makeAlertValues(condition, notify,
+                                                      vars));
+    }
 
-        send("alert", priority, date, values);
+    /**
+     * Send an alert to IceCube Live.
+     *
+     * @param utcTime DAQ time
+     * @param priority priority level
+     * @param condition I3Live condition
+     * @param notify list of email addresses which receive notification
+     * @param vars map of variable names to values
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    public void sendAlert(IUTCTime utcTime, Priority priority,
+                          String condition, String notify,
+                          Map<String, Object> vars)
+        throws AlertException
+    {
+        send("alert", priority, utcTime, makeAlertValues(condition, notify,
+                                                         vars));
     }
 
     /**

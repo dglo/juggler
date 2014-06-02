@@ -9,6 +9,7 @@ import icecube.daq.log.LoggingOutputStream;
 import icecube.daq.util.FlasherboardConfiguration;
 import icecube.daq.util.LocatePDAQ;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.BindException;
@@ -33,7 +34,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -272,17 +275,19 @@ class LoggingConfiguration
     private int logPort;
     private String liveHost;
     private int livePort;
+    private File logFile;
     private IDAQAppender appender;
     private Handler handler;
 
     LoggingConfiguration(String compName, Level logLevel)
         throws SocketException, UnknownHostException
     {
-        this(compName, logLevel, null, 0, null, 0);
+        this(compName, logLevel, null, 0, null, 0, null);
     }
 
     LoggingConfiguration(String compName, Level logLevel, String logHost,
-                         int logPort, String liveHost, int livePort)
+                         int logPort, String liveHost, int livePort,
+                         File logFile)
         throws SocketException, UnknownHostException
     {
         this.compName = compName;
@@ -291,6 +296,7 @@ class LoggingConfiguration
         this.logPort = logPort;
         this.liveHost = liveHost;
         this.livePort = livePort;
+        this.logFile = logFile;
 
         if ((logHost == null || logHost.length() == 0 || logPort <= 0) &&
             (liveHost == null || liveHost.length() == 0 || livePort <= 0))
@@ -329,6 +335,21 @@ class LoggingConfiguration
         }
 
         BasicConfigurator.configure(appender);
+        if (logFile != null) {
+            FileAppender fapp;
+            try {
+                fapp =  new FileAppender(new PatternLayout(),
+                                         logFile.getAbsolutePath());
+            } catch (IOException ioe) {
+                System.err.println("Cannot create appender");
+                ioe.printStackTrace();
+                fapp = null;
+            }
+
+            if (fapp != null) {
+                BasicConfigurator.configure(fapp);
+            }
+        }
 
         Log log = LogFactory.getLog(getClass());
 
@@ -934,12 +955,37 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
+        File logFile = null;
         setLoggingConfiguration(new LoggingConfiguration(comp.getName(),
                                                          comp.getLogLevel(),
                                                          logHost, logPort,
-                                                         liveHost, livePort));
+                                                         liveHost, livePort,
+                                                         logFile));
 
         return "OK";
+    }
+
+    private static final File buildFile(String dir, String base, char ch)
+    {
+        if (ch == (char) 0) {
+            return new File(dir, base + ".log");
+        }
+
+        return new File(dir, String.format("%s_%c.log", base, ch));
+    }
+
+    private static final File renameTemp(String base, char oldCh, char newCh)
+    {
+        File oldFile = buildFile("/tmp", base, oldCh);
+        if (oldFile.exists()) {
+            File newFile = buildFile("/tmp", base, newCh);
+            if (newFile.exists() && oldCh != 'z') {
+                renameTemp(base, newCh, (char)(newCh + 1));
+            }
+            oldFile.renameTo(newFile);
+        }
+
+        return oldFile;
     }
 
     /**
@@ -1457,7 +1503,7 @@ public class DAQCompServer
         {
             defaultLogConfig =
                 new LoggingConfiguration(comp.getName(), logLevel, logIP,
-                                         logPort, liveIP, livePort);
+                                         logPort, liveIP, livePort, null);
         }
     }
 

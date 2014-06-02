@@ -1,5 +1,7 @@
 package icecube.daq.juggler.alert;
 
+import icecube.daq.payload.IUTCTime;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -110,6 +112,21 @@ public class UDPAlerter
     }
 
     /**
+     * Send a message to IceCube Live.
+     *
+     * @param varname variable name
+     * @param priority priority level
+     * @param utcTime DAQ time
+     * @param values map of variable names to values
+     */
+    public void send(String varname, Priority priority, IUTCTime utcTime,
+                     Map<String, Object> values)
+        throws AlertException
+    {
+        throw new Error("Unimplemented");
+    }
+
+    /**
      * Send an alert.
      *
      * @param priority priority level
@@ -158,6 +175,25 @@ public class UDPAlerter
         throws AlertException
     {
         sendAlert("alert", date, priority, condition, notify, vars);
+    }
+
+    /**
+     * Send an alert to IceCube Live.
+     *
+     * @param utcTime DAQ time
+     * @param priority priority level
+     * @param condition I3Live condition
+     * @param notify list of email addresses which receive notification
+     * @param vars map of variable names to values
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    public void sendAlert(IUTCTime utcTime, Priority priority,
+                          String condition, String notify,
+                          Map<String, Object> vars)
+        throws AlertException
+    {
+        throw new Error("Unimplemented");
     }
 
     /**
