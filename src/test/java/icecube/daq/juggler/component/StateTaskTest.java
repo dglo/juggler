@@ -30,6 +30,7 @@ class StateComponent
     private boolean didStarted;
     private boolean didSwitching;
     private boolean didStopping;
+    private boolean didForceStopping;
     private boolean didStopped;
     private boolean didDisconnected;
     private boolean didStopMBeanAgent;
@@ -69,6 +70,7 @@ class StateComponent
     boolean didConfiguring() { return didConfiguring; }
     boolean didDisconnected() { return didDisconnected; }
     boolean didFlushCaches() { return didFlushCaches; }
+    boolean didForceStopping() { return didForceStopping; }
     boolean didResetting() { return didResetting; }
     boolean didSetRunNumber() { return didSetRunNumber; }
     boolean didStartEngines() { return didStartEngines; }
@@ -97,6 +99,18 @@ class StateComponent
     public void flushCaches()
     {
         didFlushCaches = true;
+    }
+
+    /**
+     * Perform any actions which should happen just before a run is
+     * force-stopped.
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public void forceStopping()
+        throws DAQCompException
+    {
+        didForceStopping = true;
     }
 
     /**

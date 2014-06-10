@@ -38,6 +38,15 @@ public interface IComponent
     void flushCaches();
 
     /**
+     * Perform any actions which should happen just before a run is
+     * force-stopped.
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    void forceStopping()
+        throws DAQCompException;
+
+    /**
      * Emergency stop of component.
      *
      * @throws DAQCompException if there is a problem

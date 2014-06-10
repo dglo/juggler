@@ -54,7 +54,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 14921 2014-03-20 22:10:08Z dglo $
+ * @version $Id: DAQComponent.java 15039 2014-06-10 21:56:23Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -582,6 +582,19 @@ public abstract class DAQComponent
         }
 
         stateTask.forcedStop();
+    }
+
+    /**
+     * Override this method to perform any clean-up before connectors
+     * are force-stopped.
+     *
+     * @throws DAQCompException if there is a problem cleaning up the
+     *                          connectors
+     */
+    public void forceStopping()
+        throws DAQCompException
+    {
+        // Override me!
     }
 
     /**

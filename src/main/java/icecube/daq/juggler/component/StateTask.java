@@ -322,6 +322,8 @@ public class StateTask
                 calledStopping = true;
             }
 
+            comp.forceStopping();
+
             doForcedStop();
             prevState = DAQState.READY;
         }
