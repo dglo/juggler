@@ -54,7 +54,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15039 2014-06-10 21:56:23Z dglo $
+ * @version $Id: DAQComponent.java 15095 2014-07-18 20:51:47Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -729,9 +729,9 @@ public abstract class DAQComponent
      *
      * @return list of trigger count data.
      */
-    public List<Map> getMoniCounts()
+    public List<Map<String, Object>> getMoniCounts()
     {
-        return new ArrayList<Map>();
+        return new ArrayList<Map<String, Object>>();
     }
 
     /**

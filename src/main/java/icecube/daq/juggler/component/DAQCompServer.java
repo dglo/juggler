@@ -783,7 +783,7 @@ public class DAQCompServer
      *
      * @throws DAQCompException if component or subrun does not exist
      */
-    public List<Map> getMoniCounts()
+    public List<Map<String, Object>> getMoniCounts()
         throws DAQCompException
     {
         if (comp == null) {
