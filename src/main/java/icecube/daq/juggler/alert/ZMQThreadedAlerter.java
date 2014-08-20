@@ -18,9 +18,6 @@ import org.apache.commons.logging.LogFactory;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;
-import org.zeromq.ZMQException;
-
-
 
 /**
  * Handle alerts

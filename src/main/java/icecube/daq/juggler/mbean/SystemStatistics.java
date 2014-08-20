@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,7 +42,7 @@ public class SystemStatistics
                         "\\s+(\\d+)%\\s+(\\S.*)\\s*$");
 
     /** Network IO reading stuff */
-    public static String PNDfilename = "/proc/net/dev";
+    public static final String PND_FILENAME = "/proc/net/dev";
     private Pattern barPattern   = Pattern.compile("\\|");
     private Pattern dataPattern  = Pattern.compile("[:\\s]+");
     private Pattern spacePattern = Pattern.compile("\\s+");
@@ -252,9 +251,9 @@ public class SystemStatistics
         // Network IO reading set-up
         BufferedReader PNDreader;
         try {
-            PNDreader = new BufferedReader(new FileReader(PNDfilename));
+            PNDreader = new BufferedReader(new FileReader(PND_FILENAME));
         } catch (FileNotFoundException fnfe) {
-            LOG.error("Couldn't open " + PNDfilename + " on OS: " +
+            LOG.error("Couldn't open " + PND_FILENAME + " on OS: " +
                       System.getProperty("os.name"));
             return null;
         }
@@ -279,7 +278,7 @@ public class SystemStatistics
                     rx_headers = spacePattern.split(header[1]);
                     tx_headers = spacePattern.split(header[2]);
                 } else {
-                    LOG.error("Bogus " + PNDfilename +
+                    LOG.error("Bogus " + PND_FILENAME +
                               "  line: \"" + line + "\"");
                 }
                 past_header = true;
@@ -293,7 +292,7 @@ public class SystemStatistics
             String iface = data[0];
             int rx_i;
             int tx_i;
-            // The recieve data for this interface
+            // The receive data for this interface
             for (rx_i = 0; rx_i < rx_headers.length; rx_i++) {
                 map.put(iface + "_rx_" + rx_headers[rx_i], data[rx_i + 1]);
             }

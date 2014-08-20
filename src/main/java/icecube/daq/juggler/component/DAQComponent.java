@@ -54,7 +54,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15095 2014-07-18 20:51:47Z dglo $
+ * @version $Id: DAQComponent.java 15128 2014-08-20 16:37:50Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -170,7 +170,7 @@ public abstract class DAQComponent
      *
      * @param conn connector
      */
-    private final void addConnector(DAQConnector conn)
+    private void addConnector(DAQConnector conn)
     {
         connectors.add(conn);
         connSorted = false;
@@ -255,9 +255,9 @@ public abstract class DAQComponent
      *
      * @throws Error if 'engine' is not a PayloadReader
      */
-    private final void addMonitoredEngine(String type,
-                                          DAQComponentInputProcessor engine,
-                                          boolean optional)
+    private void addMonitoredEngine(String type,
+                                    DAQComponentInputProcessor engine,
+                                    boolean optional)
     {
         addConnector(new DAQInputConnector(type, engine, optional));
 
@@ -318,10 +318,10 @@ public abstract class DAQComponent
      *
      * @throws Error if 'engine' is not a known output engine
      */
-    private final void addMonitoredEngine(String type,
-                                          DAQComponentOutputProcess engine,
-                                          boolean allowMultipleConnections,
-                                          boolean optional)
+    private void addMonitoredEngine(String type,
+                                    DAQComponentOutputProcess engine,
+                                    boolean allowMultipleConnections,
+                                    boolean optional)
     {
         addConnector(new DAQOutputConnector(type, engine,
                                             allowMultipleConnections,

@@ -965,7 +965,7 @@ public class DAQCompServer
         return "OK";
     }
 
-    private static final File buildFile(String dir, String base, char ch)
+    private static File buildFile(String dir, String base, char ch)
     {
         if (ch == (char) 0) {
             return new File(dir, base + ".log");
@@ -974,7 +974,7 @@ public class DAQCompServer
         return new File(dir, String.format("%s_%c.log", base, ch));
     }
 
-    private static final File renameTemp(String base, char oldCh, char newCh)
+    private static File renameTemp(String base, char oldCh, char newCh)
     {
         File oldFile = buildFile("/tmp", base, oldCh);
         if (oldFile.exists()) {
