@@ -26,8 +26,6 @@ public class ZMQThreadedAlerter
     extends Thread
     implements Alerter
 {
-    /** Logging object */
-    private static final Log LOG = LogFactory.getLog(ZMQThreadedAlerter.class);
     /** Number of ZeroMQ I/O threads */
     private static final int NUMBER_OF_THREADS = 5;
 
@@ -193,8 +191,6 @@ public class ZMQThreadedAlerter
     public void sendObject(Object obj)
         throws AlertException
     {
-	String addr;
-
 	if (fLiveAddr==null) {
 	    throw new AlertException("sendLive called before setAddr!");
 	}
@@ -337,7 +333,7 @@ public class ZMQThreadedAlerter
 			continue;
 		    }
 
-		    if (myAddr!=fLiveAddr) {
+		    if (myAddr == null || !myAddr.equals(fLiveAddr)) {
 			myAddr=fLiveAddr;
 			update_socket=true;
 		    }

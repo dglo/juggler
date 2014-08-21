@@ -9,7 +9,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>juggler</artifactId>
   <packaging>jar</packaging>
-  <name>juggler</name>
+  <name>DAQ component framework</name>
   <description>The ${project.name} sub-system of the Surface Data Acquisition system for the IceCube Project.</description>
 
   <scm>

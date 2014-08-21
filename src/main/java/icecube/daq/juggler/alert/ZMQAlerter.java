@@ -193,17 +193,20 @@ public class ZMQAlerter
         byte[] bytes = json.toString().getBytes();
 
         synchronized (this) {
-            if (socket == null && !socketWarned) {
-                LOG.error("Cannot send alert; socket has been closed");
-                socketWarned = true;
-            }
-
-            try {
-                socket.send(bytes, 0);
-            } catch (ZMQException ze) {
-                final String msg = String.format("Cannot send \"%s\" to 0MQ" +
-                                                 " host \"%s\"", obj, zmqURL);
-                throw new AlertException(msg, ze);
+            if (socket == null) {
+                if (!socketWarned) {
+                    LOG.error("Cannot send alert; socket has been closed");
+                    socketWarned = true;
+                }
+            } else {
+                try {
+                    socket.send(bytes, 0);
+                } catch (ZMQException ze) {
+                    final String msg =
+                        String.format("Cannot send \"%s\" to 0MQ host \"%s\"",
+                                      obj, zmqURL);
+                    throw new AlertException(msg, ze);
+                }
             }
         }
     }
@@ -319,9 +322,9 @@ public class ZMQAlerter
                                      "\" returned null address");
         }
 
-        zmqPort = port;
-
         synchronized (this) {
+            zmqPort = port;
+
             zmqURL = "tcp://" + zmqHost.getHostAddress() + ":" +
                 zmqPort;
 

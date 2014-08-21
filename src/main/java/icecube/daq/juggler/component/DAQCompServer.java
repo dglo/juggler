@@ -974,20 +974,6 @@ public class DAQCompServer
         return new File(dir, String.format("%s_%c.log", base, ch));
     }
 
-    private static File renameTemp(String base, char oldCh, char newCh)
-    {
-        File oldFile = buildFile("/tmp", base, oldCh);
-        if (oldFile.exists()) {
-            File newFile = buildFile("/tmp", base, newCh);
-            if (newFile.exists() && oldCh != 'z') {
-                renameTemp(base, newCh, (char)(newCh + 1));
-            }
-            oldFile.renameTo(newFile);
-        }
-
-        return oldFile;
-    }
-
     /**
      * Check that the server is still alive.
      *
