@@ -314,7 +314,7 @@ public class DAQCompServerTest
 
         MockServer srvr = new MockServer(mockComp, new String[0]);
 
-        Object badConn = new Integer(666);
+        Object badConn = Integer.valueOf(666);
         try {
             srvr.connect(new Object[] { badConn });
             fail("Should have failed due to bad connection type");
@@ -349,9 +349,9 @@ public class DAQCompServerTest
         HashMap connMap = new HashMap();
         connMap.put("type", connType);
         connMap.put("compName", DAQCmdInterface.DAQ_EVENTBUILDER);
-        connMap.put("compNum", new Integer(0));
+        connMap.put("compNum", Integer.valueOf(0));
         connMap.put("host", "localhost");
-        connMap.put("port", new Integer(port));
+        connMap.put("port", Integer.valueOf(port));
 
         String rtnVal;
 
@@ -967,8 +967,8 @@ public class DAQCompServerTest
         MockServer srvr = new MockServer(mockComp, new String[0]);
 
         Object[] flasherCfg = new Object[] {
-            "ABC", new Integer(12), new Integer(34),
-            new Integer(56), new Integer(78), new Integer(90),
+            "ABC", Integer.valueOf(12), Integer.valueOf(34),
+            Integer.valueOf(56), Integer.valueOf(78), Integer.valueOf(90),
         };
 
         ArrayList list = new ArrayList();

@@ -188,7 +188,7 @@ public class SystemStatistics
                             LOG.error("Couldn't parse df #" + i +
                                       " \"" + match.group(i + 2) +
                                       "\" from \"" + line + "\"", nfe);
-                            array[i] = new Long(0);
+                            array[i] = Long.valueOf(0);
                         }
                     }
 

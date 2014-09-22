@@ -120,7 +120,7 @@ class XMLRPCServer
             char[] array = new char[] {((Character) val).charValue() };
             return new String(array);
         } else if (val instanceof Short) {
-            return new Integer(((Short) val).intValue());
+            return Integer.valueOf(((Short) val).intValue());
         } else if (val instanceof Long) {
             long lVal = ((Long) val).longValue();
             if (lVal < (long) Integer.MIN_VALUE ||
@@ -129,7 +129,7 @@ class XMLRPCServer
                 return val.toString();
             }
 
-            return new Integer((int) lVal);
+            return Integer.valueOf((int) lVal);
         } else if (val instanceof Float) {
             return new Double(((Float) val).doubleValue());
         } else if (val instanceof AbstractMap) {

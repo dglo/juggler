@@ -1447,14 +1447,15 @@ public class DAQCompServer
             Object[] row = new Object[3];
             row[0] = type;
             row[1] = Character.toString(conn.getDescriptionChar());
-            row[2] = new Integer(conn.getPort());
+            row[2] = Integer.valueOf(conn.getPort());
 
             connList.add(row);
         }
 
         Object[] params = new Object[] {
-            comp.getName(), new Integer(comp.getNumber()),
-            host, new Integer(port), new Integer(comp.getMBeanXmlRpcPort()),
+            comp.getName(), Integer.valueOf(comp.getNumber()),
+            host, Integer.valueOf(port),
+            Integer.valueOf(comp.getMBeanXmlRpcPort()),
             connList.toArray(),
         };
 

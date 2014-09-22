@@ -59,9 +59,9 @@ class MockData
 
         for (int i = 0; i < attrNames.length; i++) {
             if (attrNames[i].equals("countUp")) {
-                map.put(attrNames[i], new Integer(countUp++));
+                map.put(attrNames[i], Integer.valueOf(countUp++));
             } else if (attrNames[i].equals("countByTwo")) {
-                map.put(attrNames[i], new Integer(countByTwo));
+                map.put(attrNames[i], Integer.valueOf(countByTwo));
                 countByTwo += 2;
             } else if (attrNames[i].equals("rawArray")) {
                 int[] tmpArray = new int[countArray.length];
@@ -73,7 +73,7 @@ class MockData
             } else if (attrNames[i].equals("countArray")) {
                 Integer[] tmpArray = new Integer[countArray.length];
                 for (int j = 0; j < tmpArray.length; j++) {
-                    tmpArray[j] = new Integer(countArray[j]++);
+                    tmpArray[j] = Integer.valueOf(countArray[j]++);
                 }
 
                 map.put(attrNames[i], tmpArray);
@@ -89,7 +89,7 @@ class MockData
                 HashMap tmpHash = new HashMap();
 
                 for (int j = 0; j < countHash.length; j++) {
-                    tmpHash.put(hashNames[j], new Integer(countHash[j]++));
+                    tmpHash.put(hashNames[j], Integer.valueOf(countHash[j]++));
                 }
                 map.put(attrNames[i], tmpHash);
             } else {
