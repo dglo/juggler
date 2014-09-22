@@ -54,7 +54,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15128 2014-08-20 16:37:50Z dglo $
+ * @version $Id: DAQComponent.java 15153 2014-09-22 15:20:10Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -1489,7 +1489,7 @@ public abstract class DAQComponent
      */
     public String toString()
     {
-        StringBuffer buf = new StringBuffer(getName());
+        StringBuilder buf = new StringBuilder(getName());
 
         if (caches.size() > 0) {
             buf.append(" [");

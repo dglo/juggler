@@ -182,7 +182,7 @@ public class LocalMonitor
         if (obj == null) {
             return "null";
         } else if (obj.getClass().isArray()) {
-            StringBuffer strBuf = new StringBuffer("[");
+            StringBuilder strBuf = new StringBuilder("[");
             final int len = Array.getLength(obj);
             for (int i = 0; i < len; i++) {
                 if (strBuf.length() > 1) {
@@ -193,7 +193,7 @@ public class LocalMonitor
             strBuf.append("]");
             return strBuf.toString();
         } else if (obj.getClass().equals(HashMap.class)) {
-            StringBuffer strBuf = new StringBuffer("{");
+            StringBuilder strBuf = new StringBuilder("{");
             HashMap map = (HashMap) obj;
 
             for (Map.Entry entry: (Set<Map.Entry>)map.entrySet()) {
