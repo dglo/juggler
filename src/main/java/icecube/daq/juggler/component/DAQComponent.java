@@ -35,11 +35,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 
-import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
+import org.w3c.dom.Element;
 
 /**
  * Generic DAQ component methods.
@@ -54,7 +50,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15153 2014-09-22 15:20:10Z dglo $
+ * @version $Id: DAQComponent.java 15165 2014-09-25 18:43:15Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -670,17 +666,14 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if the attribute or file cannot be found
      */
-    public File getFile(String dataDir, Element elem, String attrName)
+    public static File getFile(String dataDir, Element elem, String attrName)
         throws DAQCompException
     {
         // get attribute
-        Attribute fileAttr = elem.attribute(attrName);
-        if (fileAttr == null) {
+        String name = elem.getAttribute(attrName);
+        if (name == null || name == "") {
             return null;
         }
-
-        // get attribute value
-        String name = fileAttr.getValue();
 
         // build path for attribute
         File file;
@@ -944,59 +937,6 @@ public abstract class DAQComponent
     public final Iterable<DAQConnector> listConnectors()
     {
         return connectors;
-    }
-
-    /**
-     * Load a file as an XML document.
-     *
-     * @param dir directory path
-     * @param name XML file name
-     *
-     * @return XML Document object
-     *
-     * @throws DAQCompException if there is a problem
-     */
-    public Document loadXMLDocument(File dir, String name)
-        throws DAQCompException
-    {
-        // build config file path
-        File xmlFile = new File(dir, name);
-        if (!xmlFile.exists()) {
-            xmlFile = new File(dir, name + ".xml");
-            if (!xmlFile.exists()) {
-                throw new DAQCompException("Couldn't find " + name +
-                                           " in " + dir);
-            }
-        }
-
-        // open config file
-        FileInputStream fis;
-        try {
-            fis = new FileInputStream(xmlFile);
-        } catch (FileNotFoundException fnfe) {
-            throw new DAQCompException("Couldn't open " + xmlFile);
-        }
-
-        Document doc;
-        try {
-            // read in config XML
-            try {
-                doc = new SAXReader().read(fis);
-            } catch (DocumentException de) {
-                throw new DAQCompException("Couldn't read " + xmlFile + ": ",
-                                           de);
-            }
-        } finally {
-            // done with the fileinputstream
-            try {
-                fis.close();
-            } catch (IOException e) {
-                throw new DAQCompException("Could not close " + xmlFile +
-                                           " input stream");
-            }
-        }
-
-        return doc;
     }
 
     /**

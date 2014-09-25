@@ -7,14 +7,26 @@ import icecube.daq.juggler.test.MockCache;
 import icecube.daq.juggler.test.MockInputEngine;
 import icecube.daq.juggler.test.MockOutputEngine;
 import icecube.daq.payload.IByteBufferCache;
+import icecube.daq.util.JAXPUtil;
+import icecube.daq.util.JAXPUtilException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Iterator;
+import java.util.List;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 class BadOutputEngine
     extends MockOutputEngine
@@ -1447,6 +1459,36 @@ public class DAQComponentTest
         } catch (DAQCompException dce) {
             // expect failure
         }
+    }
+
+    public void testGetFileFromElement()
+        throws DAQCompException, IOException, JAXPUtilException
+    {
+        String sample = "<a><b val=\"123\">" +
+            "<bx num=\"1\" name=\"one\"/>" +
+            "<bx num=\"3\" name=\"three\"/>" +
+            "</b>" +
+            "<c><cx file=\"/dev/null\">foo</cx></c>" +
+            "<d name=\"xyz\"/>" +
+            "</a>";
+
+        File tmpFile = File.createTempFile("comp", ".xml");
+        tmpFile.deleteOnExit();
+
+        PrintWriter out = new PrintWriter(tmpFile);
+        out.print(sample);
+        out.close();
+
+        Document doc = JAXPUtil.loadXMLDocument(tmpFile.getParentFile(),
+                                                tmpFile.getName());
+
+        Node node = JAXPUtil.extractNode(doc, "a/c/cx");
+        assertNotNull("Cannot find node", node);
+        assertEquals("Bad node type", node.getNodeType(), Node.ELEMENT_NODE);
+
+        File f = DAQComponent.getFile(null, (Element) node, "file");
+        assertNotNull("Cannot extract file", f);
+        assertEquals("Extracted wrong file", "/dev/null", f.getPath());
     }
 
     public static void main(String argv[])
