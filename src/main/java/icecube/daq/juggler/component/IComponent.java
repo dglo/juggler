@@ -120,13 +120,6 @@ public interface IComponent
     void setGlobalConfigurationDir(String dirName);
 
     /**
-     * Set the run number inside this component.
-     *
-     * @param runNumber run number
-     */
-    void setRunNumber(int num);
-
-    /**
      * Start background threads.
      *
      * @param startMBeanAgent if <tt>false</tt>, do not start MBean server
@@ -147,17 +140,21 @@ public interface IComponent
     /**
      * Perform any actions which should happen just after a run is started.
      *
+     * @param runNumber new run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    void started()
+    void started(int runNumber)
         throws DAQCompException;
 
     /**
      * Perform any actions which should happen just before a run is started.
      *
+     * @param runNumber new run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    void starting()
+    void starting(int runNumber)
         throws DAQCompException;
 
     /**

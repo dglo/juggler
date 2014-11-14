@@ -355,13 +355,11 @@ public class StateTask
         // haven't yet called stopping() for this run
         calledStopping = false;
 
-        comp.setRunNumber(startNumber);
-
-        comp.starting();
+        comp.starting(startNumber);
 
         comp.startEngines();
 
-        comp.started();
+        comp.started(startNumber);
 
         state = DAQState.RUNNING;
     }

@@ -24,7 +24,6 @@ class StateComponent
     private boolean connStopped = true;
 
     private boolean didConfiguring;
-    private boolean didSetRunNumber;
     private boolean didStartEngines;
     private boolean didStarting;
     private boolean didStarted;
@@ -72,7 +71,6 @@ class StateComponent
     boolean didFlushCaches() { return didFlushCaches; }
     boolean didForceStopping() { return didForceStopping; }
     boolean didResetting() { return didResetting; }
-    boolean didSetRunNumber() { return didSetRunNumber; }
     boolean didStartEngines() { return didStartEngines; }
     boolean didStarted() { return didStarted; }
     boolean didStarting() { return didStarting; }
@@ -195,7 +193,6 @@ class StateComponent
     void resetInternalFlags()
     {
         didConfiguring = false;
-        didSetRunNumber = false;
         didStartEngines = false;
         didStarting = false;
         didStarted = false;
@@ -232,16 +229,6 @@ class StateComponent
     }
 
     /**
-     * Set the run number inside this component.
-     *
-     * @param runNumber run number
-     */
-    public void setRunNumber(int num)
-    {
-        didSetRunNumber = true;
-    }
-
-    /**
      * Start background threads.
      *
      * @param startMBeanAgent if <tt>false</tt>, do not start MBean server
@@ -268,9 +255,11 @@ class StateComponent
     /**
      * Perform any actions which should happen just after a run is started.
      *
+     * @param runNumber new run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    public void started()
+    public void started(int runNumber)
         throws DAQCompException
     {
         didStarted = true;
@@ -279,9 +268,11 @@ class StateComponent
     /**
      * Perform any actions which should happen just before a run is started.
      *
+     * @param runNumber new run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    public void starting()
+    public void starting(int runNumber)
         throws DAQCompException
     {
         didStarting = true;
@@ -385,8 +376,6 @@ public class StateTaskTest
                      "flushCaches", trans);
         checkOneFunc(CompFunc.didResetting(bitmap), comp.didResetting(),
                      "resetting", trans);
-        checkOneFunc(CompFunc.didSetRunNumber(bitmap), comp.didSetRunNumber(),
-                     "setRunNumber", trans);
         checkOneFunc(CompFunc.didStartEngines(bitmap), comp.didStartEngines(),
                      "startEngines", trans);
         checkOneFunc(CompFunc.didStarted(bitmap), comp.didStarted(),

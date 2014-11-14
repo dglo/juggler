@@ -167,12 +167,12 @@ public class MockComponent
         return subrunStartTime;
     }
 
-    public void started()
+    public void started(int runNumber)
     {
         calledStarted = true;
     }
 
-    public void starting()
+    public void starting(int runNumber)
     {
         calledStarting = true;
     }

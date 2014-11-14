@@ -50,7 +50,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15165 2014-09-25 18:43:15Z dglo $
+ * @version $Id: DAQComponent.java 15256 2014-11-14 14:43:43Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -754,16 +754,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Get the current run number.
-     *
-     * @return current run number
-     */
-    public int getRunNumber()
-    {
-        return -1;
-    }
-
-    /**
      * Get component name (and ID, for non-hub components.)
      *
      * @return full name
@@ -1125,16 +1115,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Override this method to set the run number inside this component.
-     *
-     * @param runNumber run number
-     */
-    public void setRunNumber(int runNumber)
-    {
-        // Override me!
-    }
-
-    /**
      * Start background threads.
      *
      * @throws DAQCompException if input server cannot be started
@@ -1278,9 +1258,11 @@ public abstract class DAQComponent
     /**
      * Override this method for actions which happen after a run has started.
      *
+     * @param runNumber run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    public void started()
+    public void started(int runNumber)
         throws DAQCompException
     {
         // Override me!
@@ -1290,9 +1272,11 @@ public abstract class DAQComponent
      * Override this method for actions which happen just before a run is
      * started.
      *
+     * @param runNumber run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    public void starting()
+    public void starting(int runNumber)
         throws DAQCompException
     {
         // Override me!

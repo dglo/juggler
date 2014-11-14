@@ -836,23 +836,6 @@ public class DAQCompServer
     }
 
     /**
-     * XML-RPC method to get the current run number from a component.
-     *
-     * @return current run number
-     *
-     * @throws DAQCompException if component or subrun does not exist
-     */
-    public int getRunNumber()
-        throws DAQCompException
-    {
-        if (comp == null) {
-            throw new DAQCompException("Component not found");
-        }
-
-        return comp.getRunNumber();
-    }
-
-    /**
      * XML-RPC method to return component state.
      *
      * @return component state
