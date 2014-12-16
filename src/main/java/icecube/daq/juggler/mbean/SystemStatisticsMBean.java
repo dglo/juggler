@@ -1,14 +1,15 @@
 package icecube.daq.juggler.mbean;
 
 import java.util.HashMap;
-//import java.util.TreeMap;
+import java.util.TreeMap;
 
 /**
  * System statistics monitor.
  */
 public interface SystemStatisticsMBean
 {
-    double[] getLoadAverage();
     HashMap getAvailableDiskSpace();
+    double[] getLoadAverage();
     //TreeMap<String, String> getNetworkIO();
+    //HashMap getProcessMemory();
 }
