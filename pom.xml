@@ -36,6 +36,49 @@
   </build>
 -->
 
+  <profiles>
+    <!--
+        architecture-specific definitions used to choose ZeroMQ native jar file
+    -->
+    <profile>
+      <id>Linux</id>
+      <activation>
+        <property>
+          <name>os.name</name>
+          <value>Linux</value>
+        </property>
+      </activation>
+      <properties>
+        <native.arch>${os.arch}</native.arch>
+        <native.os>${os.name}</native.os>
+      </properties>
+    </profile>
+    <profile>
+      <id>Windows</id>
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+      <properties>
+        <native.arch>${os.arch}</native.arch>
+        <native.os>Windows</native.os>
+      </properties>
+    </profile>
+    <profile>
+      <id>Mac</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <properties>
+        <native.arch>${os.arch}</native.arch>
+        <native.os>Darwin</native.os>
+      </properties>
+    </profile>
+  </profiles>
+
   <!-- Dependencies for this project.  These should not contain
   versions.  The versions needed should be specified in the top-level
   pom's dependencyManagement -->
@@ -73,6 +116,17 @@
     <dependency>
       <groupId>org.zeromq</groupId>
       <artifactId>jzmq</artifactId>
+    </dependency>
+
+    <!--
+        I'm not sure why, but jzmq-native doesn't work when specified in
+        the top-level pom.xml, only when it's fully qualified here
+    -->
+    <dependency>
+      <groupId>org.zeromq</groupId>
+      <artifactId>jzmq-native</artifactId>
+      <classifier>${native.arch}-${native.os}</classifier>
+      <version>${jzmq.version}</version>
     </dependency>
 
     <dependency>
