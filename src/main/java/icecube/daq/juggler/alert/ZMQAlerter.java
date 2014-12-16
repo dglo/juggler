@@ -47,6 +47,7 @@ public class ZMQAlerter
     private Socket socket;
     /** Have we logged an error after the socket was closed? */
     private boolean socketWarned;
+    private boolean debug;
 
     /**
      * Create an alerter
@@ -73,6 +74,7 @@ public class ZMQAlerter
      */
     public void close()
     {
+logDebug("close TOP");
         synchronized (this) {
             if (socket != null) {
                 socket.close();
@@ -85,6 +87,7 @@ public class ZMQAlerter
                 context = null;
             }
         }
+logDebug("close END");
     }
 
     /**
@@ -105,6 +108,13 @@ public class ZMQAlerter
     public boolean isActive()
     {
         return zmqHost != null && context != null;
+    }
+
+    private void logDebug(String msg)
+    {
+        if (debug) {
+            LOG.error(service + " " + msg);
+        }
     }
 
     /**
@@ -185,12 +195,15 @@ public class ZMQAlerter
     public void sendObject(Object obj)
         throws AlertException
     {
+logDebug("sendObject TOP");
         String json;
         synchronized (gson) {
             json = gson.toJson(obj);
         }
 
         byte[] bytes = json.toString().getBytes();
+
+logDebug("send " + bytes.length + " bytes");
 
         synchronized (this) {
             if (socket == null && !socketWarned) {
@@ -199,13 +212,16 @@ public class ZMQAlerter
             }
 
             try {
-                socket.send(bytes, 0);
+                if (!socket.send(bytes, 0)) {
+                    throw new AlertException("Send failed for " + json);
+                }
             } catch (ZMQException ze) {
                 final String msg = String.format("Cannot send \"%s\" to 0MQ" +
                                                  " host \"%s\"", obj, zmqURL);
                 throw new AlertException(msg, ze);
             }
         }
+logDebug("sendObject END");
     }
 
     /**
@@ -346,6 +362,11 @@ public class ZMQAlerter
         }
     }
 
+    public void setDebug(boolean b)
+    {
+        debug = b;
+    }
+
     /**
      * Return debugging string
      *
@@ -353,7 +374,10 @@ public class ZMQAlerter
      */
     public String toString()
     {
-        return String.format("ZMQAlerter[%s]",
-                             zmqURL == null ? "" : zmqURL);
+logDebug("toString TOP");
+        String str = String.format("ZMQAlerter[%s]",
+                                   zmqURL == null ? "" : zmqURL);
+logDebug("toString END");
+        return str;
     }
 }

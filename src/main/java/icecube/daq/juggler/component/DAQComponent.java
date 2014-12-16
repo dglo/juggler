@@ -54,7 +54,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15095 2014-07-18 20:51:47Z dglo $
+ * @version $Id: DAQComponent.java 15297 2014-12-16 18:36:32Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -605,7 +605,11 @@ public abstract class DAQComponent
     public Alerter getAlerter()
     {
         if (alerter == null) {
-            alerter = new ZMQAlerter();
+            ZMQAlerter za = new ZMQAlerter();
+            if (name == icecube.daq.common.DAQCmdInterface.DAQ_STRING_HUB) {
+                za.setDebug(true);
+            }
+            alerter = za;
         }
 
         return alerter;
