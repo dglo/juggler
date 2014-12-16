@@ -8,8 +8,7 @@ import java.util.TreeMap;
  */
 public interface SystemStatisticsMBean
 {
-    HashMap getAvailableDiskSpace();
     double[] getLoadAverage();
+    HashMap getAvailableDiskSpace();
     //TreeMap<String, String> getNetworkIO();
-    HashMap getProcessMemory();
 }

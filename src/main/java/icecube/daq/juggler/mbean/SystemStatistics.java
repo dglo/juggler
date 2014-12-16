@@ -5,14 +5,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,16 +41,6 @@ public class SystemStatistics
     private Pattern dfPat =
         Pattern.compile("^\\s*(\\S+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)" +
                         "\\s+(\\d+)%\\s+(\\S.*)\\s*$");
-    /** Set to <tt>true</tt> if process ID is not available */
-    private boolean warnedPID;
-
-    /** pmap command. */
-    private ProcessBuilder pmap;
-    /** pattern for parsing 'pmap' output. */
-    private Pattern pmapPat =
-        Pattern.compile("^(\\S+)\\s+(\\d+)K\\s+([-rwxs]+)\\s+" +
-                        "(.*)\\s*$");
-
 
     /** Network IO reading stuff */
     public static String PNDfilename = "/proc/net/dev";
@@ -64,6 +53,81 @@ public class SystemStatistics
      */
     public SystemStatistics()
     {
+    }
+
+    public double[] getLoadAverage()
+    {
+        Process proc;
+        try {
+            proc = uptime.start();
+        } catch (IOException ioe) {
+            LOG.error("Couldn't get uptime", ioe);
+            return null;
+        }
+
+        try {
+            proc.getOutputStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        try {
+            proc.getErrorStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        BufferedReader out =
+            new BufferedReader(new InputStreamReader(proc.getInputStream()));
+
+        String line;
+
+        try {
+            try {
+                line = out.readLine();
+                if (line == null) {
+                    LOG.error("No uptime output found");
+                }
+            } catch (IOException ioe) {
+                LOG.error("Couldn't read uptime output", ioe);
+                line = null;
+            }
+        } finally {
+            try {
+                out.close();
+            } catch (Throwable thr) {
+                // ignore errors on close
+            }
+        }
+
+        if (line != null) {
+            Matcher match = uptimePat.matcher(line);
+            if (!match.matches()) {
+                LOG.error("Bogus uptime line \"" + line + "\"");
+            } else {
+                double[] array = new double[match.groupCount()];
+                for (int i = 0; i < array.length; i++) {
+                    try {
+                        array[i] = Double.parseDouble(match.group(i + 1));
+                    } catch (NumberFormatException nfe) {
+                        LOG.error("Couldn't parse load average #" + i +
+                                  " \"" + match.group(i + 1) + "\" from \"" +
+                                  line + "\"", nfe);
+                        array[i] = 0.0;
+                    }
+                }
+
+                return array;
+            }
+        }
+
+        try {
+            proc.waitFor();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        return null;
     }
 
     public HashMap getAvailableDiskSpace()
@@ -169,80 +233,6 @@ public class SystemStatistics
         return map;
     }
 
-    public double[] getLoadAverage()
-    {
-        Process proc;
-        try {
-            proc = uptime.start();
-        } catch (IOException ioe) {
-            LOG.error("Couldn't get uptime", ioe);
-            return null;
-        }
-
-        try {
-            proc.getOutputStream().close();
-        } catch (Throwable thr) {
-            // ignore errors on close
-        }
-
-        try {
-            proc.getErrorStream().close();
-        } catch (Throwable thr) {
-            // ignore errors on close
-        }
-
-        BufferedReader out =
-            new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-        String line;
-
-        try {
-            try {
-                line = out.readLine();
-                if (line == null) {
-                    LOG.error("No uptime output found");
-                }
-            } catch (IOException ioe) {
-                LOG.error("Couldn't read uptime output", ioe);
-                line = null;
-            }
-        } finally {
-            try {
-                out.close();
-            } catch (Throwable thr) {
-                // ignore errors on close
-            }
-        }
-
-        if (line != null) {
-            Matcher match = uptimePat.matcher(line);
-            if (!match.matches()) {
-                LOG.error("Bogus uptime line \"" + line + "\"");
-            } else {
-                double[] array = new double[match.groupCount()];
-                for (int i = 0; i < array.length; i++) {
-                    try {
-                        array[i] = Double.parseDouble(match.group(i + 1));
-                    } catch (NumberFormatException nfe) {
-                        LOG.error("Couldn't parse load average #" + i +
-                                  " \"" + match.group(i + 1) + "\" from \"" +
-                                  line + "\"", nfe);
-                        array[i] = 0.0;
-                    }
-                }
-
-                return array;
-            }
-        }
-
-        try {
-            proc.waitFor();
-        } catch (Throwable thr) {
-            // ignore errors on close
-        }
-
-        return null;
-    }
 
     /**
      * Get infomation on current network IO
@@ -323,124 +313,6 @@ public class SystemStatistics
         return map;
     }
 
-    private String getProcessID()
-    {
-        // something like '<pid>@<hostname>', at least in SUN / Oracle JVMs
-        final String jvmName = ManagementFactory.getRuntimeMXBean().getName();
-
-        final int index = jvmName.indexOf('@');
-        if (index < 1) {
-            // part before '@' empty (index = 0) / '@' not found (index = -1)
-            return null;
-        }
-
-        return jvmName.substring(0, index);
-    }
-
-    public HashMap<String, Integer> getProcessMemory()
-    {
-        if (pmap == null) {
-            if (warnedPID) {
-                return null;
-            }
-
-            String pid = getProcessID();
-            if (pid == null) {
-                LOG.error("Cannot get current process ID");
-                warnedPID = true;
-                return null;
-            }
-
-            pmap = new ProcessBuilder("pmap", "-q", pid);
-        }
-
-        Process proc;
-        try {
-            proc = pmap.start();
-        } catch (IOException ioe) {
-            LOG.error("Couldn't get pmap", ioe);
-            return null;
-        }
-
-        try {
-            proc.getOutputStream().close();
-        } catch (Throwable thr) {
-            // ignore errors on close
-        }
-
-        try {
-            proc.getErrorStream().close();
-        } catch (Throwable thr) {
-            // ignore errors on close
-        }
-
-        BufferedReader out =
-            new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-        HashMap<String, KBytes> allocMap = new HashMap<String, KBytes>();
-
-        while (true) {
-            String line;
-            try {
-                line = out.readLine();
-            } catch (IOException ioe) {
-                LOG.error("Cannot read pmap output", ioe);
-                break;
-            }
-
-            if (line == null) {
-                break;
-            }
-
-            Matcher m = pmapPat.matcher(line);
-            if (!m.matches()) {
-                if (!line.contains(":  ")) {
-                    LOG.error("Bogus pmap line \"" + line + "\"");
-                }
-                continue;
-            }
-
-            int kbytes;
-            try {
-                kbytes = Integer.parseInt(m.group(2));
-            } catch (NumberFormatException nfe) {
-                LOG.error("Bad size \"" + m.group(2) + "\" for " + m.group(4));
-                continue;
-            }
-
-            String key = m.group(4);
-            if (key.startsWith("[ ") && key.endsWith(" ]")) {
-                key = key.substring(2, key.length() - 2);
-            } else if (key.endsWith(" (deleted)")) {
-                key = key.substring(0, key.length() - 10);
-            }
-
-            if (!allocMap.containsKey(key)) {
-                allocMap.put(key, new KBytes(kbytes));
-            } else {
-                allocMap.get(key).add(kbytes);
-            }
-        }
-
-        try {
-            out.close();
-        } catch (Throwable thr) {
-            // ignore errors on close
-        }
-
-        try {
-            proc.waitFor();
-        } catch (Throwable thr) {
-            // ignore errors on close
-        }
-
-        HashMap<String, Integer> finalMap = new HashMap<String, Integer>();
-        for (Map.Entry<String, KBytes> entry : allocMap.entrySet()) {
-            finalMap.put(entry.getKey(), entry.getValue().value());
-        }
-
-        return finalMap;
-    }
 
     /**
      * Return description of current statistics.
@@ -528,50 +400,4 @@ public class SystemStatistics
         System.out.println("SystemStatistics: out");
     }
 
-    /** Track kilobyte values for `pmap` memory segments */
-    class KBytes
-    {
-        /** Total kilobytes */
-        private int total;
-
-        /**
-         * Create one
-         *
-         * @param val initial value
-         */
-        KBytes(int val)
-        {
-            total = val;
-        }
-
-        /**
-         * Add kbyte value to the total.
-         *
-         * @param val kbyte value
-         */
-        void add(int val)
-        {
-            total += val;
-        }
-
-        /**
-         * Return value in kbytes
-         *
-         * @return kbytes
-         */
-        int value()
-        {
-            return total;
-        }
-
-        /**
-         * Return the kbyte string
-         *
-         * @return kbyte string
-         */
-        public String toString()
-        {
-            return Integer.toString(total);
-        }
-    }
 }
