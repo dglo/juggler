@@ -46,6 +46,12 @@ class MockData
     private int[] countHash = new int[] { 1, 3, 100 };
     private String[] hashNames = new String[] { "First", "Third", "100th" };
 
+    public Object get(String mbeanName, String attrName)
+        throws MBeanAgentException
+    {
+        throw new Error("Unimplemented");
+    }
+
     public HashMap getAttributes(String mbeanName, String[] attrNames)
         throws MBeanAgentException
     {

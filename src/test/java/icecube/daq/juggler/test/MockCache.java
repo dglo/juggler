@@ -55,6 +55,11 @@ public class MockCache
         throw new Error("Unimplemented");
     }
 
+    public String getName()
+    {
+        throw new Error("Unimplemented");
+    }
+
     public int getTotalBuffersAcquired()
     {
         throw new Error("Unimplemented");
@@ -86,6 +91,11 @@ public class MockCache
     }
 
     public void returnBuffer(ByteBuffer x0)
+    {
+        throw new Error("Unimplemented");
+    }
+
+    public void returnBuffer(int x0)
     {
         throw new Error("Unimplemented");
     }

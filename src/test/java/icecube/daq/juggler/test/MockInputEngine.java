@@ -57,6 +57,11 @@ public class MockInputEngine
         running = false;
     }
 
+    public int getNumberOfChannels()
+    {
+        throw new Error("Unimplemented");
+    }
+
     public String getPresentState()
     {
         return state;

@@ -1,12 +1,15 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.common.IDAQAppender;
+import icecube.daq.juggler.alert.AlertException;
 import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.DAQLogHandler;
 import icecube.daq.log.LoggingOutputStream;
 import icecube.daq.util.FlasherboardConfiguration;
+import icecube.daq.util.LocatePDAQ;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.BindException;
@@ -18,6 +21,7 @@ import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +33,10 @@ import java.util.logging.StreamHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.Log4JLogger;
-import org.apache.log4j.Appender;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -75,22 +80,66 @@ class Spinner
     }
 }
 
-/**
- * Logging options
- */
-class LogOptions
-{
-    private String logHost;
-    private int logPort;
-    private Level logLevel;
-    private String liveHost;
-    private int livePort;
-    private Level liveLevel;
-    private boolean isSet;
+enum LogType {
+    DAQLOG, LIVELOG, LIVEMONI
+}
 
-    boolean isSet()
+class LogOptionException
+    extends Exception
+{
+    LogOptionException(String msg)
     {
-        return isSet;
+        super(msg);
+    }
+}
+
+class LogTarget
+{
+    String host;
+    int port;
+    Level level;
+
+    LogTarget(String addrStr)
+        throws LogOptionException
+    {
+        int ic = addrStr.indexOf(':');
+        int il = addrStr.indexOf(',');
+        if (ic < 0 && il < 0) {
+            throw new LogOptionException("Bad log argument '" + addrStr + "'");
+        }
+
+        String levelStr;
+        if (il < 0) {
+            levelStr = "ERROR";
+            il = addrStr.length();
+        } else {
+            levelStr = addrStr.substring(il + 1);
+        }
+
+        level = getLogLevel(levelStr);
+        if (level == null) {
+            throw new LogOptionException("Bad log level '" + levelStr + "'");
+        }
+
+        if (ic < 0) {
+            host = null;
+            port = 0;
+        } else {
+            if (ic == 0) {
+                host = "localhost";
+            } else {
+                host = addrStr.substring(0, ic);
+            }
+
+            String portStr  = addrStr.substring(ic + 1, il);
+
+            try {
+                port = Integer.parseInt(portStr);
+            } catch (NumberFormatException e) {
+                throw new LogOptionException("Bad log port '" + portStr +
+                                             "' in '" + addrStr + "'");
+            }
+        }
     }
 
     /**
@@ -128,94 +177,90 @@ class LogOptions
 
         return logLevel;
     }
+}
 
-    boolean process(String addrStr, boolean isLive)
+/**
+ * Logging options
+ */
+class LogOptions
+{
+    private LogTarget daqLog;
+    private LogTarget liveLog;
+    private LogTarget liveMoni;
+
+    void configure(DAQCompServer server, DAQComponent comp)
+        throws LogOptionException
     {
-        int ic = addrStr.indexOf(':');
-        int il = addrStr.indexOf(',');
-        if (ic < 0 && il < 0) {
-            System.err.println("Bad log argument '" + addrStr + "'");
-            return false;
+        if (daqLog != null || liveLog != null) {
+            configureLogging(server, comp);
         }
 
-        String levelStr;
-        if (il < 0) {
-            levelStr = "ERROR";
-            il = addrStr.length();
-        } else {
-            levelStr = addrStr.substring(il+1);
+        if (liveMoni != null) {
+            configureMonitoring(server, comp);
         }
-
-        Level level = getLogLevel(levelStr);
-        if(level == null) {
-            System.err.println("Bad log level: '" + levelStr + "'");
-            return false;
-        }
-
-        String host;
-        int port;
-
-        if (ic < 0) {
-            host = null;
-            port = 0;
-        } else {
-            if (ic == 0) {
-                host = "localhost";
-            } else {
-                host = addrStr.substring(0, ic);
-            }
-
-            String portStr  = addrStr.substring(ic + 1, il);
-
-            try {
-                port = Integer.parseInt(portStr);
-            } catch (NumberFormatException e) {
-                System.err.println("Bad log port '" + portStr + "' in '" +
-                                   addrStr + "'");
-                return false;
-            }
-        }
-
-        if (isLive) {
-            liveHost = host;
-            livePort = port;
-            liveLevel = level;
-        } else {
-            logHost = host;
-            logPort = port;
-            logLevel = level;
-        }
-
-        if (logLevel != null && liveLevel != null &&
-            !logLevel.equals(liveLevel))
-        {
-            System.err.println("I3Live logging level " + liveLevel +
-                               " does not match pDAQ logging level " +
-                               logLevel);
-            return false;
-        }
-
-        isSet = true;
-        return true;
     }
 
-    boolean configure(DAQCompServer server, DAQComponent comp)
+    private void configureLogging(DAQCompServer server, DAQComponent comp)
+        throws LogOptionException
     {
-        comp.setLogLevel(logLevel);
-        try {
-            server.setDefaultLoggingConfiguration(logLevel, logHost, logPort,
-                                                  liveHost, livePort);
-        } catch (UnknownHostException uhe) {
-            System.err.println("Bad log host '" + logHost + "' or live host '" +
-                               liveHost + "'");
-            return false;
-        } catch (SocketException se) {
-            System.err.println("Couldn't set logging to '" + logHost +
-                               "' or '" + liveHost + "'");
-            return false;
+        if (daqLog == null) {
+            throw new LogOptionException("pDAQ logging level has not" +
+                                         " been set");
+        } else if (liveLog == null) {
+            throw new LogOptionException("I3Live logging level has not" +
+                                         " been set");
+        } else if (daqLog.level != null && liveLog.level != null &&
+            !daqLog.level.equals(liveLog.level))
+        {
+            throw new LogOptionException("I3Live logging level " +
+                                         liveLog.level +
+                                         " does not match pDAQ logging level " +
+                                         daqLog.level);
         }
 
-        return true;
+        comp.setLogLevel(daqLog.level);
+        try {
+            server.setDefaultLoggingConfiguration(daqLog.level, daqLog.host,
+                                                  daqLog.port,
+                                                  liveLog.host, liveLog.port);
+        } catch (UnknownHostException uhe) {
+            throw new LogOptionException("Bad log host '" + daqLog.host +
+                               "' or live host '" + liveLog.host + "'");
+        } catch (SocketException se) {
+            throw new LogOptionException("Couldn't set logging to '" +
+                                         daqLog.host + "' or '" +
+                                         liveLog.host + "'");
+        }
+    }
+
+    private void configureMonitoring(DAQCompServer server, DAQComponent comp)
+        throws LogOptionException
+    {
+        try {
+            comp.getAlerter().setAddress(liveMoni.host, liveMoni.port);
+        } catch (AlertException ae) {
+            throw new LogOptionException("Couldn't set alerter to '" +
+                                         liveMoni.host + ":" + liveMoni.port +
+                                         "'");
+        }
+    }
+
+    public void setDAQLog(String addrStr)
+        throws LogOptionException
+    {
+        daqLog = new LogTarget(addrStr);
+    }
+
+    public void setLiveLog(String addrStr)
+        throws LogOptionException
+    {
+        liveLog = new LogTarget(addrStr);
+    }
+
+    public void setLiveMoni(String addrStr)
+        throws LogOptionException
+    {
+        liveMoni = new LogTarget(addrStr);
     }
 }
 
@@ -230,17 +275,19 @@ class LoggingConfiguration
     private int logPort;
     private String liveHost;
     private int livePort;
+    private File logFile;
     private IDAQAppender appender;
     private Handler handler;
 
     LoggingConfiguration(String compName, Level logLevel)
         throws SocketException, UnknownHostException
     {
-        this(compName, logLevel, null, 0, null, 0);
+        this(compName, logLevel, null, 0, null, 0, null);
     }
 
     LoggingConfiguration(String compName, Level logLevel, String logHost,
-                         int logPort, String liveHost, int livePort)
+                         int logPort, String liveHost, int livePort,
+                         File logFile)
         throws SocketException, UnknownHostException
     {
         this.compName = compName;
@@ -249,6 +296,7 @@ class LoggingConfiguration
         this.logPort = logPort;
         this.liveHost = liveHost;
         this.livePort = livePort;
+        this.logFile = logFile;
 
         if ((logHost == null || logHost.length() == 0 || logPort <= 0) &&
             (liveHost == null || liveHost.length() == 0 || livePort <= 0))
@@ -280,12 +328,28 @@ class LoggingConfiguration
     void configure()
         throws SocketException
     {
+        BasicConfigurator.resetConfiguration();
+
         if (!appender.isConnected()) {
             appender.reconnect();
         }
 
-        BasicConfigurator.resetConfiguration();
         BasicConfigurator.configure(appender);
+        if (logFile != null) {
+            FileAppender fapp;
+            try {
+                fapp =  new FileAppender(new PatternLayout(),
+                                         logFile.getAbsolutePath());
+            } catch (IOException ioe) {
+                System.err.println("Cannot create appender");
+                ioe.printStackTrace();
+                fapp = null;
+            }
+
+            if (fapp != null) {
+                BasicConfigurator.configure(fapp);
+            }
+        }
 
         Log log = LogFactory.getLog(getClass());
 
@@ -460,18 +524,18 @@ public class DAQCompServer
                                  String host, int port)
         throws XmlRpcException
     {
-        Object[] rtnArray = sendRegistration(client, comp, host, port);
-        if (rtnArray.length != 6) {
-            throw new XmlRpcException("Expected 6-element array, got " +
-                                      rtnArray.length + " elements");
+        Map rtnMap = sendRegistration(client, comp, host, port);
+        if (rtnMap.size() != 6) {
+            throw new XmlRpcException("Expected 6-element hashmap, got " +
+                                      rtnMap.size() + " elements");
         }
 
-        final int compId = ((Integer) rtnArray[0]).intValue();
-        final String logIP = (String) rtnArray[1];
-        final int logPort = ((Integer) rtnArray[2]).intValue();
-        final String liveIP = (String) rtnArray[3];
-        final int livePort = ((Integer) rtnArray[4]).intValue();
-        final int tmpServerId =  ((Integer) rtnArray[5]).intValue();
+        final int compId = ((Integer) rtnMap.get("id")).intValue();
+        final String logIP = (String) rtnMap.get("logIP");
+        final int logPort = ((Integer) rtnMap.get("logPort")).intValue();
+        final String liveIP = (String) rtnMap.get("liveIP");
+        final int livePort = ((Integer) rtnMap.get("livePort")).intValue();
+        final int tmpServerId =  ((Integer) rtnMap.get("serverId")).intValue();
 
         if (serverId != tmpServerId) {
             setServerId(tmpServerId);
@@ -713,6 +777,82 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method to get the trigger counts for detector monitoring.
+     *
+     * @return list of trigger-specific event counts and times
+     *
+     * @throws DAQCompException if component or subrun does not exist
+     */
+    public List<Map<String, Object>> getMoniCounts()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return comp.getMoniCounts();
+    }
+
+    /**
+     * XML-RPC method to get the time of the first hit being replayed.
+     *
+     * @return UTC time of first hit
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String getReplayStartTime()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return Long.toString(comp.getReplayStartTime()) + "L";
+    }
+
+    /**
+     * XML-RPC method to get the run data from a builder
+     *
+     * @param runnum run number
+     *
+     * @return list of builder-specific event counts and times
+     *
+     * @throws DAQCompException if component or subrun does not exist
+     */
+    public ArrayList getRunData(int runnum)
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        long[] vals = comp.getRunData(runnum);
+        ArrayList list = new ArrayList(vals.length);
+        for (int i = 0; i < vals.length; i++) {
+            list.add(Long.toString(vals[i]) + "L");
+        }
+
+        return list;
+    }
+
+    /**
+     * XML-RPC method to get the current run number from a component.
+     *
+     * @return current run number
+     *
+     * @throws DAQCompException if component or subrun does not exist
+     */
+    public int getRunNumber()
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        return comp.getRunNumber();
+    }
+
+    /**
      * XML-RPC method to return component state.
      *
      * @return component state
@@ -726,7 +866,7 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
-        return comp.getStateString();
+        return comp.getState().toString();
     }
 
     /**
@@ -773,7 +913,7 @@ public class DAQCompServer
      *
      * @throws DAQCompException if component does not exist
      */
-    public String[][] listConnectorStates()
+    public HashMap[] listConnectorStates()
         throws DAQCompException
     {
         if (comp == null) {
@@ -782,22 +922,16 @@ public class DAQCompServer
 
         ArrayList list = new ArrayList();
 
-        for (Iterator iter = comp.listConnectors(); iter.hasNext(); ) {
-            DAQConnector conn = (DAQConnector) iter.next();
-
-            list.add(new String[] {
-                    conn.getType(), conn.getState().toLowerCase(),
-                });
+        for (DAQConnector conn : comp.listConnectors()) {
+            HashMap map = new HashMap();
+            map.put("type", conn.getType());
+            map.put("state", conn.getState().toLowerCase());
+            map.put("numChan", conn.getNumberOfChannels());
+            list.add(map);
         }
 
-        String[][] array = new String[list.size()][2];
-
-        int i = 0;
-        for (Iterator iter = list.iterator(); iter.hasNext(); ) {
-            array[i++] = (String[] )iter.next();
-        }
-
-        return array;
+        HashMap[] array = new HashMap[list.size()];
+        return (HashMap[]) list.toArray(array);
     }
 
     /**
@@ -821,11 +955,37 @@ public class DAQCompServer
             throw new DAQCompException("Component not found");
         }
 
+        File logFile = null;
         setLoggingConfiguration(new LoggingConfiguration(comp.getName(),
                                                          comp.getLogLevel(),
                                                          logHost, logPort,
-                                                         liveHost, livePort));
+                                                         liveHost, livePort,
+                                                         logFile));
+
         return "OK";
+    }
+
+    private static final File buildFile(String dir, String base, char ch)
+    {
+        if (ch == (char) 0) {
+            return new File(dir, base + ".log");
+        }
+
+        return new File(dir, String.format("%s_%c.log", base, ch));
+    }
+
+    private static final File renameTemp(String base, char oldCh, char newCh)
+    {
+        File oldFile = buildFile("/tmp", base, oldCh);
+        if (oldFile.exists()) {
+            File newFile = buildFile("/tmp", base, newCh);
+            if (newFile.exists() && oldCh != 'z') {
+                renameTemp(base, newCh, (char)(newCh + 1));
+            }
+            oldFile.renameTo(newFile);
+        }
+
+        return oldFile;
     }
 
     /**
@@ -937,30 +1097,31 @@ public class DAQCompServer
     {
         LogOptions logOpt = new LogOptions();
 
+        // get the configuration directory from a system property
+        String propConfigDir =
+            System.getProperty("icecube.daq.component.configDir");
+
         boolean usage = false;
         for (int i = 0; i < args.length; i++) {
             if (args[i].length() > 1 && args[i].charAt(0) == '-') {
                 switch(args[i].charAt(1)) {
                 case 'L':
                     i++;
-                    if (!logOpt.process(args[i], true)) {
+                    try {
+                        logOpt.setLiveLog(args[i]);
+                    } catch (LogOptionException loe) {
+                        System.err.println(loe.getMessage());
                         usage = true;
                     }
                     break;
                 case 'M':
                     i++;
-
-                    int secs;
                     try {
-                        secs = Integer.parseInt(args[i]);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Bad monitoring interval '" +
-                                           args[i] + "'");
+                        logOpt.setLiveMoni(args[i]);
+                    } catch (LogOptionException loe) {
+                        System.err.println(loe.getMessage());
                         usage = true;
-                        break;
                     }
-
-                    comp.enableLocalMonitoring(secs);
                     break;
                 case 'S':
                     showSpinner = true;
@@ -986,14 +1147,42 @@ public class DAQCompServer
                     break;
                 case 'g':
                     i++;
-                    String glDir = args[i];
-                    comp.setGlobalConfigurationDir(glDir);
+
+                    // if the system property was set ignore
+                    // the -g option
+                    if (propConfigDir==null) {
+                        propConfigDir = args[i];
+                    } else {
+                        System.err.println("Both the configuration file property " +
+                                           "and the -g option where specified.");
+                        usage = true;
+                        break;
+                    }
+
                     break;
                 case 'l':
                     i++;
-                    if (!logOpt.process(args[i], false)) {
+                    try {
+                        logOpt.setDAQLog(args[i]);
+                    } catch (LogOptionException loe) {
+                        System.err.println(loe.getMessage());
                         usage = true;
                     }
+                    break;
+                case 'm':
+                    i++;
+
+                    int secs;
+                    try {
+                        secs = Integer.parseInt(args[i]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Bad monitoring interval '" +
+                                           args[i] + "'");
+                        usage = true;
+                        break;
+                    }
+
+                    comp.enableLocalMonitoring(secs);
                     break;
                 case 's':
                     i++;
@@ -1025,6 +1214,13 @@ public class DAQCompServer
             }
         }
 
+        // if the configuration directory has been set, call the
+        // setGlobalConfigurationDir directory
+        if(propConfigDir!=null) {
+            comp.setGlobalConfigurationDir(propConfigDir);
+            LocatePDAQ.setConfigDirectory(propConfigDir);
+        }
+
         if (configURL == null) {
             try {
                 configURL = new URL("http", "localhost", 8080, "");
@@ -1034,18 +1230,24 @@ public class DAQCompServer
             }
         }
 
-        if (logOpt.isSet()) {
+        try {
             logOpt.configure(this, comp);
+        } catch (LogOptionException loe) {
+            System.err.println(loe.getMessage());
+            usage = true;
         }
 
         if (usage) {
             String usageMsg = "java " + comp.getClass().getName() + " " +
-                " [-M localMoniSeconds]" +
+                " [-L liveAddress:livePort,liveLevel]" +
+                " [-M moniAddress:moniPort,moniLevel]" +
                 " [-S(howSpinner)]" +
                 " [-c configServerURL]" +
                 " [-d dispatchDestPath]" +
-                " [-g globalConfigPath]" +
+                " [-g globalConfigPath - note deprecated, " +
+                "     use -Dicecube.daq.component.configDir]" +
                 " [-l logAddress:logPort,logLevel]" +
+                " [-m localMoniSeconds]" +
                 " [-s maxDispatchFileSize]" +
                 comp.getOptionUsage();
             throw new IllegalArgumentException(usageMsg);
@@ -1139,8 +1341,8 @@ public class DAQCompServer
         throws DAQCompException
     {
         WebServer webServer = startServer();
-        if (LOG.isInfoEnabled()) {
-            LOG.info("XML-RPC on port " + webServer.getPort());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("XML-RPC on port " + webServer.getPort());
         }
 
         try {
@@ -1149,12 +1351,18 @@ public class DAQCompServer
             while (true) {
                 try {
                     sendAnnouncement(client, comp, webServer.getPort());
+                } catch (Exception ex) {
+                    LOG.error("Couldn't announce " + comp, ex);
+                    continue;
+                }
 
+                try {
                     if (!monitorServer(client, comp)) {
                         break;
                     }
                 } catch (Exception ex) {
-                    LOG.error("Couldn't announce " + comp, ex);
+                    LOG.error("Couldn't monitor " + comp, ex);
+                    continue;
                 }
             }
         } finally {
@@ -1193,7 +1401,17 @@ public class DAQCompServer
                 announce(client, comp, addr.getHostAddress(), port);
                 break;
             } catch (XmlRpcException xre) {
-                if (!(xre.linkedException instanceof ConnectException)) {
+                final String timeoutMsg = "socket.timeout:timed out";
+
+                if (xre.linkedException instanceof ConnectException) {
+                    // ignore connection exceptions
+                } else if (xre.getMessage().endsWith(timeoutMsg)) {
+                    if (xre.linkedException == null) {
+                        LOG.error("Got timeout message");
+                    } else {
+                        LOG.error("Got timeout message", xre.linkedException);
+                    }
+                } else {
                     final String errMsg = "Couldn't announce component";
                     throw new DAQCompException(errMsg, xre);
                 }
@@ -1224,15 +1442,13 @@ public class DAQCompServer
      *
      * @throws XmlRpcException if the registration message could not be sent
      */
-    private static Object[] sendRegistration(XmlRpcClient client,
-                                             DAQComponent comp, String host,
-                                             int port)
+    private static Map sendRegistration(XmlRpcClient client, DAQComponent comp,
+                                        String host, int port)
         throws XmlRpcException
     {
         ArrayList connList = new ArrayList();
 
-        for (Iterator iter = comp.listConnectors(); iter.hasNext();) {
-            DAQConnector conn = (DAQConnector) iter.next();
+        for (DAQConnector conn : comp.listConnectors()) {
             if (!conn.isInput() && !conn.isOutput()) {
                 continue;
             }
@@ -1244,7 +1460,7 @@ public class DAQCompServer
 
             Object[] row = new Object[3];
             row[0] = type;
-            row[1] = conn.isInput() ? Boolean.TRUE : Boolean.FALSE;
+            row[1] = Character.toString(conn.getDescriptionChar());
             row[2] = new Integer(conn.getPort());
 
             connList.add(row);
@@ -1256,16 +1472,16 @@ public class DAQCompServer
             connList.toArray(),
         };
 
-        Object rtnObj = client.execute("rpc_register_component", params);
+        Object rtnObj = client.execute("rpc_component_register", params);
         if (rtnObj == null) {
-            throw new XmlRpcException("rpc_register_component returned null");
-        } else if (!rtnObj.getClass().isArray()) {
+            throw new XmlRpcException("rpc_component_register returned null");
+        } else if (!(rtnObj instanceof Map)) {
             throw new XmlRpcException("Unexpected return object [ " + rtnObj +
                                       "] (type " +
                                       rtnObj.getClass().getName() + ")");
         }
 
-        return (Object[]) rtnObj;
+        return (Map) rtnObj;
     }
 
     /**
@@ -1287,7 +1503,7 @@ public class DAQCompServer
         {
             defaultLogConfig =
                 new LoggingConfiguration(comp.getName(), logLevel, logIP,
-                                         logPort, liveIP, livePort);
+                                         logPort, liveIP, livePort, null);
         }
     }
 
@@ -1296,7 +1512,6 @@ public class DAQCompServer
      *
      * @param appender mock appender
      * @param handler mock handler
-     * @param logLevel log level
      */
     public static void setDefaultLoggingConfiguration(IDAQAppender appender,
                                                       Handler handler)
@@ -1306,11 +1521,131 @@ public class DAQCompServer
     }
 
     /**
+     * XML-RPC method setting first "good" time in the specified component.
+     * run.
+     *
+     * @param firstTime first "good" time
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String setFirstGoodTime(String firstTimeStr)
+        throws DAQCompException, IOException
+    {
+        if (firstTimeStr == null) {
+            throw new DAQCompException("Time cannot be null");
+        }
+
+        String str;
+        if (!firstTimeStr.endsWith("L")) {
+            str = firstTimeStr;
+        } else {
+            str = firstTimeStr.substring(0, firstTimeStr.length() - 1);
+        }
+
+        long val;
+        try {
+            val = Long.parseLong(str);
+        } catch (NumberFormatException nfe) {
+            throw new DAQCompException("Bad time string \"" + firstTimeStr +
+                                       "\"");
+        }
+
+        return setFirstGoodTime(val);
+    }
+
+    /**
+     * XML-RPC method setting first "good" time in the specified component.
+     * run.
+     *
+     * @param firstTime first "good" time
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String setFirstGoodTime(long firstTime)
+        throws DAQCompException, IOException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.setFirstGoodTime(firstTime);
+
+        return "OK";
+    }
+
+    /**
+     * XML-RPC method setting last "good" time in the specified component.
+     * run.
+     *
+     * @param lastTime last "good" time
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String setLastGoodTime(String lastTimeStr)
+        throws DAQCompException, IOException
+    {
+        if (lastTimeStr == null) {
+            throw new DAQCompException("Time cannot be null");
+        }
+
+        String str;
+        if (!lastTimeStr.endsWith("L")) {
+            str = lastTimeStr;
+        } else {
+            str = lastTimeStr.substring(0, lastTimeStr.length() - 1);
+        }
+
+        long val;
+        try {
+            val = Long.parseLong(str);
+        } catch (NumberFormatException nfe) {
+            throw new DAQCompException("Bad time string \"" + lastTimeStr +
+                                       "\"");
+        }
+
+        return setLastGoodTime(val);
+    }
+
+    /**
+     * XML-RPC method setting last "good" time in the specified component.
+     * run.
+     *
+     * @param lastTime last "good" time
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String setLastGoodTime(long lastTime)
+        throws DAQCompException, IOException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.setLastGoodTime(lastTime);
+
+        return "OK";
+    }
+
+    /**
      * Set logging to the specified configuration.
      */
     private static void setLoggingConfiguration(LoggingConfiguration logConfig)
     {
-        LOG.info("Resetting logging");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Resetting logging");
+        }
 
         if (logConfig.equals(defaultLogConfig)) {
             if (REDIRECT_STDOUT && !STDOUT.equals(System.out)) {
@@ -1360,7 +1695,9 @@ public class DAQCompServer
             }
         }
 
-        LOG.info("Logging has been reset");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Logging has been reset");
+        }
     }
 
     /**
@@ -1370,12 +1707,67 @@ public class DAQCompServer
      */
     private static void setServerId(int newId)
     {
-        if (serverIdSet) {
-            LOG.error("Changing server ID from " + serverId + " to " + newId);
+        if (serverIdSet && LOG.isDebugEnabled()) {
+            LOG.debug("Changing server ID from " + serverId + " to " + newId);
         }
 
         serverId = newId;
         serverIdSet = true;
+    }
+
+    /**
+     * XML-RPC method to set the offset applied to each hit being replayed.
+     *
+     * @param offset offset to apply to hit times
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String setReplayOffset(String offsetStr)
+        throws DAQCompException
+    {
+        if (offsetStr == null) {
+            throw new DAQCompException("Time cannot be null");
+        }
+
+        String str;
+        if (!offsetStr.endsWith("L")) {
+            str = offsetStr;
+        } else {
+            str = offsetStr.substring(0, offsetStr.length() - 1);
+        }
+
+        long val;
+        try {
+            val = Long.parseLong(str);
+        } catch (NumberFormatException nfe) {
+            throw new DAQCompException("Bad time string \"" + offsetStr +
+                                       "\"");
+        }
+
+        return setReplayOffset(val);
+    }
+
+    /**
+     * XML-RPC method to set the offset applied to each hit being replayed.
+     *
+     * @param offset offset to apply to hit times
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     */
+    public String setReplayOffset(long offset)
+        throws DAQCompException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.setReplayOffset(offset);
+
+        return "OK";
     }
 
     /**
@@ -1477,7 +1869,6 @@ public class DAQCompServer
      * XML-RPC method requesting the specified component to start a subrun.
      * Note that an empty list signals the end of the subrun.
      *
-     * @param subrunNumber subrun number
      * @param rawData Python-formatted subrun data
      *
      * @return start time
@@ -1509,7 +1900,14 @@ public class DAQCompServer
             }
 
             try {
-                String mbid = (String) array[0];
+                long rawVal;
+                try {
+                    rawVal = Long.parseLong((String) array[0], 16);
+                } catch (NumberFormatException nfe) {
+                    throw new DAQCompException("Bad mainboard ID \"" +
+                                               array[0] +"\"");
+                }
+                String mbid = String.format("%012x", rawVal);
 
                 int[] vals = new int[5];
                 for (int i = 0; i < vals.length; i++) {
@@ -1544,5 +1942,37 @@ public class DAQCompServer
 
         comp.stopRun();
         return "OK";
+    }
+
+    /**
+     * XML-RPC method requesting the specified component to switch to a new
+     * run.
+     *
+     * @param runNumber run number
+     *
+     * @return <tt>"OK"</tt>
+     *
+     * @throws DAQCompException if component does not exist
+     * @throws IOException if there was a problem starting the component
+     */
+    public String switchToNewRun(int runNumber)
+        throws DAQCompException, IOException
+    {
+        if (comp == null) {
+            throw new DAQCompException("Component not found");
+        }
+
+        comp.switchToNewRun(runNumber);
+
+        return "OK";
+    }
+
+    /**
+     * XML-RPC method instructing the component to kill itself
+     */
+    public String terminate()
+    {
+        // XXX unimplemented
+        return "NOPE";
     }
 }

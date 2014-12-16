@@ -5,6 +5,8 @@ import java.lang.reflect.Array;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import javax.management.Attribute;
 import javax.management.InstanceNotFoundException;
@@ -86,11 +88,12 @@ class XMLRPCServer
         return newArray;
     }
 
-    private static AbstractMap fixMap(AbstractMap map) {
-
-        for(Object key : map.keySet()) {
-            map.put(key, fixValue(map.get(key)));
+    private static AbstractMap fixMap(AbstractMap map) 
+    {
+        for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
+            entry.setValue(fixValue(entry.getValue()));
         }
+
         return map;
     }
 
@@ -114,7 +117,7 @@ class XMLRPCServer
         } else if (val instanceof Byte) {
             return new Integer(((Byte) val).intValue());
         } else if (val instanceof Character) {
-            char[] array = new char[] { ((Character) val).charValue() };
+            char[] array = new char[] {((Character) val).charValue() };
             return new String(array);
         } else if (val instanceof Short) {
             return new Integer(((Short) val).intValue());
@@ -136,7 +139,7 @@ class XMLRPCServer
         return val;
     }
 
-    Object get(String mbeanName, String attrName)
+    public Object get(String mbeanName, String attrName)
         throws MBeanAgentException
     {
         if (!beans.containsKey(mbeanName)) {

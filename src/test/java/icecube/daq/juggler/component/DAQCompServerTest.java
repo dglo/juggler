@@ -1,11 +1,14 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.common.DAQCmdInterface;
 import icecube.daq.juggler.test.LogReader;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.juggler.test.MockCache;
 import icecube.daq.juggler.test.MockHandler;
 import icecube.daq.juggler.test.MockOutputEngine;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -46,6 +49,7 @@ public class DAQCompServerTest
     private static final Log LOG = LogFactory.getLog(DAQCompServerTest.class);
 
     private MockHandler handler;
+    private File tmpDir;
 
     public DAQCompServerTest(String name)
     {
@@ -66,6 +70,23 @@ public class DAQCompServerTest
         return ssChan.socket().getLocalPort();
     }
 
+    private static boolean deleteRecursive(File path)
+        throws FileNotFoundException
+    {
+        if (!path.exists()) {
+            throw new FileNotFoundException(path.getAbsolutePath());
+        }
+
+        boolean ret = true;
+        if (path.isDirectory()){
+            for (File f : path.listFiles()){
+                ret = ret && deleteRecursive(f);
+            }
+        }
+
+        return ret && path.delete();
+    }
+
     protected void setUp()
         throws Exception
     {
@@ -80,6 +101,18 @@ public class DAQCompServerTest
     public static Test suite()
     {
         return new TestSuite(DAQCompServerTest.class);
+    }
+
+    public final void tearDown()
+        throws FileNotFoundException
+    {
+        if (tmpDir != null) {
+            try {
+                deleteRecursive(tmpDir);
+            } finally {
+                tmpDir = null;
+            }
+        }
     }
 
     private void waitForLogMessages(LogReader logRdr)
@@ -200,15 +233,15 @@ public class DAQCompServerTest
         rtnVal = srvr.connect();
         assertEquals("Bad connect() return value", "OK", rtnVal);
 
-        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        mockComp.waitForStateChange(DAQState.CONNECTING);
         assertFalse("Unexpected error after connect", mockComp.isError());
 
         rtnVal = srvr.configure();
         assertEquals("Bad configure() return value", "OK", rtnVal);
 
-        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        mockComp.waitForStateChange(DAQState.CONFIGURING);
         assertEquals("Bad state after configure",
-                     DAQComponent.STATE_READY, mockComp.getState());
+                     DAQState.READY, mockComp.getState());
         assertFalse("configuring() should not have been called",
                    mockComp.wasConfiguringCalled());
         assertFalse("Unexpected error after configure", mockComp.isError());
@@ -315,21 +348,24 @@ public class DAQCompServerTest
 
         HashMap connMap = new HashMap();
         connMap.put("type", connType);
-        connMap.put("compName", "abc");
+        connMap.put("compName", DAQCmdInterface.DAQ_EVENTBUILDER);
         connMap.put("compNum", new Integer(0));
         connMap.put("host", "localhost");
         connMap.put("port", new Integer(port));
-        
+
         String rtnVal;
 
         rtnVal = srvr.connect(new Object[] { connMap });
         assertEquals("Bad connect() return value", "OK", rtnVal);
 
-        String[][] states = srvr.listConnectorStates();
+        HashMap[] states = srvr.listConnectorStates();
         assertEquals("Bad number of connectors", 1, states.length);
-        assertEquals("Bad number of connector columns", 2, states[0].length);
-        assertEquals("Bad connector type", connType, states[0][0]);
-        assertEquals("Bad connector state", connState, states[0][1]);
+        assertTrue("Connector does not contain \"type\"",
+                   states[0].containsKey("type"));
+        assertTrue("Connector does not contain \"state\"",
+                   states[0].containsKey("state"));
+        assertEquals("Bad connector type", connType, states[0].get("type"));
+        assertEquals("Bad connector state", connState, states[0].get("state"));
     }
 
     public void testDestroyNull()
@@ -358,9 +394,9 @@ public class DAQCompServerTest
         rtnVal = srvr.destroy();
         assertEquals("Bad destroy() return value", "OK", rtnVal);
 
-        mockComp.waitForStateChange(DAQComponent.STATE_DESTROYING);
+        mockComp.waitForStateChange(DAQState.DESTROYING);
         assertEquals("Bad state after destroy",
-                     DAQComponent.STATE_DESTROYED, mockComp.getState());
+                     DAQState.DESTROYED, mockComp.getState());
         assertFalse("Unexpected error after destroy", mockComp.isError());
     }
 
@@ -398,34 +434,34 @@ public class DAQCompServerTest
 
         rtnVal = srvr.connect();
         assertEquals("Bad connect() return value", "OK", rtnVal);
-        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        mockComp.waitForStateChange(DAQState.CONNECTING);
         assertFalse("Unexpected error after connect", mockComp.isError());
 
         rtnVal = srvr.configure();
         assertEquals("Bad configure() return value", "OK", rtnVal);
-        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        mockComp.waitForStateChange(DAQState.CONFIGURING);
         assertEquals("Bad state after configure",
-                     DAQComponent.STATE_READY, mockComp.getState());
+                     DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
         rtnVal = srvr.forcedStop();
         assertEquals("Bad forcedStop() return value", "OK", rtnVal);
         assertEquals("Bad state after forcedStop",
-                     DAQComponent.STATE_READY, mockComp.getState());
+                     DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after forcedStop", mockComp.isError());
 
         rtnVal = srvr.startRun(123);
         assertEquals("Bad startRun() return value", "OK", rtnVal);
-        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
+        mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
-                     DAQComponent.STATE_RUNNING, mockComp.getState());
+                     DAQState.RUNNING, mockComp.getState());
         assertFalse("Unexpected error after startRun", mockComp.isError());
 
         rtnVal = srvr.forcedStop();
         assertEquals("Bad forcedStop() return value", "OK", rtnVal);
-        mockComp.waitForStateChange(DAQComponent.STATE_FORCING_STOP);
+        mockComp.waitForStateChange(DAQState.FORCING_STOP);
         assertEquals("Bad state after forcedStop",
-                     DAQComponent.STATE_READY, mockComp.getState());
+                     DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after forcedStop", mockComp.isError());
     }
 
@@ -555,8 +591,8 @@ public class DAQCompServerTest
         LogReader dfltLog = new LogReader("dflt");
         LogReader runLog = new LogReader("run");
 
-        final String endResetMsg = "Logging has been reset";
-        final String startResetMsg = "Resetting logging";
+        //final String endResetMsg = "Logging has been reset";
+        //final String startResetMsg = "Resetting logging";
 
         boolean succeeded = false;
         try {
@@ -564,7 +600,7 @@ public class DAQCompServerTest
 
             MockServer srvr = new MockServer(mockComp, new String[0]);
 
-            dfltLog.addExpected(endResetMsg);
+            //dfltLog.addExpected(endResetMsg);
 
             srvr.initializeLogging("localhost", dfltLog.getPort(), null, 0);
 
@@ -576,8 +612,8 @@ public class DAQCompServerTest
 
             String rtnVal;
 
-            dfltLog.addExpected(startResetMsg);
-            runLog.addExpected(endResetMsg);
+            //dfltLog.addExpected(startResetMsg);
+            //runLog.addExpected(endResetMsg);
 
             rtnVal = srvr.logTo("localhost", runLog.getPort(), null, 0);
             assertEquals("Bad logTo() return value", "OK", rtnVal);
@@ -588,8 +624,8 @@ public class DAQCompServerTest
             waitForLogMessages(dfltLog);
             waitForLogMessages(runLog);
 
-            runLog.addExpected(startResetMsg);
-            dfltLog.addExpected(endResetMsg);
+            //runLog.addExpected(startResetMsg);
+            //dfltLog.addExpected(endResetMsg);
 
             srvr.resetLogging();
 
@@ -627,8 +663,8 @@ public class DAQCompServerTest
         LogReader dfltLog = new LogReader("dflt", true);
         LogReader runLog = new LogReader("run", true);
 
-        final String endResetMsg = "Logging has been reset";
-        final String startResetMsg = "Resetting logging";
+        //final String endResetMsg = "Logging has been reset";
+        //final String startResetMsg = "Resetting logging";
 
         boolean succeeded = false;
         try {
@@ -636,7 +672,7 @@ public class DAQCompServerTest
 
             MockServer srvr = new MockServer(mockComp, new String[0]);
 
-            dfltLog.addExpected(endResetMsg);
+            //dfltLog.addExpected(endResetMsg);
 
             srvr.initializeLogging(null, 0, "localhost", dfltLog.getPort());
 
@@ -648,8 +684,8 @@ public class DAQCompServerTest
 
             String rtnVal;
 
-            dfltLog.addExpected(startResetMsg);
-            runLog.addExpected(endResetMsg);
+            //dfltLog.addExpected(startResetMsg);
+            //runLog.addExpected(endResetMsg);
 
             rtnVal = srvr.logTo(null, 0, "localhost", runLog.getPort());
             assertEquals("Bad logTo() return value", "OK", rtnVal);
@@ -660,8 +696,8 @@ public class DAQCompServerTest
             waitForLogMessages(dfltLog);
             waitForLogMessages(runLog);
 
-            runLog.addExpected(startResetMsg);
-            dfltLog.addExpected(endResetMsg);
+            //runLog.addExpected(startResetMsg);
+            //dfltLog.addExpected(endResetMsg);
 
             srvr.resetLogging();
 
@@ -722,18 +758,34 @@ public class DAQCompServerTest
     {
         MockComponent mockComp = new MockComponent("tst", 0);
 
+        File testTmp = File.createTempFile("foo", "").getParentFile();
+
+        File tmpDir = new File(testTmp, "tmpTrunk");
+
+        File ddTop = new File(tmpDir, "dispatch");
+        ddTop.mkdirs();
+
+        File cfgTop = new File(tmpDir, "config");
+        cfgTop.mkdirs();
+
+        // create subdirectories used to validate config directory
+        new File(cfgTop, "trigger").mkdirs();
+        new File(cfgTop, "domconfigs").mkdirs();
+
         final int moniInterval = 543;
-        final String dispatchDir = "/tmp";
-        final String globalConfig = "/foo";
+        final String dispatchDir = ddTop.getAbsolutePath();
+        final String globalConfig = cfgTop.getAbsolutePath();
         final long maxFileSize = 678L;
 
         String[] args = new String[] {
-            "-M", Integer.toString(moniInterval),
+            "-M", "localhost:3",
             "-S",
             "-c", "foo",
             "-d", dispatchDir,
             "-g", globalConfig,
             "-l", "localhost:1,debug",
+            "-L", "localhost:2,debug",
+            "-m", Integer.toString(moniInterval),
             "-s", Long.toString(maxFileSize),
         };
 
@@ -945,6 +997,20 @@ public class DAQCompServerTest
         }
     }
 
+    public void testSwitchRunNull()
+        throws DAQCompException, IOException
+    {
+        MockServer srvr = new MockServer();
+
+        try {
+            srvr.switchToNewRun(1);
+            fail("Should have failed due to null component");
+        } catch (DAQCompException dce) {
+            assertEquals("Unexpected exception",
+                         "Component not found", dce.getMessage());
+        }
+    }
+
     public void testRun()
         throws DAQCompException, IOException
     {
@@ -968,15 +1034,15 @@ public class DAQCompServerTest
         rtnVal = srvr.connect();
         assertEquals("Bad connect() return value", "OK", rtnVal);
 
-        mockComp.waitForStateChange(DAQComponent.STATE_CONNECTING);
+        mockComp.waitForStateChange(DAQState.CONNECTING);
         assertFalse("Unexpected error after connect", mockComp.isError());
 
         rtnVal = srvr.configure("foo");
         assertEquals("Bad configure() return value", "OK", rtnVal);
 
-        mockComp.waitForStateChange(DAQComponent.STATE_CONFIGURING);
+        mockComp.waitForStateChange(DAQState.CONFIGURING);
         assertEquals("Bad state after configure",
-                     DAQComponent.STATE_READY, mockComp.getState());
+                     DAQState.READY, mockComp.getState());
         assertTrue("configuring() was not called",
                    mockComp.wasConfiguringCalled());
         assertFalse("Unexpected error after configure", mockComp.isError());
@@ -984,21 +1050,33 @@ public class DAQCompServerTest
         rtnVal = srvr.startRun(runNum);
         assertEquals("Bad startRun() return value", "OK", rtnVal);
 
-        mockComp.waitForStateChange(DAQComponent.STATE_STARTING);
+        mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
-                     DAQComponent.STATE_RUNNING, mockComp.getState());
+                     DAQState.RUNNING, mockComp.getState());
         assertTrue("starting() was not called",
                    mockComp.wasStartingCalled());
         assertTrue("started() was not called",
                    mockComp.wasStartedCalled());
         assertFalse("Unexpected error after startRun", mockComp.isError());
 
+        int switchNum = runNum + 10;
+
+        rtnVal = srvr.switchToNewRun(switchNum);
+        assertEquals("Bad switchToNewRun() return value", "OK", rtnVal);
+
+        mockComp.waitForStateChange(DAQState.SWITCHING);
+        assertEquals("Bad state after switchRun",
+                     DAQState.RUNNING, mockComp.getState());
+        assertTrue("switching() was not called",
+                   mockComp.wasSwitchingCalled());
+        assertFalse("Unexpected error after switchRun", mockComp.isError());
+
         rtnVal = srvr.stopRun();
         assertEquals("Bad stopRun() return value", "OK", rtnVal);
 
-        mockComp.waitForStateChange(DAQComponent.STATE_STOPPING);
+        mockComp.waitForStateChange(DAQState.STOPPING);
         assertEquals("Bad state after stopRun",
-                     DAQComponent.STATE_READY, mockComp.getState());
+                     DAQState.READY, mockComp.getState());
         assertTrue("stopped() was not called",
                    mockComp.wasStoppedCalled());
         assertFalse("Unexpected error after stopRun", mockComp.isError());
@@ -1006,9 +1084,9 @@ public class DAQCompServerTest
         rtnVal = srvr.reset();
         assertEquals("Bad reset() return value", "OK", rtnVal);
 
-        mockComp.waitForStateChange(DAQComponent.STATE_RESETTING);
+        mockComp.waitForStateChange(DAQState.RESETTING);
         assertEquals("Bad state",
-                     DAQComponent.STATE_IDLE, mockComp.getState());
+                     DAQState.IDLE, mockComp.getState());
         assertFalse("Unexpected error after reset", mockComp.isError());
 
 /*

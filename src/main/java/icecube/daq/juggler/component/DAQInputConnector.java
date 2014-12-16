@@ -22,7 +22,20 @@ public class DAQInputConnector
      */
     DAQInputConnector(String type, DAQComponentInputProcessor engine)
     {
-        super(type);
+        this(type, engine, false);
+    }
+
+    /**
+     * Create a DAQ input connector.
+     *
+     * @param type connector type
+     * @param engine input engine
+     * @param optional <tt>true</tt> if this is an optional connector
+     */
+    DAQInputConnector(String type, DAQComponentInputProcessor engine,
+                      boolean optional)
+    {
+        super(type, optional);
 
         this.engine = engine;
     }
@@ -53,6 +66,16 @@ public class DAQInputConnector
         throws Exception
     {
         engine.forcedStopProcessing();
+    }
+
+    /**
+     * Get number of active channels.
+     *
+     * @return number of channels
+     */
+    public int getNumberOfChannels()
+    {
+        return engine.getNumberOfChannels();
     }
 
     /**

@@ -3,7 +3,6 @@ package icecube.daq.juggler.mbean;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.HashMap;
@@ -11,6 +10,8 @@ import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,11 +40,10 @@ public class SystemStatistics
     /** pattern for parsing 'df' output. */
     private Pattern dfPat =
         Pattern.compile("^\\s*(\\S+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)" +
-                        "\\s+(\\d+)%\\s+(\\S+)\\s*$");
+                        "\\s+(\\d+)%\\s+(\\S.*)\\s*$");
 
     /** Network IO reading stuff */
-    private static String PNDfilename = "/proc/net/dev";
-    private BufferedReader PNDreader = null;
+    public static String PNDfilename = "/proc/net/dev";
     private Pattern barPattern   = Pattern.compile("\\|");
     private Pattern dataPattern  = Pattern.compile("[:\\s]+");
     private Pattern spacePattern = Pattern.compile("\\s+");
@@ -65,18 +65,39 @@ public class SystemStatistics
             return null;
         }
 
+        try {
+            proc.getOutputStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        try {
+            proc.getErrorStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
         BufferedReader out =
             new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
         String line;
+
         try {
-            line = out.readLine();
-            if (line == null) {
-                LOG.error("No uptime output found");
+            try {
+                line = out.readLine();
+                if (line == null) {
+                    LOG.error("No uptime output found");
+                }
+            } catch (IOException ioe) {
+                LOG.error("Couldn't read uptime output", ioe);
+                line = null;
             }
-        } catch (IOException ioe) {
-            LOG.error("Couldn't read uptime output", ioe);
-            line = null;
+        } finally {
+            try {
+                out.close();
+            } catch (Throwable thr) {
+                // ignore errors on close
+            }
         }
 
         if (line != null) {
@@ -100,6 +121,12 @@ public class SystemStatistics
             }
         }
 
+        try {
+            proc.waitFor();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
         return null;
     }
 
@@ -111,6 +138,18 @@ public class SystemStatistics
         } catch (IOException ioe) {
             LOG.error("Couldn't get df", ioe);
             return null;
+        }
+
+        try {
+            proc.getOutputStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        try {
+            proc.getErrorStream().close();
+        } catch (Throwable thr) {
+            // ignore errors on close
         }
 
         BufferedReader out =
@@ -167,7 +206,7 @@ public class SystemStatistics
                         LOG.error("Couldn't parse df avail bytes \"" +
                                   match.group(4) + "\" from \"" + line + "\"",
                                   nfe);
-                        avail = new Long(0);
+                        avail = Long.valueOf(0);
                     }
 
                     if (map == null) {
@@ -177,6 +216,18 @@ public class SystemStatistics
                     map.put(match.group(6), avail);
                 }
             }
+        }
+
+        try {
+            out.close();
+        } catch (Throwable thr) {
+            // ignore errors on close
+        }
+
+        try {
+            proc.waitFor();
+        } catch (Throwable thr) {
+            // ignore errors on close
         }
 
         return map;
@@ -193,12 +244,13 @@ public class SystemStatistics
         TreeMap<String, String> map = null;
         boolean past_header = false;
         String line = null;
-        String header[];
-        String rx_headers[] = null;
-        String tx_headers[] = null;
-        String data[];
+        String[] header;
+        String[] rx_headers = null;
+        String[] tx_headers = null;
+        String[] data;
 
         // Network IO reading set-up
+        BufferedReader PNDreader;
         try {
             PNDreader = new BufferedReader(new FileReader(PNDfilename));
         } catch (FileNotFoundException fnfe) {
@@ -214,7 +266,7 @@ public class SystemStatistics
                 LOG.error("Problem reading io stats: " + ioe);
             }
 
-            if (line == null) { // End of output
+            if (line == null) {
                 break;
             }
 
@@ -238,18 +290,24 @@ public class SystemStatistics
                 map = new TreeMap<String, String>();
             }
             data = dataPattern.split(line.trim());
-            String iface = data[0];  // one interface per line
+            String iface = data[0];
             int rx_i;
             int tx_i;
             // The recieve data for this interface
-            for(rx_i = 0; rx_i < rx_headers.length; rx_i++) {
+            for (rx_i = 0; rx_i < rx_headers.length; rx_i++) {
                 map.put(iface + "_rx_" + rx_headers[rx_i], data[rx_i + 1]);
             }
             // The transmit data for this interface
-            for(tx_i = 0; tx_i < tx_headers.length; tx_i++) {
+            for (tx_i = 0; tx_i < tx_headers.length; tx_i++) {
                 map.put(iface + "_tx_" + tx_headers[tx_i],
                         data[rx_i + tx_i + 1]);
             }
+        }
+
+        try {
+            PNDreader.close();
+        } catch (Throwable thr) {
+            // ignore errors on close
         }
 
         return map;
@@ -282,17 +340,16 @@ public class SystemStatistics
             StringBuffer buf = new StringBuffer("space: {");
 
             boolean needComma = false;
-            Iterator iter = dfMap.keySet().iterator();
-            while (iter.hasNext()) {
-                String mountPt = (String) iter.next();
+            for(Map.Entry entry : (Set<Map.Entry>)dfMap.entrySet()) {
+                String mountPt = (String) entry.getKey();
 
                 if (needComma) {
                     buf.append(", ");
                 }
 
-                Long avail = (Long) dfMap.get(mountPt);
+                long avail = (Long) entry.getValue();
                 buf.append(String.format("%s: %d", mountPt,
-                                         avail.longValue()));
+                                         avail));
                 needComma = true;
             }
 
@@ -307,10 +364,10 @@ public class SystemStatistics
             StringBuffer buf = new StringBuffer("network: {");
 
             boolean needComma = false;
-            Iterator<String> iter = ioMap.keySet().iterator();
-            while (iter.hasNext()) {
-                String ioStat = iter.next();
-                String ioData = ioMap.get(ioStat);
+            for(Map.Entry entry: ioMap.entrySet()) {
+                String ioStat = (String)entry.getKey();
+                String ioData = (String)entry.getValue();
+
                 if (needComma) {
                     buf.append(", ");
                 }
@@ -326,7 +383,8 @@ public class SystemStatistics
     /**
      * This is intended for unit testing
      */
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         System.out.println("SystemStats: in");
         SystemStatistics ss = new SystemStatistics();
 

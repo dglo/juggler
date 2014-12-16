@@ -18,7 +18,7 @@ public class DAQSplicer
      */
     DAQSplicer(Splicer splicer)
     {
-        super("splicer");
+        super("splicer", false);
 
         this.splicer = splicer;
     }
@@ -43,6 +43,16 @@ public class DAQSplicer
         throws Exception
     {
         // cannot forceably stop splicer
+    }
+
+    /**
+     * Get number of active channels.
+     *
+     * @return number of channels
+     */
+    public int getNumberOfChannels()
+    {
+        return splicer.getStrandCount();
     }
 
     /**

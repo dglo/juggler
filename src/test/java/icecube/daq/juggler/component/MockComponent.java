@@ -22,6 +22,7 @@ public class MockComponent
     private boolean calledStarting;
     private boolean calledStopped;
     private boolean calledStopping;
+    private boolean calledSwitching;
     private boolean stopEngines;
 
     private String version;
@@ -47,6 +48,7 @@ public class MockComponent
         calledStarting = false;
         calledStopped = false;
         calledStopping = false;
+        calledSwitching = false;
     }
 
     public void commitSubrun(int subrunNumber, long startTime)
@@ -150,7 +152,17 @@ public class MockComponent
     }
 
     public long startSubrun(List<FlasherboardConfiguration> data)
+        throws DAQCompException
     {
+        for (FlasherboardConfiguration fb : data) {
+            if (fb.getMainboardID().length() != 12 ||
+                fb.getMainboardID().startsWith(" "))
+            {
+                throw new DAQCompException("Bad MBID \"" +
+                                           fb.getMainboardID() +
+                                           "\" in " + fb);
+            }
+        }
         calledStartSubrun = true;
         return subrunStartTime;
     }
@@ -175,8 +187,7 @@ public class MockComponent
         calledStopping = true;
 
         if (stopEngines) {
-            for (Iterator iter = listConnectors(); iter.hasNext(); ) {
-                DAQConnector conn = (DAQConnector) iter.next();
+            for (DAQConnector conn : listConnectors()) {
                 try {
                     conn.forcedStopProcessing();
                 } catch (Exception ex) {
@@ -184,6 +195,11 @@ public class MockComponent
                 }
             }
         }
+    }
+
+    public void switching(int runNumber)
+    {
+        calledSwitching = true;
     }
 
     boolean wasConfiguringCalled()
@@ -229,5 +245,10 @@ public class MockComponent
     boolean wasStoppingCalled()
     {
         return calledStopping;
+    }
+
+    boolean wasSwitchingCalled()
+    {
+        return calledSwitching;
     }
 }

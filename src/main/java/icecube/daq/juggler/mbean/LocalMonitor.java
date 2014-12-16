@@ -9,6 +9,8 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -133,9 +135,9 @@ public class LocalMonitor
                 }
 
                 out.println(keys[i] + ": " + dateStr + ":");
-                for (Object attrName : valMap.keySet()) {
-                    out.println("\t" + attrName + ": " +
-                                toString(valMap.get(attrName)));
+                for (Map.Entry entry: (Set<Map.Entry>)valMap.entrySet()) {
+                    out.println("\t" + entry.getKey() + ": " +
+                                toString(entry.getValue()));
                 }
             }
             out.flush();
@@ -177,7 +179,9 @@ public class LocalMonitor
 
     private String toString(Object obj)
     {
-        if (obj.getClass().isArray()) {
+        if (obj == null) {
+            return "null";
+        } else if (obj.getClass().isArray()) {
             StringBuffer strBuf = new StringBuffer("[");
             final int len = Array.getLength(obj);
             for (int i = 0; i < len; i++) {
@@ -191,12 +195,13 @@ public class LocalMonitor
         } else if (obj.getClass().equals(HashMap.class)) {
             StringBuffer strBuf = new StringBuffer("{");
             HashMap map = (HashMap) obj;
-            for (Object key: map.keySet()) {
+
+            for (Map.Entry entry: (Set<Map.Entry>)map.entrySet()) {
                 if (strBuf.length() > 1) {
                     strBuf.append(", ");
                 }
-                strBuf.append('\'').append(toString(key));
-                strBuf.append("': ").append(toString(map.get(key)));
+                strBuf.append('\'').append(toString(entry.getKey()));
+                strBuf.append("': ").append(toString(entry.getValue()));
             }
             strBuf.append("}");
             return strBuf.toString();

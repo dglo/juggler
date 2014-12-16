@@ -128,6 +128,27 @@ public class LogReader
         return getReaderName();
     }
 
+    public void waitForMessages()
+    {
+        waitForMessages(10, 100);
+    }
+
+    public void waitForMessages(int numReps, int sleepTime)
+    {
+        for (int i = 0; !hasError() && !isFinished() && i < numReps; i++) {
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException ie) {
+                // ignore interrupts
+            }
+        }
+        if (hasError()) throw new Error(getNextError());
+        if (getNumberOfExpectedMessages() != 0) {
+            throw new Error("Didn't receive " + getNumberOfExpectedMessages() +
+                            " expected log");
+        }
+    }
+
     class ReaderThread
         implements Runnable
     {

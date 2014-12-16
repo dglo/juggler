@@ -10,5 +10,5 @@ public interface SystemStatisticsMBean
 {
     double[] getLoadAverage();
     HashMap getAvailableDiskSpace();
-    TreeMap<String, String> getNetworkIO();
+    //TreeMap<String, String> getNetworkIO();
 }
