@@ -53,8 +53,10 @@ public class SystemStatistics
                         "(.*)\\s*$");
 
 
+    /** Path to network devices */
+    public static String PND_FILENAME = "/proc/net/dev";
+
     /** Network IO reading stuff */
-    public static String PNDfilename = "/proc/net/dev";
     private Pattern barPattern   = Pattern.compile("\\|");
     private Pattern dataPattern  = Pattern.compile("[:\\s]+");
     private Pattern spacePattern = Pattern.compile("\\s+");
@@ -262,9 +264,9 @@ public class SystemStatistics
         // Network IO reading set-up
         BufferedReader PNDreader;
         try {
-            PNDreader = new BufferedReader(new FileReader(PNDfilename));
+            PNDreader = new BufferedReader(new FileReader(PND_FILENAME));
         } catch (FileNotFoundException fnfe) {
-            LOG.error("Couldn't open " + PNDfilename + " on OS: " +
+            LOG.error("Couldn't open " + PND_FILENAME + " on OS: " +
                       System.getProperty("os.name"));
             return null;
         }
@@ -289,7 +291,7 @@ public class SystemStatistics
                     rx_headers = spacePattern.split(header[1]);
                     tx_headers = spacePattern.split(header[2]);
                 } else {
-                    LOG.error("Bogus " + PNDfilename +
+                    LOG.error("Bogus " + PND_FILENAME +
                               "  line: \"" + line + "\"");
                 }
                 past_header = true;
