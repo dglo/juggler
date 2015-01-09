@@ -237,9 +237,9 @@ class LogOptions
         throws LogOptionException
     {
         try {
-            comp.getAlerter().setAddress(liveMoni.host, liveMoni.port);
+            comp.setAlerterAddress(liveMoni.host, liveMoni.port);
         } catch (AlertException ae) {
-            throw new LogOptionException("Couldn't set alerter to '" +
+            throw new LogOptionException("Couldn't set alerter address to '" +
                                          liveMoni.host + ":" + liveMoni.port +
                                          "'");
         }

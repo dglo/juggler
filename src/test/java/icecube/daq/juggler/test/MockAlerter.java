@@ -15,9 +15,8 @@ public class MockAlerter
     private boolean inactive;
     private boolean closed;
 
+    private long sendDelay;
     private int numSent;
-    private String expVarName;
-    private Priority expPrio;
 
     public MockAlerter()
     {
@@ -40,7 +39,7 @@ public class MockAlerter
 
     public String getService()
     {
-        throw new Error("Unimplemented");
+        return DEFAULT_SERVICE;
     }
 
     public boolean isActive()
@@ -53,68 +52,20 @@ public class MockAlerter
         return closed;
     }
 
-    public void send(String varname, Priority prio, Calendar dateTime,
-                     Map<String, Object> values)
-        throws AlertException
-    {
-        throw new Error("Unimplemented");
-    }
-
-    public void send(String varname, Priority prio, IUTCTime utcTime,
-                     Map<String, Object> values)
-        throws AlertException
-    {
-        throw new Error("Unimplemented");
-    }
-
-    public void send(String varName, Priority prio, Map<String, Object> values)
-        throws AlertException
-    {
-        if (closed) {
-            throw new Error("Alerter has been closed");
-        }
-
-        if (expVarName == null || expPrio == null) {
-            fail("Received unexpected " + varName + " alert, prio " + prio);
-        }
-
-        assertEquals("Unexpected varname", expVarName, varName);
-        assertEquals("Unexpected priority", expPrio, prio);
-
-        numSent++;
-    }
-
-    public void sendAlert(Priority prio, String condition, Map x2)
-        throws AlertException
-    {
-        throw new Error("Unimplemented");
-    }
-
-    public void sendAlert(Priority prio, String condition, String notify,
-                          Map<String, Object> vars)
-        throws AlertException
-    {
-        throw new Error("Unimplemented");
-    }
-
-    public void sendAlert(Calendar dateTime, Priority prio, String condition,
-                          String notify, Map<String, Object> vars)
-        throws AlertException
-    {
-        throw new Error("Unimplemented");
-    }
-
-    public void sendAlert(IUTCTime utcTime, Priority prio, String condition,
-                          String notify, Map<String, Object> vars)
-        throws AlertException
-    {
-        throw new Error("Unimplemented");
-    }
-
     public void sendObject(Object obj)
         throws AlertException
     {
-        throw new Error("Unimplemented");
+        if (sendDelay > 0) {
+            try {
+                Thread.sleep(sendDelay);
+            } catch (InterruptedException ie) {
+                // ignore interrupts
+            } finally {
+                sendDelay = 0;
+            }
+        }
+
+        numSent++;
     }
 
     public void setAddress(String host, int port)
@@ -123,13 +74,8 @@ public class MockAlerter
         // ignored
     }
 
-    public void setExpectedPriority(Priority prio)
+    public void setSendDelay(long millis)
     {
-        expPrio = prio;
-    }
-
-    public void setExpectedVarName(String name)
-    {
-        expVarName = name;
+        sendDelay = millis;
     }
 }

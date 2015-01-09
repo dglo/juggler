@@ -7,6 +7,8 @@ import icecube.daq.io.SimpleOutputEngine;
 import icecube.daq.io.SimpleReader;
 import icecube.daq.io.SpliceablePayloadReader;
 import icecube.daq.io.SpliceableSimpleReader;
+import icecube.daq.juggler.alert.AlertException;
+import icecube.daq.juggler.alert.AlertQueue;
 import icecube.daq.juggler.alert.Alerter;
 import icecube.daq.juggler.alert.ZMQAlerter;
 import icecube.daq.juggler.mbean.LocalMonitor;
@@ -50,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15256 2014-11-14 14:43:43Z dglo $
+ * @version $Id: DAQComponent.java 15333 2015-01-09 22:08:50Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -106,9 +108,12 @@ public abstract class DAQComponent
 
     /** Thread which transitions between states */
     private StateTask stateTask;
+    private boolean taskDestroyed;
 
     /** Alert manager */
     private Alerter alerter;
+    /** Alert queue */
+    private AlertQueue alertQueue;
 
     /**
      * Create a component.
@@ -393,9 +398,8 @@ public abstract class DAQComponent
     public void closeAll()
         throws IOException
     {
-        if (alerter != null) {
-            alerter.close();
-            alerter = null;
+        if (alertQueue != null) {
+            alertQueue.stop();
         }
     }
 
@@ -420,7 +424,7 @@ public abstract class DAQComponent
     public final void configure()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -438,7 +442,7 @@ public abstract class DAQComponent
     public final void configure(String name)
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -468,7 +472,7 @@ public abstract class DAQComponent
     public final void connect()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -486,7 +490,7 @@ public abstract class DAQComponent
     public final void connect(Connection[] list)
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -502,7 +506,7 @@ public abstract class DAQComponent
     public final void destroy()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -518,7 +522,7 @@ public abstract class DAQComponent
     public final void disconnect()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -572,7 +576,7 @@ public abstract class DAQComponent
     public final void forcedStop()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -594,11 +598,25 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the alert queue.
+     *
+     * @return alert queue
+     */
+    public AlertQueue getAlertQueue()
+    {
+        if (alertQueue == null) {
+            alertQueue = new AlertQueue(getAlerter());
+        }
+
+        return alertQueue;
+    }
+
+    /**
      * Get the alert manager.
      *
      * @return alert manager
      */
-    public Alerter getAlerter()
+    private Alerter getAlerter()
     {
         if (alerter == null) {
             alerter = new ZMQAlerter();
@@ -848,7 +866,7 @@ public abstract class DAQComponent
      */
     public final DAQState getState()
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             return DAQState.DESTROYED;
         }
 
@@ -884,7 +902,7 @@ public abstract class DAQComponent
      */
     public boolean isError()
     {
-        return stateTask != null && stateTask.isError();
+        return !taskDestroyed && stateTask.isError();
     }
 
     /**
@@ -958,7 +976,7 @@ public abstract class DAQComponent
     final void reset()
         throws DAQCompException, IOException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -1010,12 +1028,30 @@ public abstract class DAQComponent
     }
 
     /**
+     * Set the address to which alerts are sent.
+     *
+     * @param host - server host name
+     * @param port - server port number
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    public void setAlerterAddress(String host, int port)
+        throws AlertException
+    {
+        getAlerter().setAddress(host, port);
+    }
+
+    /**
      * Set the alert manager.
      *
      * @param alerter alert manager
      */
     public void setAlerter(Alerter alerter)
     {
+        if (alertQueue != null) {
+            alertQueue.setAlerter(alerter);
+        }
+
         if (this.alerter != null) {
             this.alerter.close();
         }
@@ -1229,7 +1265,7 @@ public abstract class DAQComponent
     public final void startRun(int runNumber)
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -1307,7 +1343,7 @@ public abstract class DAQComponent
     public final void stopRun()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -1326,7 +1362,7 @@ public abstract class DAQComponent
     {
         if (stateTask != null) {
             stateTask.stop();
-            stateTask = null;
+            taskDestroyed = true;
         }
     }
 
@@ -1364,7 +1400,7 @@ public abstract class DAQComponent
     public final void switchToNewRun(int runNumber)
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -1395,7 +1431,7 @@ public abstract class DAQComponent
      */
     public void waitForStateChange(DAQState curState)
     {
-        while (stateTask != null && stateTask.getState() == curState &&
+        while (!taskDestroyed && stateTask.getState() == curState &&
                !stateTask.isError())
         {
             try {
