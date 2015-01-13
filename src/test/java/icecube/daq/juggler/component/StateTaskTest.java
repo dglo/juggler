@@ -1,5 +1,7 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.juggler.alert.AlertQueue;
+import icecube.daq.juggler.alert.Alerter;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.payload.IByteBufferCache;
 
@@ -122,6 +124,11 @@ class StateComponent
         throw new UnimplementedException();
     }
 
+    public AlertQueue getAlertQueue()
+    {
+        throw new UnimplementedException();
+    }
+
     /**
      * Get the buffer cache for the specified data type.
      *
@@ -217,6 +224,10 @@ class StateComponent
         didResetting = true;
     }
 
+    public void setAlerter(Alerter alerter)
+    {
+        throw new UnimplementedException();
+    }
 
     /**
      * Set the location of the global configuration directory.

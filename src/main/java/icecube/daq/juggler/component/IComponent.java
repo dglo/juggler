@@ -1,5 +1,7 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.juggler.alert.AlertQueue;
+import icecube.daq.juggler.alert.Alerter;
 import icecube.daq.payload.IByteBufferCache;
 
 import java.util.Set;
@@ -53,6 +55,13 @@ public interface IComponent
      */
     void forcedStop()
         throws DAQCompException;
+
+    /**
+     * Get the alert queue.
+     *
+     * @return alert queue
+     */
+    AlertQueue getAlertQueue();
 
     /**
      * Get the buffer cache for the specified data type.
@@ -111,6 +120,13 @@ public interface IComponent
      */
     void resetting()
         throws DAQCompException;
+
+    /**
+     * Set the alert manager.
+     *
+     * @param alerter alert manager
+     */
+    void setAlerter(Alerter alerter);
 
     /**
      * Set the location of the global configuration directory.
