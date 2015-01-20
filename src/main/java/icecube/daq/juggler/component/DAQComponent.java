@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15333 2015-01-09 22:08:50Z dglo $
+ * @version $Id: DAQComponent.java 15359 2015-01-20 17:18:50Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -606,6 +606,11 @@ public abstract class DAQComponent
     {
         if (alertQueue == null) {
             alertQueue = new AlertQueue(getAlerter());
+        }
+
+        // Since caller needs an AlertQueue, we can assume they want it running
+        if (alertQueue.isStopped()) {
+            alertQueue.start();
         }
 
         return alertQueue;
