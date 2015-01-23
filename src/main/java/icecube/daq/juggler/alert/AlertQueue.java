@@ -185,7 +185,7 @@ public class AlertQueue
                 }
             } else {
                 // if queue has shrunk enough, resume adding stuff
-                queueFull = queue.size() < maxQueueSize / 2;
+                queueFull = queue.size() >= maxQueueSize / 2;
                 if (!queueFull) {
                     LOG.error("Reenabled alert queue containing " +
                               queue.size() + " messages (dropped " +
