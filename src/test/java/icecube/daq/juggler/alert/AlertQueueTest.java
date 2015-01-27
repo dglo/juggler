@@ -87,7 +87,7 @@ public class AlertQueueTest
         //             0, alerter.countAllAlerts());
     }
 
-    //@Test
+    @Test
     public void testBasic()
         throws AlertException
     {
@@ -133,7 +133,7 @@ public class AlertQueueTest
                      alerter.getNumSent());
     }
 
-    //@Test
+    @Test
     public void testBasicPushVariants()
         throws AlertException
     {
