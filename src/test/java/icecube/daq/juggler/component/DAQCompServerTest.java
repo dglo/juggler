@@ -764,7 +764,6 @@ public class DAQCompServerTest
 
         File testTmp = File.createTempFile("foo", "").getParentFile();
 
-
         // tearDown() method will remove this directory
         tmpDir = new File(testTmp, "tmpTrunk");
 
