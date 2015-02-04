@@ -6,6 +6,7 @@ import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.juggler.test.MockCache;
 import icecube.daq.juggler.test.MockHandler;
 import icecube.daq.juggler.test.MockOutputEngine;
+import icecube.daq.util.LocatePDAQ;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -106,6 +107,9 @@ public class DAQCompServerTest
     public final void tearDown()
         throws FileNotFoundException
     {
+        // make sure we don't leave cached directory paths pointing at 'tmpDir'
+        LocatePDAQ.clearCache();
+
         if (tmpDir != null) {
             try {
                 deleteRecursive(tmpDir);
@@ -760,7 +764,9 @@ public class DAQCompServerTest
 
         File testTmp = File.createTempFile("foo", "").getParentFile();
 
-        File tmpDir = new File(testTmp, "tmpTrunk");
+
+        // tearDown() method will remove this directory
+        tmpDir = new File(testTmp, "tmpTrunk");
 
         File ddTop = new File(tmpDir, "dispatch");
         ddTop.mkdirs();
