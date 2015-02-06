@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15359 2015-01-20 17:18:50Z dglo $
+ * @version $Id: DAQComponent.java 15397 2015-02-06 23:18:56Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -676,50 +676,6 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         return -1L;
-    }
-
-    /**
-     * Get the file associated with the specified attribute.
-     *
-     * @param dataDir data directory
-     * @param elem XML element describing the file/directory
-     * @param attrName name of file/directory attribute
-     *
-     * @return data file
-     *
-     * @throws DAQCompException if the attribute or file cannot be found
-     */
-    public static File getFile(String dataDir, Element elem, String attrName)
-        throws DAQCompException
-    {
-        // get attribute
-        String name = elem.getAttribute(attrName);
-        if (name == null || name == "") {
-            return null;
-        }
-
-        // build path for attribute
-        File file;
-        if (dataDir == null) {
-            file = new File(name);
-        } else {
-            file = new File(dataDir, name);
-        }
-
-        // make sure path exists
-        if (!file.exists()) {
-            String hostname;
-            try {
-                hostname = InetAddress.getLocalHost().getHostName();
-            } catch (Exception ex) {
-                hostname = "unknown";
-            }
-            throw new DAQCompException(attrName + " " + file +
-                                       " does not exist on " + hostname);
-        }
-
-        // return file path
-        return file;
     }
 
     /**

@@ -1461,36 +1461,6 @@ public class DAQComponentTest
         }
     }
 
-    public void testGetFileFromElement()
-        throws DAQCompException, IOException, JAXPUtilException
-    {
-        String sample = "<a><b val=\"123\">" +
-            "<bx num=\"1\" name=\"one\"/>" +
-            "<bx num=\"3\" name=\"three\"/>" +
-            "</b>" +
-            "<c><cx file=\"/dev/null\">foo</cx></c>" +
-            "<d name=\"xyz\"/>" +
-            "</a>";
-
-        File tmpFile = File.createTempFile("comp", ".xml");
-        tmpFile.deleteOnExit();
-
-        PrintWriter out = new PrintWriter(tmpFile);
-        out.print(sample);
-        out.close();
-
-        Document doc = JAXPUtil.loadXMLDocument(tmpFile.getParentFile(),
-                                                tmpFile.getName());
-
-        Node node = JAXPUtil.extractNode(doc, "a/c/cx");
-        assertNotNull("Cannot find node", node);
-        assertEquals("Bad node type", node.getNodeType(), Node.ELEMENT_NODE);
-
-        File f = DAQComponent.getFile(null, (Element) node, "file");
-        assertNotNull("Cannot extract file", f);
-        assertEquals("Extracted wrong file", "/dev/null", f.getPath());
-    }
-
     public static void main(String argv[])
     {
         junit.textui.TestRunner.run(suite());
