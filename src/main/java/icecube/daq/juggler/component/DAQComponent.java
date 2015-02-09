@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15400 2015-02-09 20:20:57Z dglo $
+ * @version $Id: DAQComponent.java 15403 2015-02-09 20:35:25Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -114,6 +114,9 @@ public abstract class DAQComponent
     private Alerter alerter;
     /** Alert queue */
     private AlertQueue alertQueue;
+
+    /** Current run number */
+    private int runNumber;
 
     /**
      * Create a component.
@@ -723,60 +726,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Return the requested MBean.
-     *
-     * @return MBean
-     *
-     * @throws DAQCompException if there is a problem
-     */
-    public Object getMBean(String name)
-        throws DAQCompException
-    {
-        try {
-            return mbeanAgent.getBean(name);
-        } catch (MBeanAgentException mae) {
-            throw new DAQCompException("Bad MBean name \"" + name + "\"", mae);
-        }
-    }
-
-    /**
-     * Get the most recent set of trigger counts to be used for
-     * detector monitoring.
-     *
-     * @return list of trigger count data.
-     */
-    public List<Map<String, Object>> getMoniCounts()
-    {
-        return new ArrayList<Map<String, Object>>();
-    }
-
-    /**
-     * Get the time of the first hit being replayed.
-     *
-     * @return UTC time of first hit
-     *
-     * @throws DAQCompException if component is not a replay hub
-     */
-    public long getReplayStartTime()
-        throws DAQCompException
-    {
-        throw new DAQCompException("Component is not a ReplayHub");
-    }
-
-    /**
-     * Get the run data for a builder.
-     *
-     * @param runnum run number
-     *
-     * @return list of run data values
-     */
-    public long[] getRunData(int runnum)
-        throws DAQCompException
-    {
-        return new long[0];
-    }
-
-    /**
      * Get component name (and ID, for non-hub components.)
      *
      * @return full name
@@ -811,6 +760,23 @@ public abstract class DAQComponent
     }
 
     /**
+     * Return the requested MBean.
+     *
+     * @return MBean
+     *
+     * @throws DAQCompException if there is a problem
+     */
+    public Object getMBean(String name)
+        throws DAQCompException
+    {
+        try {
+            return mbeanAgent.getBean(name);
+        } catch (MBeanAgentException mae) {
+            throw new DAQCompException("Bad MBean name \"" + name + "\"", mae);
+        }
+    }
+
+    /**
      * Get MBean XML-RPC server port for this component.
      *
      * @return <tt>0</tt> if there is no MBean server for this component
@@ -831,6 +797,17 @@ public abstract class DAQComponent
 
 
         return port;
+    }
+
+    /**
+     * Get the most recent set of trigger counts to be used for
+     * detector monitoring.
+     *
+     * @return list of trigger count data.
+     */
+    public List<Map<String, Object>> getMoniCounts()
+    {
+        return new ArrayList<Map<String, Object>>();
     }
 
     /**
@@ -862,6 +839,44 @@ public abstract class DAQComponent
     public String getOptionUsage()
     {
         return "";
+    }
+
+    /**
+     * Get the time of the first hit being replayed.
+     *
+     * @return UTC time of first hit
+     *
+     * @throws DAQCompException if component is not a replay hub
+     */
+    public long getReplayStartTime()
+        throws DAQCompException
+    {
+        throw new DAQCompException("Component is not a ReplayHub");
+    }
+
+    /**
+     * Get the run data for a builder.
+     *
+     * @param runnum run number
+     *
+     * @return list of run data values
+     */
+    public long[] getRunData(int runnum)
+        throws DAQCompException
+    {
+        return new long[0];
+    }
+
+    /**
+     * Get the current run number.  The event builder maintains its own version
+     * of this method which is more correct than this value for a short period
+     * during SwitchRuns.
+     *
+     * @return current run number
+     */
+    public int getRunNumber()
+    {
+        return runNumber;
     }
 
     /**
@@ -1280,6 +1295,8 @@ public abstract class DAQComponent
         }
 
         stateTask.startRun(runNumber);
+
+        this.runNumber = runNumber;
     }
 
     /**
@@ -1411,6 +1428,8 @@ public abstract class DAQComponent
         }
 
         stateTask.switchToNewRun(runNumber);
+
+        this.runNumber = runNumber;
     }
 
     /**
