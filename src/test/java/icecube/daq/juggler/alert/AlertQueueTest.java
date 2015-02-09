@@ -158,61 +158,33 @@ public class AlertQueueTest
         assertTrue("AlertQueue should be stopped", aq.isStopped());
         assertTrue("AlertQueue should not be idle", aq.isIdle());
 
-        final int maxSize = 4;
-
-        aq.setMaxQueueSize(maxSize);
+        aq.setMaxQueueSize(1);
         alerter.setSendDelay(500);
 
         startQueue(aq);
 
-        // queue maximum number of alerts
-        for (int i = 0; i < maxSize; i++) {
-            aq.push("Alert#" + i);
-        }
+        aq.push("ABC");
+        aq.push("DEF");
 
-        // keep pushing alerts until we see the overflow error
-        int dropped = 0;
-        for (int i = maxSize; i < maxSize * 2; i++) {
-            aq.push("Alert#" + i);
-            dropped++;
-            if (appender.getNumberOfMessages() > 0) {
-                break;
-            }
-        }
-
-        // should only receive one error
-        assertEquals("Bad number of log messages",
-                     1, appender.getNumberOfMessages());
-
-        final String front = "Disabled alert queue containing ";
-        String msg = (String) appender.getMessage(0);
-        if (!msg.startsWith(front)) {
-            fail("Unexpected log message: " + msg);
-        }
-        appender.clear();
-
-        // wait for queue to be emptied
         flushQueue(aq);
-
-        // push into empty queue
-        aq.push("ValidAgain");
-
-        // we added the maximum number of alerts plus one
-        int expAlerts = maxSize + 1;
-
-        // the previous push should cause a 'reenabled' log message
         assertEquals("Bad number of log messages",
                      1, appender.getNumberOfMessages());
         assertEquals("Bad log message",
-                     "Reenabled alert queue containing 0 messages (dropped " +
-                     dropped + ")", appender.getMessage(0));
+                     "Disabled alert queue containing 1 messages",
+                     appender.getMessage(0));
         appender.clear();
 
-        // empty the queue again and stop
-        flushQueue(aq);
-        aq.stopAndWait();
+        aq.push("GHI");
 
-        // make sure we got the expected number of alerts
-        assertEquals("Bad number of alerts sent", expAlerts, aq.getNumSent());
+        flushQueue(aq);
+        assertEquals("Bad number of log messages",
+                     1, appender.getNumberOfMessages());
+        assertEquals("Bad log message",
+                     "Reenabled alert queue containing 0 messages (dropped 1)",
+                     appender.getMessage(0));
+        appender.clear();
+
+        aq.stopAndWait();
+        assertEquals("Bad number of alerts sent", 2, aq.getNumSent());
     }
 }
