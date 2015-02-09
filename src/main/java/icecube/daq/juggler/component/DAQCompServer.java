@@ -237,9 +237,9 @@ class LogOptions
         throws LogOptionException
     {
         try {
-            comp.getAlerter().setAddress(liveMoni.host, liveMoni.port);
+            comp.setAlerterAddress(liveMoni.host, liveMoni.port);
         } catch (AlertException ae) {
-            throw new LogOptionException("Couldn't set alerter to '" +
+            throw new LogOptionException("Couldn't set alerter address to '" +
                                          liveMoni.host + ":" + liveMoni.port +
                                          "'");
         }
@@ -836,23 +836,6 @@ public class DAQCompServer
     }
 
     /**
-     * XML-RPC method to get the current run number from a component.
-     *
-     * @return current run number
-     *
-     * @throws DAQCompException if component or subrun does not exist
-     */
-    public int getRunNumber()
-        throws DAQCompException
-    {
-        if (comp == null) {
-            throw new DAQCompException("Component not found");
-        }
-
-        return comp.getRunNumber();
-    }
-
-    /**
      * XML-RPC method to return component state.
      *
      * @return component state
@@ -965,27 +948,13 @@ public class DAQCompServer
         return "OK";
     }
 
-    private static final File buildFile(String dir, String base, char ch)
+    private static File buildFile(String dir, String base, char ch)
     {
         if (ch == (char) 0) {
             return new File(dir, base + ".log");
         }
 
         return new File(dir, String.format("%s_%c.log", base, ch));
-    }
-
-    private static final File renameTemp(String base, char oldCh, char newCh)
-    {
-        File oldFile = buildFile("/tmp", base, oldCh);
-        if (oldFile.exists()) {
-            File newFile = buildFile("/tmp", base, newCh);
-            if (newFile.exists() && oldCh != 'z') {
-                renameTemp(base, newCh, (char)(newCh + 1));
-            }
-            oldFile.renameTo(newFile);
-        }
-
-        return oldFile;
     }
 
     /**
@@ -1461,14 +1430,15 @@ public class DAQCompServer
             Object[] row = new Object[3];
             row[0] = type;
             row[1] = Character.toString(conn.getDescriptionChar());
-            row[2] = new Integer(conn.getPort());
+            row[2] = Integer.valueOf(conn.getPort());
 
             connList.add(row);
         }
 
         Object[] params = new Object[] {
-            comp.getName(), new Integer(comp.getNumber()),
-            host, new Integer(port), new Integer(comp.getMBeanXmlRpcPort()),
+            comp.getName(), Integer.valueOf(comp.getNumber()),
+            host, Integer.valueOf(port),
+            Integer.valueOf(comp.getMBeanXmlRpcPort()),
             connList.toArray(),
         };
 

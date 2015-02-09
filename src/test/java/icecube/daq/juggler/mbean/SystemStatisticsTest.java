@@ -20,7 +20,7 @@ public class SystemStatisticsTest
 
     private boolean canReadNetIO()
     {
-        File f = new File(SystemStatistics.PNDfilename);
+        File f = new File(SystemStatistics.PND_FILENAME);
         return f.canRead();
     }
 

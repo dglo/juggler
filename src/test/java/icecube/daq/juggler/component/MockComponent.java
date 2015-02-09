@@ -1,5 +1,8 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.juggler.alert.Alerter;
+import icecube.daq.juggler.test.MockAlerter;
+
 import icecube.daq.util.FlasherboardConfiguration;
 
 import java.util.Iterator;
@@ -33,6 +36,8 @@ public class MockComponent
     private long maxFileSize;
     private long subrunStartTime;
     private long subrunCommitTime;
+
+    private MockAlerter alerter;
 
     MockComponent(String name, int num)
     {
@@ -69,6 +74,15 @@ public class MockComponent
     public void enableLocalMonitoring(int interval)
     {
         moniInterval = interval;
+    }
+
+    public Alerter getAlerter()
+    {
+        if (alerter == null) {
+            alerter = new MockAlerter();
+        }
+
+        return alerter;
     }
 
     public String getDispatchDirectory()
@@ -167,12 +181,12 @@ public class MockComponent
         return subrunStartTime;
     }
 
-    public void started()
+    public void started(int runNumber)
     {
         calledStarted = true;
     }
 
-    public void starting()
+    public void starting(int runNumber)
     {
         calledStarting = true;
     }

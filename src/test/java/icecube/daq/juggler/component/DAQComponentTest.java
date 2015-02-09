@@ -7,14 +7,26 @@ import icecube.daq.juggler.test.MockCache;
 import icecube.daq.juggler.test.MockInputEngine;
 import icecube.daq.juggler.test.MockOutputEngine;
 import icecube.daq.payload.IByteBufferCache;
+import icecube.daq.util.JAXPUtil;
+import icecube.daq.util.JAXPUtilException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Iterator;
+import java.util.List;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 class BadOutputEngine
     extends MockOutputEngine

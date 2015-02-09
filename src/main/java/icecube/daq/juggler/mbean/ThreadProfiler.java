@@ -1,4 +1,4 @@
-package icecube.daq.stringhub;
+package icecube.daq.juggler.mbean;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;

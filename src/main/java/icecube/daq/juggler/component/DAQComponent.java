@@ -7,6 +7,8 @@ import icecube.daq.io.SimpleOutputEngine;
 import icecube.daq.io.SimpleReader;
 import icecube.daq.io.SpliceablePayloadReader;
 import icecube.daq.io.SpliceableSimpleReader;
+import icecube.daq.juggler.alert.AlertException;
+import icecube.daq.juggler.alert.AlertQueue;
 import icecube.daq.juggler.alert.Alerter;
 import icecube.daq.juggler.alert.ZMQAlerter;
 import icecube.daq.juggler.mbean.LocalMonitor;
@@ -35,11 +37,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 
-import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
+import org.w3c.dom.Element;
 
 /**
  * Generic DAQ component methods.
@@ -54,7 +52,7 @@ import org.dom4j.io.SAXReader;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15095 2014-07-18 20:51:47Z dglo $
+ * @version $Id: DAQComponent.java 15397 2015-02-06 23:18:56Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -110,9 +108,12 @@ public abstract class DAQComponent
 
     /** Thread which transitions between states */
     private StateTask stateTask;
+    private boolean taskDestroyed;
 
     /** Alert manager */
     private Alerter alerter;
+    /** Alert queue */
+    private AlertQueue alertQueue;
 
     /**
      * Create a component.
@@ -170,7 +171,7 @@ public abstract class DAQComponent
      *
      * @param conn connector
      */
-    private final void addConnector(DAQConnector conn)
+    private void addConnector(DAQConnector conn)
     {
         connectors.add(conn);
         connSorted = false;
@@ -255,9 +256,9 @@ public abstract class DAQComponent
      *
      * @throws Error if 'engine' is not a PayloadReader
      */
-    private final void addMonitoredEngine(String type,
-                                          DAQComponentInputProcessor engine,
-                                          boolean optional)
+    private void addMonitoredEngine(String type,
+                                    DAQComponentInputProcessor engine,
+                                    boolean optional)
     {
         addConnector(new DAQInputConnector(type, engine, optional));
 
@@ -318,10 +319,10 @@ public abstract class DAQComponent
      *
      * @throws Error if 'engine' is not a known output engine
      */
-    private final void addMonitoredEngine(String type,
-                                          DAQComponentOutputProcess engine,
-                                          boolean allowMultipleConnections,
-                                          boolean optional)
+    private void addMonitoredEngine(String type,
+                                    DAQComponentOutputProcess engine,
+                                    boolean allowMultipleConnections,
+                                    boolean optional)
     {
         addConnector(new DAQOutputConnector(type, engine,
                                             allowMultipleConnections,
@@ -397,9 +398,8 @@ public abstract class DAQComponent
     public void closeAll()
         throws IOException
     {
-        if (alerter != null) {
-            alerter.close();
-            alerter = null;
+        if (alertQueue != null) {
+            alertQueue.stop();
         }
     }
 
@@ -424,7 +424,7 @@ public abstract class DAQComponent
     public final void configure()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -442,7 +442,7 @@ public abstract class DAQComponent
     public final void configure(String name)
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -472,7 +472,7 @@ public abstract class DAQComponent
     public final void connect()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -490,7 +490,7 @@ public abstract class DAQComponent
     public final void connect(Connection[] list)
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -506,7 +506,7 @@ public abstract class DAQComponent
     public final void destroy()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -522,7 +522,7 @@ public abstract class DAQComponent
     public final void disconnect()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -576,7 +576,7 @@ public abstract class DAQComponent
     public final void forcedStop()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -598,11 +598,30 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the alert queue.
+     *
+     * @return alert queue
+     */
+    public AlertQueue getAlertQueue()
+    {
+        if (alertQueue == null) {
+            alertQueue = new AlertQueue(getAlerter());
+        }
+
+        // Since caller needs an AlertQueue, we can assume they want it running
+        if (alertQueue.isStopped()) {
+            alertQueue.start();
+        }
+
+        return alertQueue;
+    }
+
+    /**
      * Get the alert manager.
      *
      * @return alert manager
      */
-    public Alerter getAlerter()
+    private Alerter getAlerter()
     {
         if (alerter == null) {
             alerter = new ZMQAlerter();
@@ -660,53 +679,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Get the file associated with the specified attribute.
-     *
-     * @param dataDir data directory
-     * @param elem XML element describing the file/directory
-     * @param attrName name of file/directory attribute
-     *
-     * @return data file
-     *
-     * @throws DAQCompException if the attribute or file cannot be found
-     */
-    public File getFile(String dataDir, Element elem, String attrName)
-        throws DAQCompException
-    {
-        // get attribute
-        Attribute fileAttr = elem.attribute(attrName);
-        if (fileAttr == null) {
-            return null;
-        }
-
-        // get attribute value
-        String name = fileAttr.getValue();
-
-        // build path for attribute
-        File file;
-        if (dataDir == null) {
-            file = new File(name);
-        } else {
-            file = new File(dataDir, name);
-        }
-
-        // make sure path exists
-        if (!file.exists()) {
-            String hostname;
-            try {
-                hostname = InetAddress.getLocalHost().getHostName();
-            } catch (Exception ex) {
-                hostname = "unknown";
-            }
-            throw new DAQCompException(attrName + " " + file +
-                                       " does not exist on " + hostname);
-        }
-
-        // return file path
-        return file;
-    }
-
-    /**
      * Return the requested MBean.
      *
      * @return MBean
@@ -758,16 +730,6 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         return new long[0];
-    }
-
-    /**
-     * Get the current run number.
-     *
-     * @return current run number
-     */
-    public int getRunNumber()
-    {
-        return -1;
     }
 
     /**
@@ -865,7 +827,7 @@ public abstract class DAQComponent
      */
     public final DAQState getState()
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             return DAQState.DESTROYED;
         }
 
@@ -901,7 +863,7 @@ public abstract class DAQComponent
      */
     public boolean isError()
     {
-        return stateTask != null && stateTask.isError();
+        return !taskDestroyed && stateTask.isError();
     }
 
     /**
@@ -947,59 +909,6 @@ public abstract class DAQComponent
     }
 
     /**
-     * Load a file as an XML document.
-     *
-     * @param dir directory path
-     * @param name XML file name
-     *
-     * @return XML Document object
-     *
-     * @throws DAQCompException if there is a problem
-     */
-    public Document loadXMLDocument(File dir, String name)
-        throws DAQCompException
-    {
-        // build config file path
-        File xmlFile = new File(dir, name);
-        if (!xmlFile.exists()) {
-            xmlFile = new File(dir, name + ".xml");
-            if (!xmlFile.exists()) {
-                throw new DAQCompException("Couldn't find " + name +
-                                           " in " + dir);
-            }
-        }
-
-        // open config file
-        FileInputStream fis;
-        try {
-            fis = new FileInputStream(xmlFile);
-        } catch (FileNotFoundException fnfe) {
-            throw new DAQCompException("Couldn't open " + xmlFile);
-        }
-
-        Document doc;
-        try {
-            // read in config XML
-            try {
-                doc = new SAXReader().read(fis);
-            } catch (DocumentException de) {
-                throw new DAQCompException("Couldn't read " + xmlFile + ": ",
-                                           de);
-            }
-        } finally {
-            // done with the fileinputstream
-            try {
-                fis.close();
-            } catch (IOException e) {
-                throw new DAQCompException("Could not close " + xmlFile +
-                                           " input stream");
-            }
-        }
-
-        return doc;
-    }
-
-    /**
      * List all MBean names.
      *
      * @return list of MBean names
@@ -1028,7 +937,7 @@ public abstract class DAQComponent
     final void reset()
         throws DAQCompException, IOException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -1080,12 +989,30 @@ public abstract class DAQComponent
     }
 
     /**
+     * Set the address to which alerts are sent.
+     *
+     * @param host - server host name
+     * @param port - server port number
+     *
+     * @throws AlertException if there is a problem with one of the parameters
+     */
+    public void setAlerterAddress(String host, int port)
+        throws AlertException
+    {
+        getAlerter().setAddress(host, port);
+    }
+
+    /**
      * Set the alert manager.
      *
      * @param alerter alert manager
      */
     public void setAlerter(Alerter alerter)
     {
+        if (alertQueue != null) {
+            alertQueue.setAlerter(alerter);
+        }
+
         if (this.alerter != null) {
             this.alerter.close();
         }
@@ -1182,16 +1109,6 @@ public abstract class DAQComponent
         throws DAQCompException
     {
         throw new DAQCompException("Component is not a ReplayHub");
-    }
-
-    /**
-     * Override this method to set the run number inside this component.
-     *
-     * @param runNumber run number
-     */
-    public void setRunNumber(int runNumber)
-    {
-        // Override me!
     }
 
     /**
@@ -1309,7 +1226,7 @@ public abstract class DAQComponent
     public final void startRun(int runNumber)
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -1338,9 +1255,11 @@ public abstract class DAQComponent
     /**
      * Override this method for actions which happen after a run has started.
      *
+     * @param runNumber run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    public void started()
+    public void started(int runNumber)
         throws DAQCompException
     {
         // Override me!
@@ -1350,9 +1269,11 @@ public abstract class DAQComponent
      * Override this method for actions which happen just before a run is
      * started.
      *
+     * @param runNumber run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    public void starting()
+    public void starting(int runNumber)
         throws DAQCompException
     {
         // Override me!
@@ -1383,7 +1304,7 @@ public abstract class DAQComponent
     public final void stopRun()
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -1402,7 +1323,7 @@ public abstract class DAQComponent
     {
         if (stateTask != null) {
             stateTask.stop();
-            stateTask = null;
+            taskDestroyed = true;
         }
     }
 
@@ -1440,7 +1361,7 @@ public abstract class DAQComponent
     public final void switchToNewRun(int runNumber)
         throws DAQCompException
     {
-        if (stateTask == null) {
+        if (taskDestroyed) {
             throw new DAQCompException("Component " + getName() +
                                        " has been destroyed");
         }
@@ -1471,7 +1392,7 @@ public abstract class DAQComponent
      */
     public void waitForStateChange(DAQState curState)
     {
-        while (stateTask != null && stateTask.getState() == curState &&
+        while (!taskDestroyed && stateTask.getState() == curState &&
                !stateTask.isError())
         {
             try {
@@ -1489,7 +1410,7 @@ public abstract class DAQComponent
      */
     public String toString()
     {
-        StringBuffer buf = new StringBuffer(getName());
+        StringBuilder buf = new StringBuilder(getName());
 
         if (caches.size() > 0) {
             buf.append(" [");

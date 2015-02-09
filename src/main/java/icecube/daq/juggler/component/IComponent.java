@@ -1,5 +1,7 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.juggler.alert.AlertQueue;
+import icecube.daq.juggler.alert.Alerter;
 import icecube.daq.payload.IByteBufferCache;
 
 import java.util.Set;
@@ -53,6 +55,13 @@ public interface IComponent
      */
     void forcedStop()
         throws DAQCompException;
+
+    /**
+     * Get the alert queue.
+     *
+     * @return alert queue
+     */
+    AlertQueue getAlertQueue();
 
     /**
      * Get the buffer cache for the specified data type.
@@ -113,18 +122,18 @@ public interface IComponent
         throws DAQCompException;
 
     /**
+     * Set the alert manager.
+     *
+     * @param alerter alert manager
+     */
+    void setAlerter(Alerter alerter);
+
+    /**
      * Set the location of the global configuration directory.
      *
      * @param dirName absolute path of configuration directory
      */
     void setGlobalConfigurationDir(String dirName);
-
-    /**
-     * Set the run number inside this component.
-     *
-     * @param runNumber run number
-     */
-    void setRunNumber(int num);
 
     /**
      * Start background threads.
@@ -147,17 +156,21 @@ public interface IComponent
     /**
      * Perform any actions which should happen just after a run is started.
      *
+     * @param runNumber new run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    void started()
+    void started(int runNumber)
         throws DAQCompException;
 
     /**
      * Perform any actions which should happen just before a run is started.
      *
+     * @param runNumber new run number
+     *
      * @throws DAQCompException if there is a problem starting the component
      */
-    void starting()
+    void starting(int runNumber)
         throws DAQCompException;
 
     /**

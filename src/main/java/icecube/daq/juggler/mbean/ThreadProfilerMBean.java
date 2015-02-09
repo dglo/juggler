@@ -1,6 +1,5 @@
-package icecube.daq.stringhub;
+package icecube.daq.juggler.mbean;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public interface ThreadProfilerMBean

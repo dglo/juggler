@@ -88,7 +88,7 @@ class XMLRPCServer
         return newArray;
     }
 
-    private static AbstractMap fixMap(AbstractMap map) 
+    private static AbstractMap fixMap(AbstractMap map)
     {
         for (Map.Entry entry : (Set<Map.Entry>)map.entrySet()) {
             entry.setValue(fixValue(entry.getValue()));
@@ -115,12 +115,12 @@ class XMLRPCServer
         if (val.getClass().isArray()) {
             return fixArray((Object) val);
         } else if (val instanceof Byte) {
-            return new Integer(((Byte) val).intValue());
+            return Integer.valueOf(((Byte) val).intValue());
         } else if (val instanceof Character) {
             char[] array = new char[] {((Character) val).charValue() };
             return new String(array);
         } else if (val instanceof Short) {
-            return new Integer(((Short) val).intValue());
+            return Integer.valueOf(((Short) val).intValue());
         } else if (val instanceof Long) {
             long lVal = ((Long) val).longValue();
             if (lVal < (long) Integer.MIN_VALUE ||
@@ -129,7 +129,7 @@ class XMLRPCServer
                 return val.toString();
             }
 
-            return new Integer((int) lVal);
+            return Integer.valueOf((int) lVal);
         } else if (val instanceof Float) {
             return new Double(((Float) val).doubleValue());
         } else if (val instanceof AbstractMap) {

@@ -107,6 +107,23 @@ public class ZMQAlerter
         return zmqHost != null && context != null;
     }
 
+    private HashMap<String, Object> makeAlertValues(String condition,
+                                                    String notify,
+                                                    Map<String, Object> vars)
+    {
+        HashMap values = new HashMap();
+        if (condition != null && condition.length() > 0) {
+            values.put("condition", condition);
+        }
+        if (notify != null && notify.length() > 0) {
+            values.put("notify", notify);
+        }
+        if (vars != null && vars.size() > 0) {
+            values.put("vars", vars);
+        }
+        return values;
+    }
+
     /**
      * Send a message to IceCube Live.
      *
@@ -193,17 +210,20 @@ public class ZMQAlerter
         byte[] bytes = json.toString().getBytes();
 
         synchronized (this) {
-            if (socket == null && !socketWarned) {
-                LOG.error("Cannot send alert; socket has been closed");
-                socketWarned = true;
-            }
-
-            try {
-                socket.send(bytes, 0);
-            } catch (ZMQException ze) {
-                final String msg = String.format("Cannot send \"%s\" to 0MQ" +
-                                                 " host \"%s\"", obj, zmqURL);
-                throw new AlertException(msg, ze);
+            if (socket == null) {
+                if (!socketWarned) {
+                    LOG.error("Cannot send alert; socket has been closed");
+                    socketWarned = true;
+                }
+            } else {
+                try {
+                    socket.send(bytes, 0);
+                } catch (ZMQException ze) {
+                    final String msg =
+                        String.format("Cannot send \"%s\" to 0MQ host \"%s\"",
+                                      obj, zmqURL);
+                    throw new AlertException(msg, ze);
+                }
             }
         }
     }
@@ -239,23 +259,6 @@ public class ZMQAlerter
         throws AlertException
     {
         sendAlert(Calendar.getInstance(), priority, condition, notify, vars);
-    }
-
-    private HashMap<String, Object> makeAlertValues(String condition,
-                                                    String notify,
-                                                    Map<String, Object> vars)
-    {
-        HashMap values = new HashMap();
-        if (condition != null && condition.length() > 0) {
-            values.put("condition", condition);
-        }
-        if (notify != null && notify.length() > 0) {
-            values.put("notify", notify);
-        }
-        if (vars != null && vars.size() > 0) {
-            values.put("vars", vars);
-        }
-        return values;
     }
 
     /**
@@ -319,9 +322,9 @@ public class ZMQAlerter
                                      "\" returned null address");
         }
 
-        zmqPort = port;
-
         synchronized (this) {
+            zmqPort = port;
+
             zmqURL = "tcp://" + zmqHost.getHostAddress() + ":" +
                 zmqPort;
 
