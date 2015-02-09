@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15401 2015-02-09 20:31:22Z dglo $
+ * @version $Id: DAQComponent.java 15402 2015-02-09 20:34:14Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -114,6 +114,9 @@ public abstract class DAQComponent
     private Alerter alerter;
     /** Alert queue */
     private AlertQueue alertQueue;
+
+    /** Current run number */
+    private int runNumber;
 
     /**
      * Create a component.
@@ -821,6 +824,18 @@ public abstract class DAQComponent
     }
 
     /**
+     * Get the current run number.  The event builder maintains its own version
+     * of this method which is more correct than this value for a short period
+     * during SwitchRuns.
+     *
+     * @return current run number
+     */
+    public int getRunNumber()
+    {
+        return runNumber;
+    }
+
+    /**
      * Get current state.
      *
      * @return current state
@@ -1236,6 +1251,8 @@ public abstract class DAQComponent
         }
 
         stateTask.startRun(runNumber);
+
+        this.runNumber = runNumber;
     }
 
     /**
@@ -1367,6 +1384,8 @@ public abstract class DAQComponent
         }
 
         stateTask.switchToNewRun(runNumber);
+
+        this.runNumber = runNumber;
     }
 
     /**
