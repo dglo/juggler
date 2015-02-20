@@ -71,7 +71,12 @@ public class MockOutputEngine
         return state;
     }
 
-    public long[] getRecordsSent()
+    public long getRecordsSent()
+    {
+        throw new Error("Unimplemented");
+    }
+
+    public long getTotalRecordsSent()
     {
         throw new Error("Unimplemented");
     }
