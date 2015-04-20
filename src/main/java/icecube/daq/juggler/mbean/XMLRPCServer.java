@@ -131,7 +131,7 @@ class XMLRPCServer
 
             return Integer.valueOf((int) lVal);
         } else if (val instanceof Float) {
-            return new Double(((Float) val).doubleValue());
+            return Double.valueOf(((Float) val).doubleValue());
         } else if (val instanceof AbstractMap) {
             return fixMap((AbstractMap) val);
         }
