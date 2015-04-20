@@ -1511,7 +1511,7 @@ public class DAQCompServer
      * XML-RPC method setting first "good" time in the specified component.
      * run.
      *
-     * @param firstTime first "good" time
+     * @param firstTimeStr first "good" time (as a String)
      *
      * @return <tt>"OK"</tt>
      *
@@ -1570,7 +1570,7 @@ public class DAQCompServer
      * XML-RPC method setting last "good" time in the specified component.
      * run.
      *
-     * @param lastTime last "good" time
+     * @param lastTimeStr last "good" time (as a String)
      *
      * @return <tt>"OK"</tt>
      *
@@ -1705,7 +1705,7 @@ public class DAQCompServer
     /**
      * XML-RPC method to set the offset applied to each hit being replayed.
      *
-     * @param offset offset to apply to hit times
+     * @param offsetStr offset to apply to hit times (as a String)
      *
      * @return <tt>"OK"</tt>
      *

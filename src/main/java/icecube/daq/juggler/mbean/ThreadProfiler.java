@@ -48,7 +48,7 @@ public class ThreadProfiler
     /**
      * Get general thread data.
      *
-     * @return map of threadData->value
+     * @return map of threadData-&gt;value
      */
     public HashMap<String, Long> getThreadInfo()
     {
