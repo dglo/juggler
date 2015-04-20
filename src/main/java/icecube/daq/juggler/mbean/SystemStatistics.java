@@ -477,7 +477,7 @@ public class SystemStatistics
         if (dfMap == null || dfMap.size() == 0) {
             dfStr = "";
         } else {
-            StringBuffer buf = new StringBuffer("space: {");
+            StringBuilder buf = new StringBuilder("space: {");
 
             boolean needComma = false;
             for(Map.Entry entry : (Set<Map.Entry>)dfMap.entrySet()) {
@@ -501,7 +501,7 @@ public class SystemStatistics
         if (ioMap == null || ioMap.size() == 0) {
             ioStr = "";
         } else {
-            StringBuffer buf = new StringBuffer("network: {");
+            StringBuilder buf = new StringBuilder("network: {");
 
             boolean needComma = false;
             for(Map.Entry entry: ioMap.entrySet()) {
