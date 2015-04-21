@@ -172,7 +172,8 @@ public class AlertQueue
         if (alerter == null) {
             throw new AlertException("Alerter has not been set");
         } else if (stopping || stopped) {
-            throw new AlertException("AlertQueue has not been started");
+            throw new AlertException("Alert queue " + name +
+                                     " has not been started");
         }
 
         synchronized (queue) {
@@ -180,16 +181,16 @@ public class AlertQueue
                 // if queue is "too large", stop adding stuff
                 queueFull = queue.size() >= maxQueueSize;
                 if (queueFull) {
-                    LOG.error("Disabled alert queue containing " +
+                    LOG.error("Disabled alert queue " + name + " containing " +
                               queue.size() + " messages");
                 }
             } else {
                 // if queue has shrunk enough, resume adding stuff
                 queueFull = queue.size() >= maxQueueSize / 2;
                 if (!queueFull) {
-                    LOG.error("Reenabled alert queue containing " +
-                              queue.size() + " messages (dropped " +
-                              numDropped + ")");
+                    LOG.error("Reenabled alert queue " + name +
+                              " containing " + queue.size() +
+                              " messages (dropped " + numDropped + ")");
                 }
             }
 
@@ -263,8 +264,8 @@ public class AlertQueue
                         idle = true;
                         queue.wait();
                     } catch (InterruptedException ie) {
-                        LOG.error("Interrupt while waiting for alert queue",
-                                  ie);
+                        LOG.error("Interrupt while waiting for alert queue " +
+                                  name, ie);
                     }
                     idle = false;
                 }
@@ -285,7 +286,7 @@ public class AlertQueue
                 alerter.sendObject(obj);
                 numSent++;
             } catch (AlertException ae) {
-                LOG.error("Cannot send " + obj, ae);
+                LOG.error("Alert queue " + name + " cannot send " + obj, ae);
             }
         }
 
