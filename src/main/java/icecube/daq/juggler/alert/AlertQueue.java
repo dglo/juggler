@@ -17,6 +17,8 @@ import org.apache.commons.logging.LogFactory;
 public class AlertQueue
     implements Runnable
 {
+    public static final String DEFAULT_NAME = "AlertQueue";
+
     private static final Log LOG = LogFactory.getLog(AlertQueue.class);
 
     private static final int MAX_QUEUE_SIZE = 1000000;
@@ -44,7 +46,7 @@ public class AlertQueue
      */
     public AlertQueue(Alerter alerter)
     {
-        this("AlertQueue", alerter);
+        this(DEFAULT_NAME, alerter);
     }
 
     /**

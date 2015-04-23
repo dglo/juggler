@@ -184,7 +184,8 @@ public class AlertQueueTest
         assertEquals("Bad number of log messages",
                      1, appender.getNumberOfMessages());
 
-        final String front = "Disabled alert queue containing ";
+        final String front = "Disabled alert queue " +
+            AlertQueue.DEFAULT_NAME + " containing ";
         String msg = (String) appender.getMessage(0);
         if (!msg.startsWith(front)) {
             fail("Unexpected log message: " + msg);
@@ -204,7 +205,8 @@ public class AlertQueueTest
         assertEquals("Bad number of log messages",
                      1, appender.getNumberOfMessages());
         assertEquals("Bad log message",
-                     "Reenabled alert queue containing 0 messages (dropped " +
+                     "Reenabled alert queue " + AlertQueue.DEFAULT_NAME +
+                     " containing 0 messages (dropped " +
                      dropped + ")", appender.getMessage(0));
         appender.clear();
 
