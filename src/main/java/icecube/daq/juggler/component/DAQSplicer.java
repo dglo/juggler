@@ -72,7 +72,7 @@ public class DAQSplicer
      */
     public String getState()
     {
-        return splicer.getStateString();
+        return splicer.getState().name();
     }
 
     /**
@@ -82,7 +82,7 @@ public class DAQSplicer
      */
     public boolean isRunning()
     {
-        return (splicer.getState() != Splicer.STOPPED);
+        return (splicer.getState() != Splicer.State.STOPPED);
     }
 
     /**
@@ -102,7 +102,7 @@ public class DAQSplicer
      */
     public boolean isStopped()
     {
-        return (splicer.getState() == Splicer.STOPPED);
+        return (splicer.getState() == Splicer.State.STOPPED);
     }
 
     /**
