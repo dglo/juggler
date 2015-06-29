@@ -35,9 +35,9 @@ public class AlertQueue
     private int maxQueueSize = MAX_QUEUE_SIZE;
     private boolean queueFull;
 
-    private boolean idle = true;
-    private boolean stopping;
-    private boolean stopped = true;
+    private volatile boolean idle = true;
+    private volatile boolean stopping;
+    private volatile boolean stopped = true;
 
     /**
      * Create an AlertQueue with a thread named <tt>"AlertQueue"</tt>
@@ -261,7 +261,7 @@ public class AlertQueue
         while (!stopping || queue.size() > 0) {
             Object obj;
             synchronized (queue) {
-                if (queue.size() == 0) {
+                if (queue.size() == 0 && !stopping) {
                     try {
                         idle = true;
                         queue.wait();
@@ -280,7 +280,8 @@ public class AlertQueue
             }
 
             if (obj == null) {
-                // we woke up to an empty queue; go to top of loop
+                // we woke up to an empty queue or were stopped when the
+                // queue was empty; go to top of loop
                 continue;
             }
 
