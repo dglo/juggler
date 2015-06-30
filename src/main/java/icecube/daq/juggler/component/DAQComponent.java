@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15402 2015-02-09 20:34:14Z dglo $
+ * @version $Id: DAQComponent.java 15619 2015-06-30 16:07:51Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -395,6 +395,7 @@ public abstract class DAQComponent
 
     /**
      * Close all open files, sockets, etc.
+     * NOTE: This is only used by unit tests.
      *
      * @throws IOException if there is a problem
      */
