@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15619 2015-06-30 16:07:51Z dglo $
+ * @version $Id: DAQComponent.java 15760 2015-09-14 22:06:09Z bendfelt $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -1132,7 +1132,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if input server cannot be started
      */
-    public final void start()
+    public void start()
         throws DAQCompException
     {
         start(true);
