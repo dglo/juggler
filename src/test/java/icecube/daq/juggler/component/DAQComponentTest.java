@@ -986,7 +986,7 @@ public class DAQComponentTest
         mockComp.forcedStop();
         mockComp.waitForStateChange(DAQState.FORCING_STOP);
         assertEquals("Bad state after forcedStop",
-                     DAQState.RUNNING, mockComp.getState());
+                     DAQState.ERROR, mockComp.getState());
 
         assertEquals("Bad number of log messages",
                      1, getNumberOfMessages());
@@ -1042,7 +1042,7 @@ public class DAQComponentTest
         mockComp.startRun(1);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after bad startRun",
-                     DAQState.READY, mockComp.getState());
+                     DAQState.ERROR, mockComp.getState());
         assertTrue("Expected error after bad startRun", mockComp.isError());
 
         assertEquals("Bad number of log messages",
