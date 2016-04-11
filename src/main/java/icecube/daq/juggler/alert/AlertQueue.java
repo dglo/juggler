@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
  * Thread which queues and sends alerts
  */
 public class AlertQueue
-    implements Runnable
+    implements Runnable, IAlertQueue
 {
     public static final String DEFAULT_NAME = "AlertQueue";
 
