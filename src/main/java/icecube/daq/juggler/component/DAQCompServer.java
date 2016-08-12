@@ -530,12 +530,12 @@ public class DAQCompServer
                                       rtnMap.size() + " elements");
         }
 
-        final int compId = ((Integer) rtnMap.get("id")).intValue();
+        final int compId = ((Number) rtnMap.get("id")).intValue();
         final String logIP = (String) rtnMap.get("logIP");
-        final int logPort = ((Integer) rtnMap.get("logPort")).intValue();
+        final int logPort = ((Number) rtnMap.get("logPort")).intValue();
         final String liveIP = (String) rtnMap.get("liveIP");
-        final int livePort = ((Integer) rtnMap.get("livePort")).intValue();
-        final int tmpServerId =  ((Integer) rtnMap.get("serverId")).intValue();
+        final int livePort = ((Number) rtnMap.get("livePort")).intValue();
+        final int tmpServerId =  ((Number) rtnMap.get("serverId")).intValue();
 
         if (serverId != tmpServerId) {
             setServerId(tmpServerId);
@@ -706,9 +706,9 @@ public class DAQCompServer
 
             String type = (String) map.get("type");
             String compName = (String) map.get("compName");
-            int compNum = ((Integer) map.get("compNum")).intValue();
+            int compNum = ((Number) map.get("compNum")).intValue();
             String host = (String) map.get("host");
-            int port = ((Integer) map.get("port")).intValue();
+            int port = ((Number) map.get("port")).intValue();
 
             connList[i] = new Connection(type, compName, compNum, host, port);
         }
@@ -1040,7 +1040,7 @@ public class DAQCompServer
         try {
             Object obj = client.execute("rpc_ping", NO_PARAMS);
 
-            int val = ((Integer) obj).intValue();
+            int val = ((Number) obj).intValue();
 
             sawServer = (val == serverId);
         } catch (XmlRpcException xre) {
@@ -1898,7 +1898,7 @@ public class DAQCompServer
 
                 int[] vals = new int[5];
                 for (int i = 0; i < vals.length; i++) {
-                    vals[i] = ((Integer) array[i + 1]).intValue();
+                    vals[i] = ((Number) array[i + 1]).intValue();
                 }
 
                 data.add(new FlasherboardConfiguration(mbid, vals[0], vals[1],
