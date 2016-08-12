@@ -508,6 +508,7 @@ public class DAQCompServer
         comp.setLogLevel(Level.INFO);
 
         processArgs(comp, args);
+        comp.initialize();
 
         resetLoggingConfiguration();
     }

@@ -120,6 +120,10 @@ class MiniComponent
     {
         return "$Id$";
     }
+
+    public void initialize()
+    {
+    }
 }
 
 public class DAQComponentTest

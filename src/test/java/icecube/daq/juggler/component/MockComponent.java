@@ -120,6 +120,10 @@ public class MockComponent
         return version;
     }
 
+    public void initialize()
+    {
+    }
+
     public void prepareSubrun(int subrunNumber)
     {
         calledPrepareSubrun = true;

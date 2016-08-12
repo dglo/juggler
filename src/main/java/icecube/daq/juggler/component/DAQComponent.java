@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 15760 2015-09-14 22:06:09Z bendfelt $
+ * @version $Id: DAQComponent.java 16198 2016-08-12 20:48:03Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -871,6 +871,13 @@ public abstract class DAQComponent
     {
         return 0;
     }
+
+    /**
+     * Create all internal objects and start up component in IDLE state.
+     * @throws DAQCompException if there is a problem
+     */
+    public abstract void initialize()
+        throws DAQCompException;
 
     /**
      * Is there an error from the last request?
