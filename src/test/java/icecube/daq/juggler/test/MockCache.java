@@ -24,11 +24,6 @@ public class MockCache
         throw new Error("Unimplemented");
     }
 
-    public void destinationClosed()
-    {
-        throw new Error("Unimplemented");
-    }
-
     public void flush()
     {
         // do nothing
