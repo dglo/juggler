@@ -5,6 +5,7 @@ import icecube.daq.juggler.alert.Alerter;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.payload.IByteBufferCache;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -42,6 +43,18 @@ class StateComponent
     public StateComponent(String fullName)
     {
         this.fullName = fullName;
+    }
+
+    /**
+     * Close all open files, sockets, etc.
+     * NOTE: This is only used by unit tests.
+     *
+     * @throws IOException if there is a problem
+     */
+    public void closeAll()
+        throws IOException
+    {
+        throw new UnimplementedException();
     }
 
     /**
