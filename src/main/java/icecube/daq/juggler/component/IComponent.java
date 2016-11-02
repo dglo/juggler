@@ -4,6 +4,7 @@ import icecube.daq.juggler.alert.AlertQueue;
 import icecube.daq.juggler.alert.Alerter;
 import icecube.daq.payload.IByteBufferCache;
 
+import java.io.IOException;
 import java.util.Set;
 
 public interface IComponent
@@ -17,6 +18,15 @@ public interface IComponent
      */
     void configuring(String configName)
         throws DAQCompException;
+
+    /**
+     * Close all open files, sockets, etc.
+     * NOTE: This is only used by unit tests.
+     *
+     * @throws IOException if there is a problem
+     */
+    void closeAll()
+        throws IOException;
 
     /**
      * Destroy all connections and threads.
