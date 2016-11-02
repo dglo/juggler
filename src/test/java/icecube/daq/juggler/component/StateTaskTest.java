@@ -481,21 +481,27 @@ public class StateTaskTest
             Thread thread = new Thread(st);
             thread.setName("StateTask");
             thread.start();
-            while (!st.isRunning()) {
+            for (int j = 0; !st.isRunning() && j < 100; j++) {
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(10);
                 } catch (InterruptedException ie) {
                     // ignore interrupts
                 }
             }
+            if (!st.isRunning()) {
+                fail("StateTask " + st + " was not started!");
+            }
 
             st.stop();
-            while (!st.isStopped()) {
+            for (int j = 0; !st.isStopped() && j < 100; j++) {
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(10);
                 } catch (InterruptedException ie) {
                     // ignore interrupts
                 }
+            }
+            if (!st.isStopped()) {
+                fail("StateTask " + st + " was not stopped!");
             }
 
             assertEquals("Unexpected final state for " + trans.getOldState() +
