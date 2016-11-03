@@ -1,8 +1,7 @@
 package icecube.daq.juggler.alert;
 
+import icecube.daq.common.MockAppender;
 import icecube.daq.juggler.alert.Alerter.Priority;
-import icecube.daq.juggler.test.MockAlerter;
-import icecube.daq.juggler.test.MockAppender;
 import icecube.daq.juggler.test.MockAlerter;
 import icecube.daq.juggler.test.MockUTCTime;
 
@@ -80,8 +79,7 @@ public class AlertQueueTest
     public void tearDown()
         throws Exception
     {
-        assertEquals("Bad number of log messages",
-                     0, appender.getNumberOfMessages());
+        appender.assertNoLogMessages();
 
         //assertEquals("Bad number of alert messages",
         //             0, alerter.countAllAlerts());
@@ -181,16 +179,10 @@ public class AlertQueueTest
         }
 
         // should only receive one error
-        assertEquals("Bad number of log messages",
-                     1, appender.getNumberOfMessages());
-
         final String front = "Disabled alert queue " +
             AlertQueue.DEFAULT_NAME + " containing ";
-        String msg = (String) appender.getMessage(0);
-        if (!msg.startsWith(front)) {
-            fail("Unexpected log message: " + msg);
-        }
-        appender.clear();
+        appender.assertLogMessage(front);
+        appender.assertNoLogMessages();
 
         // wait for queue to be emptied
         flushQueue(aq);
@@ -201,14 +193,21 @@ public class AlertQueueTest
         // we added the maximum number of alerts plus one
         int expAlerts = maxSize + 1;
 
+        // wait for the log message
+        for (int i = 0; i < 100 && appender.getNumberOfMessages() == 0; i++) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ie) {
+                // ignore interrupts
+            }
+        }
+
         // the previous push should cause a 'reenabled' log message
-        assertEquals("Bad number of log messages",
-                     1, appender.getNumberOfMessages());
-        assertEquals("Bad log message",
-                     "Reenabled alert queue " + AlertQueue.DEFAULT_NAME +
-                     " containing 0 messages (dropped " +
-                     dropped + ")", appender.getMessage(0));
-        appender.clear();
+        final String reMsg = "Reenabled alert queue " +
+            AlertQueue.DEFAULT_NAME + " containing 0 messages (dropped " +
+            dropped + ")";
+        appender.assertLogMessage(reMsg);
+        appender.assertNoLogMessages();
 
         // empty the queue again and stop
         flushQueue(aq);
