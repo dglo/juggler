@@ -76,6 +76,9 @@ public class DAQOutputConnector
     public OutputChannel connect(IByteBufferCache bufMgr, Connection conn)
         throws IOException
     {
+        DAQComponentOutputProcess.ChannelRequirements channelRequirement =
+                engine.getChannelRequirement();
+
         InetSocketAddress addr =
             new InetSocketAddress(conn.getHost(), conn.getPort());
 
@@ -88,8 +91,17 @@ public class DAQOutputConnector
                                                conn.getPort(), uae);
         }
 
-        chan.configureBlocking(false);
-
+        switch (channelRequirement)
+        {
+            case NON_BLOCKING:
+                chan.configureBlocking(false);
+                break;
+            case BLOCKING:
+                chan.configureBlocking(true);
+                break;
+            default:
+                throw new Error("Unknown enum: " + channelRequirement);
+        }
         final String name = conn.getComponentName();
         final int num = conn.getComponentNumber();
 
