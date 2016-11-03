@@ -1093,12 +1093,6 @@ public class DAQCompServerTest
         assertEquals("Bad state",
                      DAQState.IDLE, mockComp.getState());
         assertFalse("Unexpected error after reset", mockComp.isError());
-
-/*
-        assertEquals("Expected log message", 1, getNumberOfMessages());
-        assertEquals("Bad log message", "Where am I?", getMessage(0));
-        clearMessages();
-*/
     }
 
     public static void main(String argv[])

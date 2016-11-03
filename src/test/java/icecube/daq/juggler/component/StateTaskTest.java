@@ -523,9 +523,8 @@ public class StateTaskTest
 
             checkFunctions(comp, trans, trans.getFunctionBitmap());
 
-            assertEquals("Bad number of log messages " + trans.getOldState() +
-                         "->" + trans.getAction(),
-                         0, getNumberOfMessages());
+            assertNoLogMessages(trans.getOldState() + "->" +
+                                trans.getAction());
         }
     }
 }

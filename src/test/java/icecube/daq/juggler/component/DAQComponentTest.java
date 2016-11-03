@@ -197,24 +197,19 @@ public class DAQComponentTest
             testComp.addCache(types[i], cache);
         }
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         // currently allowed to overwrite cache entries
         for (int i = 0; i < types.length; i++) {
             MockCache cache = new MockCache(types[i]);
             testComp.addCache(types[i], cache);
 
-            assertEquals("Bad number of log messages",
-                         1, getNumberOfMessages());
-            assertEquals("Unexpected log message",
-                         "Overwriting buffer cache for type \"" + types[i] +
-                         "\"", getMessage(0));
-            clearMessages();
+            assertLogMessage("Overwriting buffer cache for type \"" +
+                             types[i] + "\"");
+            assertNoLogMessages();
         }
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         for (int i = 0; i < types.length; i++) {
             MockCache cache =
@@ -660,18 +655,14 @@ public class DAQComponentTest
 
         mockComp.start();
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         mockComp.connect();
         mockComp.waitForStateChange(DAQState.CONNECTING);
         assertTrue("Expected error", mockComp.isError());
 
-        assertEquals("Bad number of log messages",
-                     1, getNumberOfMessages());
-        assertEquals("Unexpected log message 0",
-                     "Connect failed", getMessage(0));
-        clearMessages();
+        assertLogMessage("Connect failed");
+        assertNoLogMessages();
 
         assertEquals("Bad state after failed connect",
                      DAQState.IDLE, mockComp.getState());
@@ -693,18 +684,14 @@ public class DAQComponentTest
                            "localhost", 123),
         };
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         mockComp.connect(badList);
         mockComp.waitForStateChange(DAQState.CONNECTING);
         assertTrue("Expected error", mockComp.isError());
 
-        assertEquals("Bad number of log messages",
-                     1, getNumberOfMessages());
-        assertEquals("Unexpected log message 0",
-                     "Connect failed", getMessage(0));
-        clearMessages();
+        assertLogMessage("Connect failed");
+        assertNoLogMessages();
 
         assertEquals("Bad state after failed connect",
                      DAQState.IDLE, mockComp.getState());
@@ -733,18 +720,14 @@ public class DAQComponentTest
                            outTarget.getServerPort()),
         };
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         mockComp.connect(badList);
         mockComp.waitForStateChange(DAQState.CONNECTING);
         assertTrue("Expected error", mockComp.isError());
 
-        assertEquals("Bad number of log messages",
-                     1, getNumberOfMessages());
-        assertEquals("Unexpected log message 0",
-                     "Connect failed", getMessage(0));
-        clearMessages();
+        assertLogMessage("Connect failed");
+        assertNoLogMessages();
 
         assertEquals("Bad state after failed connect",
                      DAQState.IDLE, mockComp.getState());
@@ -800,18 +783,14 @@ public class DAQComponentTest
                            outTarget.getServerPort()),
         };
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         mockComp.connect(badList);
         mockComp.waitForStateChange(DAQState.CONNECTING);
         assertTrue("Expected error", mockComp.isError());
 
-        assertEquals("Bad number of log messages",
-                     1, getNumberOfMessages());
-        assertEquals("Unexpected log message 0",
-                     "Connect failed", getMessage(0));
-        clearMessages();
+        assertLogMessage("Connect failed");
+        assertNoLogMessages();
 
         assertEquals("Bad state after failed connect",
                      DAQState.IDLE, mockComp.getState());
@@ -840,18 +819,14 @@ public class DAQComponentTest
                            outTarget.getServerPort()),
         };
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         mockComp.connect(badList);
         mockComp.waitForStateChange(DAQState.CONNECTING);
         assertTrue("Expected error", mockComp.isError());
 
-        assertEquals("Bad number of log messages",
-                     1, getNumberOfMessages());
-        assertEquals("Unexpected log message 0",
-                     "Connect failed", getMessage(0));
-        clearMessages();
+        assertLogMessage("Connect failed");
+        assertNoLogMessages();
 
         assertEquals("Bad state after failed connect",
                      DAQState.IDLE, mockComp.getState());
@@ -984,19 +959,15 @@ public class DAQComponentTest
                      DAQState.RUNNING, mockComp.getState());
         assertFalse("Unexpected error after startRun", mockComp.isError());
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         mockComp.forcedStop();
         mockComp.waitForStateChange(DAQState.FORCING_STOP);
         assertEquals("Bad state after forcedStop",
                      DAQState.ERROR, mockComp.getState());
 
-        assertEquals("Bad number of log messages",
-                     1, getNumberOfMessages());
-        assertEquals("Unexpected log message 0",
-                     "Forced stop failed", getMessage(0));
-        clearMessages();
+        assertLogMessage("Forced stop failed");
+        assertNoLogMessages();
 
         mockComp.reset();
         testComp.waitForStateChange(DAQState.RESETTING);
@@ -1040,8 +1011,7 @@ public class DAQComponentTest
                      DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         mockComp.startRun(1);
         mockComp.waitForStateChange(DAQState.STARTING);
@@ -1049,13 +1019,9 @@ public class DAQComponentTest
                      DAQState.ERROR, mockComp.getState());
         assertTrue("Expected error after bad startRun", mockComp.isError());
 
-        assertEquals("Bad number of log messages",
-                     2, getNumberOfMessages());
-        assertEquals("Unexpected log message 0",
-                     "Couldn't start tst", getMessage(0));
-        assertEquals("Unexpected log message 1",
-                     "Start run failed", getMessage(1));
-        clearMessages();
+        assertLogMessage("Couldn't start tst");
+        assertLogMessage("Start run failed");
+        assertNoLogMessages();
     }
 
     public void testListConnectors()
@@ -1389,8 +1355,7 @@ public class DAQComponentTest
                          DAQState.RUNNING, mockComp.getState());
             assertFalse("Unexpected error after startRun", mockComp.isError());
 
-            assertEquals("Bad number of log messages",
-                         0, getNumberOfMessages());
+            assertNoLogMessages();
 
             mockComp.serverDied();
             assertEquals("Bad state for #" + i,
@@ -1398,24 +1363,17 @@ public class DAQComponentTest
 
             switch (i) {
             case 0:
-                assertEquals("Bad number of log messages",
-                             1, getNumberOfMessages());
-                assertEquals("Unexpected log message 0",
-                             "Reset failed", getMessage(0));
+                assertLogMessage("Reset failed");
                 break;
             case 1:
-                assertEquals("Bad number of log messages",
-                             2, getNumberOfMessages());
-                assertEquals("Unexpected log message 0",
-                             "Reset failed", getMessage(0));
-                assertEquals("Unexpected log message 1",
-                             "Destroy failed", getMessage(1));
+                assertLogMessage("Reset failed");
+                assertLogMessage("Destroy failed");
                 break;
             default:
                 fail("Unexpected case");
                 break;
             }
-            clearMessages();
+            assertNoLogMessages();
         }
     }
 
@@ -1433,19 +1391,15 @@ public class DAQComponentTest
 
         mockComp.addEngine("gunk", badOut);
 
-        assertEquals("Bad number of log messages",
-                     0, getNumberOfMessages());
+        assertNoLogMessages();
 
         mockComp.destroy();
         mockComp.waitForStateChange(DAQState.DESTROYING);
         assertEquals("Bad state after failed destroy",
                      DAQState.DESTROYED, mockComp.getState());
 
-        assertEquals("Bad number of log messages",
-                     1, getNumberOfMessages());
-        assertEquals("Unexpected log message 0",
-                     "Destroy failed", getMessage(0));
-        clearMessages();
+        assertLogMessage("Destroy failed");
+        assertNoLogMessages();
     }
 
     public void testResetDestroyed()
