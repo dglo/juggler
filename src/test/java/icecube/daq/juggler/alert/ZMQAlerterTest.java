@@ -373,11 +373,8 @@ class ZMQServer
 
     public void waitForMessages()
     {
-        waitForMessages(10, 100);
-    }
-
-    public void waitForMessages(int numReps, int sleepTime)
-    {
+        final int numReps = 1000;
+        final int sleepTime = 10;
         for (int i = 0; !hasError() && !isFinished() && i < numReps; i++) {
             try {
                 Thread.sleep(sleepTime);
