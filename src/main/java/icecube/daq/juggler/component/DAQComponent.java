@@ -1,5 +1,6 @@
 package icecube.daq.juggler.component;
 
+import icecube.daq.io.BlockingOutputEngine;
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.PayloadReader;
@@ -52,7 +53,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 16198 2016-08-12 20:48:03Z dglo $
+ * @version $Id: DAQComponent.java 16315 2016-11-03 20:37:09Z bendfelt $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -75,8 +76,8 @@ public abstract class DAQComponent
         "TotalStrandDepth",
     };
 
-    /** Methods names for SimpleOutputEngine MBean */
-    private static final String[] simpleEngineMethods = new String[] {
+    /** Methods names for SimpleOutputEngine and BlockingOutputEngine MBean */
+    private static final String[] outputEngineMethods = new String[] {
         "Depth",
         "RecordsSent",
     };
@@ -332,8 +333,12 @@ public abstract class DAQComponent
                                             optional));
 
         if (engine instanceof SimpleOutputEngine) {
-            addMBean(type, new MBeanWrapper(engine, simpleEngineMethods));
-        } else {
+            addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
+        }
+        else if (engine instanceof BlockingOutputEngine) {
+            addMBean(type, new MBeanWrapper(engine, outputEngineMethods));
+        }
+        else {
             throw new Error("Cannot monitor " + engine.getClass().getName());
         }
     }
