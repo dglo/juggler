@@ -203,7 +203,7 @@ public class AlertQueueTest
         // the previous push should cause a 'reenabled' log message
         final String reMsg = "Reenabled alert queue " +
             AlertQueue.DEFAULT_NAME + " containing 0 messages (dropped " +
-            dropped + ")";
+            aq.getNumDropped() + ")";
         appender.assertLogMessage(reMsg);
         appender.assertNoLogMessages();
 
