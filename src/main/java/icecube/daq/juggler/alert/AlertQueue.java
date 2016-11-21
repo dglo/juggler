@@ -1,6 +1,7 @@
 package icecube.daq.juggler.alert;
 
 import icecube.daq.payload.IUTCTime;
+import icecube.daq.payload.impl.UTCTime;
 
 import java.util.ArrayDeque;
 import java.util.Calendar;
@@ -64,34 +65,11 @@ public class AlertQueue
 
     private Map<String, Object> buildMessage(String varname,
                                              Alerter.Priority priority,
-                                             Map<String, Object> values)
-    {
-        return buildMessage(varname, priority, Calendar.getInstance(), values);
-    }
-
-    private Map<String, Object> buildMessage(String varname,
-                                             Alerter.Priority priority,
                                              IUTCTime utc,
                                              Map<String, Object> values)
     {
-        return buildMessage(varname, priority, utc.toDateString(), values);
-    }
+        final String dateStr = utc.toDateString();
 
-    private Map<String, Object> buildMessage(String varname,
-                                             Alerter.Priority priority,
-                                             Calendar date,
-                                             Map<String, Object> values)
-    {
-        final String dateStr =
-            String.format("%tF %tT.%tL000", date, date, date);
-        return buildMessage(varname, priority, dateStr, values);
-    }
-
-    private Map<String, Object> buildMessage(String varname,
-                                             Alerter.Priority priority,
-                                             String dateStr,
-                                             Map<String, Object> values)
-    {
         String service;
         if (alerter != null) {
             service = alerter.getService();
@@ -163,12 +141,12 @@ public class AlertQueue
     /**
      * Add <tt>obj</tt> to the queue of alerts to be sent
      *
-     * @param obj alert to be sent
+     * @param map alert to be sent
      *
      * @throws AlertException if there is a problem with the alerter or
      *                        the thread is stopped
      */
-    public void push(Object obj)
+    public void push(Map<String, Object> map)
         throws AlertException
     {
         if (alerter == null) {
@@ -199,7 +177,7 @@ public class AlertQueue
             if (queueFull) {
                 numDropped++;
             } else {
-                queue.addLast(obj);
+                queue.addLast(map);
                 queue.notify();
             }
         }
@@ -219,7 +197,7 @@ public class AlertQueue
                      Map<String, Object> values)
         throws AlertException
     {
-        push(buildMessage(varname, prio, values));
+        push(varname, prio, new UTCTime(), values);
     }
 
     /**
@@ -237,6 +215,10 @@ public class AlertQueue
                      Map<String, Object> values)
         throws AlertException
     {
+        if (utcTime == null) {
+            utcTime = new UTCTime();
+        }
+
         push(buildMessage(varname, prio, utcTime, values));
     }
 

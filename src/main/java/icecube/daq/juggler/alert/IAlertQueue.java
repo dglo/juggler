@@ -23,7 +23,7 @@ public interface IAlertQueue
      * @throws AlertException if there is a problem with the alerter or
      *                        the thread is stopped
      */
-    void push(Object obj)
+    void push(Map<String, Object> obj)
         throws AlertException;
 
     /**
