@@ -5,6 +5,8 @@ import icecube.daq.juggler.alert.Alerter.Priority;
 import icecube.daq.juggler.test.MockAlerter;
 import icecube.daq.juggler.test.MockUTCTime;
 
+import java.util.HashMap;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -103,7 +105,9 @@ public class AlertQueueTest
         int numExpected = 0;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 30; j++) {
-                aq.push("Alert#" + i + "/" + j);
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("alert", String.format("%d/%d", i, j));
+                aq.push(map);
                 numExpected++;
             }
 
@@ -161,16 +165,23 @@ public class AlertQueueTest
 
         startQueue(aq);
 
+        // track number of alerts sent
+        int sent = 0;
+
         // queue maximum number of alerts
         for (int i = 0; i < maxSize; i++) {
-            aq.push("Alert#" + i);
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("alert", i);
+            aq.push(map);
+            sent++;
         }
 
         // keep pushing alerts until we see the overflow error
-        int dropped = 0;
         for (int i = maxSize; i < maxSize * 2; i++) {
-            aq.push("Alert#" + i);
-            dropped++;
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("alert", i);
+            aq.push(map);
+            sent++;
             if (appender.getNumberOfMessages() > 0) {
                 break;
             }
@@ -186,10 +197,10 @@ public class AlertQueueTest
         flushQueue(aq);
 
         // push into empty queue
-        aq.push("ValidAgain");
-
-        // we added the maximum number of alerts plus one
-        int expAlerts = maxSize + 1;
+        HashMap<String, Object> finalMap = new HashMap<String, Object>();
+        finalMap.put("Valid", "yes");
+        aq.push(finalMap);
+        sent++;
 
         // wait for the log message
         for (int i = 0; i < 100 && appender.getNumberOfMessages() == 0; i++) {
@@ -212,6 +223,7 @@ public class AlertQueueTest
         aq.stopAndWait();
 
         // make sure we got the expected number of alerts
-        assertEquals("Bad number of alerts sent", expAlerts, aq.getNumSent());
+        assertEquals("Bad number of alerts sent",
+                     sent - aq.getNumDropped(), aq.getNumSent());
     }
 }
