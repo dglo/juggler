@@ -55,6 +55,8 @@ class XMLRPCServer
 
         Class arrayType = array.getClass().getComponentType();
         if (arrayType == Long.class || arrayType == long.class) {
+            // 'long' values get converted to 'int' or 'String'
+            //   so array type must be 'Object'
             arrayType = Object.class;
         }
 
