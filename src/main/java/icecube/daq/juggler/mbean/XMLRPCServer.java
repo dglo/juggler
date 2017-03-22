@@ -51,17 +51,18 @@ class XMLRPCServer
 
     private static Object fixArray(Object array)
     {
-        Object newArray = null;
-
         boolean forceString = false;
 
+        Class arrayType = array.getClass().getComponentType();
+        if (arrayType == Long.class || arrayType == long.class) {
+            arrayType = Object.class;
+        }
+
         final int len = Array.getLength(array);
+
+        Object newArray = Array.newInstance(arrayType, len);
         for (int i = 0; i < len; i++) {
             Object elem = fixValue(Array.get(array, i));
-
-            if (newArray == null) {
-                newArray = Array.newInstance(elem.getClass(), len);
-            }
 
             try {
                 Array.set(newArray, i, (elem == null || !forceString ? elem :
@@ -113,7 +114,7 @@ class XMLRPCServer
         }
 
         if (val.getClass().isArray()) {
-            return fixArray((Object) val);
+            return fixArray(val);
         } else if (val instanceof Byte) {
             return Integer.valueOf(((Byte) val).intValue());
         } else if (val instanceof Character) {
@@ -149,13 +150,16 @@ class XMLRPCServer
 
         ObjectName objName = (ObjectName) beans.get(mbeanName);
 
+        Object attrVal;
         try {
-            return fixAttribute(server.getAttribute(objName, attrName));
+            attrVal = server.getAttribute(objName, attrName);
         } catch (JMException jme) {
             throw new MBeanAgentException("Couldn't get MBean \"" + mbeanName +
                                           "\" attribute \"" + attrName + "\"",
                                           jme);
         }
+
+        return fixAttribute(attrVal);
     }
 
     public HashMap getAttributes(String mbeanName, String[] attrNames)
