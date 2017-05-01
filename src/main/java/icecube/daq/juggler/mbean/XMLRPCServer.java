@@ -53,18 +53,18 @@ class XMLRPCServer
     {
         boolean forceString = false;
 
-        Class arrayType = array.getClass().getComponentType();
-        if (arrayType == Long.class || arrayType == long.class) {
-            // 'long' values get converted to 'int' or 'String'
-            //   so array type must be 'Object'
-            arrayType = Object.class;
+        final int len = Array.getLength(array);
+        if (len == 0) {
+            return Array.newInstance(array.getClass().getComponentType(), len);
         }
 
-        final int len = Array.getLength(array);
-
-        Object newArray = Array.newInstance(arrayType, len);
+        Object newArray = null;
         for (int i = 0; i < len; i++) {
             Object elem = fixValue(Array.get(array, i));
+
+            if (newArray == null) {
+                newArray = Array.newInstance(elem.getClass(), len);
+            }
 
             try {
                 Array.set(newArray, i, (elem == null || !forceString ? elem :
