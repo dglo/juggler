@@ -107,6 +107,8 @@ public class DAQCompServerTest
     public final void tearDown()
         throws FileNotFoundException
     {
+        System.clearProperty(LocatePDAQ.CONFIG_DIR_PROPERTY);
+
         // make sure we don't leave cached directory paths pointing at 'tmpDir'
         LocatePDAQ.clearCache();
 
@@ -782,12 +784,13 @@ public class DAQCompServerTest
         final String globalConfig = cfgTop.getAbsolutePath();
         final long maxFileSize = 678L;
 
+        System.setProperty(LocatePDAQ.CONFIG_DIR_PROPERTY, globalConfig);
+
         String[] args = new String[] {
             "-M", "localhost:3",
             "-S",
             "-c", "foo",
             "-d", dispatchDir,
-            "-g", globalConfig,
             "-l", "localhost:1,debug",
             "-L", "localhost:2,debug",
             "-m", Integer.toString(moniInterval),

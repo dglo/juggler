@@ -4,7 +4,9 @@ import icecube.daq.common.MockAppender;
 import icecube.daq.juggler.alert.Alerter.Priority;
 import icecube.daq.juggler.test.MockAlerter;
 import icecube.daq.juggler.test.MockUTCTime;
+import icecube.daq.util.LocatePDAQ;
 
+import java.io.File;
 import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
@@ -52,6 +54,18 @@ public class AlertQueueTest
         BasicConfigurator.configure(appender);
 
         alerter = new MockAlerter();
+
+        // ensure LocatePDAQ uses the test version of the config directory
+        File configDir =
+            new File(getClass().getResource("/config").getPath());
+        if (!configDir.exists()) {
+            throw new IllegalArgumentException("Cannot find config" +
+                                               " directory under " +
+                                               getClass().getResource("/"));
+        }
+
+        System.setProperty(LocatePDAQ.CONFIG_DIR_PROPERTY,
+                           configDir.getAbsolutePath());
     }
 
     private void startQueue(AlertQueue aq)
@@ -79,6 +93,8 @@ public class AlertQueueTest
     public void tearDown()
         throws Exception
     {
+        System.clearProperty(LocatePDAQ.CONFIG_DIR_PROPERTY);
+
         appender.assertNoLogMessages();
 
         //assertEquals("Bad number of alert messages",

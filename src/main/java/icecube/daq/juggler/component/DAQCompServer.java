@@ -1086,7 +1086,7 @@ public class DAQCompServer
 
         // get the configuration directory from a system property
         String propConfigDir =
-            System.getProperty("icecube.daq.component.configDir");
+            System.getProperty(LocatePDAQ.CONFIG_DIR_PROPERTY);
 
         boolean usage = false;
         for (int i = 0; i < args.length; i++) {
@@ -1137,7 +1137,7 @@ public class DAQCompServer
 
                     // if the system property was set ignore
                     // the -g option
-                    if (propConfigDir==null) {
+                    if (propConfigDir == null) {
                         propConfigDir = args[i];
                     } else {
                         System.err.println("Both the configuration file property " +
@@ -1162,7 +1162,7 @@ public class DAQCompServer
                     int secs;
                     try {
                         secs = Integer.parseInt(args[i]);
-                    } catch (NumberFormatException e) {
+                    } catch (NumberFormatException nfe) {
                         System.err.println("Bad monitoring interval '" +
                                            args[i] + "'");
                         usage = true;
@@ -1176,7 +1176,7 @@ public class DAQCompServer
                     long maxFileSize = 0;
                     try {
                         maxFileSize = Long.parseLong(args[i]);
-                    } catch (NumberFormatException e) {
+                    } catch (NumberFormatException nfe) {
                         System.err.println("Bad file size = " + args[i]);
                         usage = true;
                         break;
@@ -1232,7 +1232,7 @@ public class DAQCompServer
                 " [-c configServerURL]" +
                 " [-d dispatchDestPath]" +
                 " [-g globalConfigPath - note deprecated, " +
-                "     use -Dicecube.daq.component.configDir]" +
+                "     use -D" + LocatePDAQ.CONFIG_DIR_PROPERTY + "]" +
                 " [-l logAddress:logPort,logLevel]" +
                 " [-m localMoniSeconds]" +
                 " [-s maxDispatchFileSize]" +
