@@ -391,10 +391,11 @@ public class MBeanAgent
                                           jme);
         }
 
+        // register all MBeans
         registerBeans();
 
         htmlAdapter.start();
-        xmlRpcAdapter.start();
+        xmlRpcAdapter.start(this);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Started MBean agent: HTML port " + htmlPort +

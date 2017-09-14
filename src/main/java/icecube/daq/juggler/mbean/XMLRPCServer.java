@@ -25,6 +25,8 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
+import org.apache.xmlrpc.webserver.DAQWebServer;
+import org.apache.xmlrpc.webserver.XmlRpcStatisticsServer;
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**
@@ -44,10 +46,6 @@ class XMLRPCServer
     private WebServer webServer;
 
     private HashMap beans = new HashMap();
-
-    public XMLRPCServer()
-    {
-    }
 
     private static Object fixArray(Object array)
     {
@@ -411,7 +409,7 @@ class XMLRPCServer
         this.port = port;
     }
 
-    public void start()
+    public void start(MBeanAgent agent)
         throws MBeanAgentException
     {
         if (port <= 0) {
@@ -422,9 +420,14 @@ class XMLRPCServer
 
         MBeanHandler.setServer(this);
 
-        webServer = new WebServer(port);
+        DAQWebServer tmpServer = new DAQWebServer("MBean", port);
 
-        XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
+        XmlRpcStatisticsServer xmlRpcServer =
+            (XmlRpcStatisticsServer) tmpServer.getXmlRpcServer();
+
+        agent.addBean("xmlrpcServer", xmlRpcServer);
+
+        webServer = tmpServer;
 
         PropertyHandlerMapping phm = new PropertyHandlerMapping();
         try {

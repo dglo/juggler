@@ -43,6 +43,9 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
+import org.apache.xmlrpc.server.XmlRpcStreamServer;
+import org.apache.xmlrpc.webserver.DAQWebServer;
+import org.apache.xmlrpc.webserver.XmlRpcStatisticsServer;
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**
@@ -1327,9 +1330,18 @@ public class DAQCompServer
     private void runEverything(DAQComponent comp, URL cfgServerURL)
         throws DAQCompException
     {
-        WebServer webServer = startServer();
+        DAQWebServer webServer = startServer();
         if (LOG.isDebugEnabled()) {
             LOG.debug("XML-RPC on port " + webServer.getPort());
+        }
+
+        try {
+            XmlRpcStatisticsServer statsServer =
+                (XmlRpcStatisticsServer) webServer.getXmlRpcServer();
+
+            comp.addMBean("rpcServer", statsServer);
+        } catch (Throwable thr) {
+            LOG.error("Failed to add RPC statistics MBean", thr);
         }
 
         try {
@@ -1785,7 +1797,7 @@ public class DAQCompServer
      *
      * @throws DAQCompException if there is a problem
      */
-    private WebServer startServer()
+    private DAQWebServer startServer()
         throws DAQCompException
     {
         int port;
@@ -1801,9 +1813,9 @@ public class DAQCompServer
             throw new DAQCompException("Couldn't search for port", ex);
         }
 
-        WebServer webServer;
+        DAQWebServer webServer;
         while (true) {
-            webServer = new WebServer(port);
+            webServer = new DAQWebServer("DAQ-RPC", port);
             try {
                 webServer.start();
                 break;
@@ -1815,7 +1827,8 @@ public class DAQCompServer
             }
         }
 
-        XmlRpcServer server = webServer.getXmlRpcServer();
+        XmlRpcStatisticsServer server =
+            (XmlRpcStatisticsServer) webServer.getXmlRpcServer();
 
         PropertyHandlerMapping propMap = new PropertyHandlerMapping();
         try {
