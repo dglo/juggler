@@ -16,6 +16,13 @@ import java.util.Map;
 public interface IAlertQueue
 {
     /**
+     * Is the thread stopped?
+     *
+     * @return <tt>true</tt> if the thread is not running
+     */
+    boolean isStopped();
+
+    /**
      * Add <tt>obj</tt> to the queue of alerts to be sent
      *
      * @param obj alert to be sent
@@ -54,4 +61,14 @@ public interface IAlertQueue
     void push(String varname, Alerter.Priority prio, IUTCTime utcTime,
               Map<String, Object> values)
         throws AlertException;
+
+    /**
+     * Start the thread if it isn't already running
+     */
+    void start();
+
+    /**
+     * Stop the thread if it's running
+     */
+    void stop();
 }
