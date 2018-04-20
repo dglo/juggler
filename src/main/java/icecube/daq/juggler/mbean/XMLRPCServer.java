@@ -45,7 +45,8 @@ class XMLRPCServer
     private int port = Integer.MIN_VALUE;
     private WebServer webServer;
 
-    private HashMap beans = new HashMap();
+    private HashMap<String, ObjectName> beans =
+        new HashMap<String, ObjectName>();
 
     private static Object fixArray(Object array)
     {
@@ -148,7 +149,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = (ObjectName) beans.get(mbeanName);
+        ObjectName objName = beans.get(mbeanName);
 
         Object attrVal;
         try {
@@ -170,7 +171,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = (ObjectName) beans.get(mbeanName);
+        ObjectName objName = beans.get(mbeanName);
 
         Iterator iter;
         try {
@@ -222,7 +223,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = (ObjectName) beans.get(mbeanName);
+        ObjectName objName = beans.get(mbeanName);
 
         Iterator iter;
         try {
@@ -303,7 +304,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = (ObjectName) beans.get(mbeanName);
+        ObjectName objName = beans.get(mbeanName);
 
         MBeanAttributeInfo[] attrInfo;
         try {
@@ -393,7 +394,7 @@ class XMLRPCServer
     {
         String key = (String) beanObjName.getKeyProperty("name");
         if (beans.containsKey(key)) {
-            ObjectName oldObjName = (ObjectName) beans.get(key);
+            ObjectName oldObjName = beans.get(key);
 
             if (!beanObjName.equals(oldObjName)) {
                 LOG.error("Overwriting MBean \"" + key + "\" objectName \"" +
