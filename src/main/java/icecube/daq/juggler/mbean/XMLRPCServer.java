@@ -215,6 +215,21 @@ class XMLRPCServer
         return map;
     }
 
+    public Map<String, Object> getDictionary()
+        throws MBeanAgentException
+    {
+        HashMap<String, Object> allData = new HashMap<String, Object>();
+
+        for (String mbeanName : beans.keySet()) {
+            final String[] attrNames = listGetters(mbeanName);
+
+            Map attrs = getAttributes(mbeanName, attrNames);
+            allData.put(mbeanName, attrs);
+        }
+
+        return allData;
+    }
+
     Object[] getList(String mbeanName, String[] attrNames)
         throws MBeanAgentException
     {

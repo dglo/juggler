@@ -8,6 +8,8 @@ public interface MBeanData
         throws MBeanAgentException;
     Map getAttributes(String mbeanName, String[] attrNames)
         throws MBeanAgentException;
+    Map<String, Object> getDictionary()
+        throws MBeanAgentException;
     String[] listGetters(String mbeanName)
         throws MBeanAgentException;
     String[] listMBeans()

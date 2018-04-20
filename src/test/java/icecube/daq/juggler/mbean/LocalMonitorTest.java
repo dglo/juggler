@@ -3,6 +3,7 @@ package icecube.daq.juggler.mbean;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -99,6 +100,12 @@ class MockData
         }
 
         return map;
+    }
+
+    public Map<String, Object> getDictionary()
+        throws MBeanAgentException
+    {
+        return null;
     }
 
     public String[] listGetters(String mbeanName)
