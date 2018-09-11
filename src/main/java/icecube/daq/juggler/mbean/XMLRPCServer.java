@@ -54,7 +54,11 @@ class XMLRPCServer
 
         final int len = Array.getLength(array);
         if (len == 0) {
-            return Array.newInstance(array.getClass().getComponentType(), len);
+            Class compType = array.getClass().getComponentType();
+            if (compType == long.class) {
+                compType = int.class;
+            }
+            return Array.newInstance(compType, len);
         }
 
         Object newArray = null;
