@@ -56,7 +56,7 @@ class XMLRPCServer
         if (len == 0) {
             Class compType = array.getClass().getComponentType();
             if (compType == long.class) {
-                compType = int.class;
+                compType = Integer.class;
             }
             return Array.newInstance(compType, len);
         }
