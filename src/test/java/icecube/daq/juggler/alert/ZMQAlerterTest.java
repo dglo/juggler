@@ -200,6 +200,7 @@ class LiveRequest
         return true;
     }
 
+    @Override
     public String toString()
     {
         return "LiveRequest[" + service + "," + varname + "." + priority +
@@ -338,6 +339,7 @@ class ZMQServer
         return expected == null || expected.size() == 0;
     }
 
+    @Override
     public void run()
     {
         running = true;
@@ -414,6 +416,7 @@ public class ZMQAlerterTest
         return new TestSuite(ZMQAlerterTest.class);
     }
 
+    @Override
     protected void tearDown()
         throws AlertException
     {

@@ -40,72 +40,86 @@ public class MockOutputEngine
         return null;
     }
 
+    @Override
     public void destroyProcessor()
     {
         destroyed = true;
     }
 
+    @Override
     public void disconnect()
         throws IOException
     {
         connected = false;
     }
 
+    @Override
     public void forcedStopProcessing()
     {
         running = false;
     }
 
+    @Override
     public OutputChannel getChannel()
     {
         throw new Error("Unimplemented");
     }
 
+    @Override
     public int getNumberOfChannels()
     {
         return 1;
     }
 
+    @Override
     public String getPresentState()
     {
         return state;
     }
 
+    @Override
     public long getRecordsSent()
     {
         throw new Error("Unimplemented");
     }
 
+    @Override
     public long getTotalRecordsSent()
     {
         throw new Error("Unimplemented");
     }
 
+    @Override
     public boolean isConnected()
     {
         return connected;
     }
 
+    @Override
     public boolean isDestroyed()
     {
         return destroyed;
     }
 
+    @Override
     public boolean isRunning()
     {
         return running;
     }
 
+    @Override
     public boolean isStopped()
     {
         return !running;
     }
 
+    @Override
     public void registerComponentObserver(DAQComponentObserver x0)
     {
         throw new Error("Unimplemented");
     }
 
+    @Override
     public void sendLastAndStop()
     {
         running = false;
@@ -116,11 +130,13 @@ public class MockOutputEngine
         this.state = state;
     }
 
+    @Override
     public void start()
     {
         // do nothing
     }
 
+    @Override
     public void startProcessing()
     {
         running = true;

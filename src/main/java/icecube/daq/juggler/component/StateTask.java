@@ -461,6 +461,7 @@ public class StateTask
         }
     }
 
+    @Override
     public void run()
     {
         running = true;
@@ -734,6 +735,7 @@ public class StateTask
         }
     }
 
+    @Override
     public String toString()
     {
         return "StateTask[" + state + "(prev=" + prevState + ")," +

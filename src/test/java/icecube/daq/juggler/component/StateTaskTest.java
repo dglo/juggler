@@ -51,6 +51,7 @@ class StateComponent
      *
      * @throws IOException if there is a problem
      */
+    @Override
     public void closeAll()
         throws IOException
     {
@@ -64,6 +65,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem configuring
      */
+    @Override
     public void configuring(String configName)
         throws DAQCompException
     {
@@ -75,6 +77,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void destroy()
         throws DAQCompException
     {
@@ -100,6 +103,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void disconnected()
         throws DAQCompException
     {
@@ -109,6 +113,7 @@ class StateComponent
     /**
      * Flush buffer caches
      */
+    @Override
     public void flushCaches()
     {
         didFlushCaches = true;
@@ -120,6 +125,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void forceStopping()
         throws DAQCompException
     {
@@ -131,12 +137,14 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void forcedStop()
         throws DAQCompException
     {
         throw new UnimplementedException();
     }
 
+    @Override
     public AlertQueue getAlertQueue()
     {
         throw new UnimplementedException();
@@ -151,6 +159,7 @@ class StateComponent
      *
      * @throws DAQCompException if the cache could not be found
      */
+    @Override
     public IByteBufferCache getByteBufferCache(String type)
         throws DAQCompException
     {
@@ -162,6 +171,7 @@ class StateComponent
      *
      * @return full name
      */
+    @Override
     public String getFullName()
     {
         return fullName;
@@ -174,6 +184,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public Object getMBean(String name)
         throws DAQCompException
     {
@@ -185,6 +196,7 @@ class StateComponent
      *
      * @return <tt>true</tt> if all connectors have stopped
      */
+    @Override
     public boolean isStopped()
     {
         return connStopped;
@@ -195,6 +207,7 @@ class StateComponent
      *
      * @return connection iterator
      */
+    @Override
     public Iterable<DAQConnector> listConnectors()
     {
         return connList;
@@ -205,6 +218,7 @@ class StateComponent
      *
      * @return list of MBean names
      */
+    @Override
     public Set<String> listMBeans()
     {
         throw new UnimplementedException();
@@ -231,12 +245,14 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem resetting
      */
+    @Override
     public void resetting()
         throws DAQCompException
     {
         didResetting = true;
     }
 
+    @Override
     public void setAlerter(Alerter alerter)
     {
         throw new UnimplementedException();
@@ -247,6 +263,7 @@ class StateComponent
      *
      * @param dirName absolute path of configuration directory
      */
+    @Override
     public void setGlobalConfigurationDir(String dirName)
     {
         throw new UnimplementedException();
@@ -259,6 +276,7 @@ class StateComponent
      *
      * @throws DAQCompException if input server cannot be started
      */
+    @Override
     public void start(boolean startMBeanAgent)
         throws DAQCompException
     {
@@ -270,6 +288,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void startEngines()
         throws DAQCompException
     {
@@ -283,6 +302,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem starting the component
      */
+    @Override
     public void started(int runNumber)
         throws DAQCompException
     {
@@ -296,6 +316,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem starting the component
      */
+    @Override
     public void starting(int runNumber)
         throws DAQCompException
     {
@@ -307,6 +328,7 @@ class StateComponent
      *
      * @throws DAQCompException if MBean agent was not stopped
      */
+    @Override
     public void stopMBeanAgent()
         throws DAQCompException
     {
@@ -316,6 +338,7 @@ class StateComponent
     /**
      * Stop the state task associated with this component.
      */
+    @Override
     public void stopStateTask()
     {
         didStopStateTask = true;
@@ -326,6 +349,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem stopping the component
      */
+    @Override
     public void stopped()
         throws DAQCompException
     {
@@ -337,6 +361,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem stopping the component
      */
+    @Override
     public void stopping()
         throws DAQCompException
     {
@@ -350,6 +375,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem switching the component
      */
+    @Override
     public void switching(int runNumber)
         throws DAQCompException
     {

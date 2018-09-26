@@ -133,6 +133,7 @@ public class AlertQueue
      *
      * @return <tt>true</tt> if the thread is not running
      */
+    @Override
     public boolean isStopped()
     {
         return stopped;
@@ -146,6 +147,7 @@ public class AlertQueue
      * @throws AlertException if there is a problem with the alerter or
      *                        the thread is stopped
      */
+    @Override
     public void push(Map<String, Object> map)
         throws AlertException
     {
@@ -193,6 +195,7 @@ public class AlertQueue
      * @throws AlertException if there is a problem with the alerter or
      *                        the thread is stopped
      */
+    @Override
     public void push(String varname, Alerter.Priority prio,
                      Map<String, Object> values)
         throws AlertException
@@ -211,6 +214,7 @@ public class AlertQueue
      * @throws AlertException if there is a problem with the alerter or
      *                        the thread is stopped
      */
+    @Override
     public void push(String varname, Alerter.Priority prio, IUTCTime utcTime,
                      Map<String, Object> values)
         throws AlertException
@@ -225,6 +229,7 @@ public class AlertQueue
     /**
      * Run the thread
      */
+    @Override
     public void run()
     {
         stopped = false;
@@ -312,6 +317,7 @@ public class AlertQueue
     /**
      * Start the thread if it isn't already running
      */
+    @Override
     public void start()
     {
         synchronized (queue) {
@@ -329,6 +335,7 @@ public class AlertQueue
     /**
      * Stop the thread if it's running
      */
+    @Override
     public void stop()
     {
         synchronized (queue) {
@@ -376,6 +383,7 @@ public class AlertQueue
     /**
      * Thread name
      */
+    @Override
     public String toString()
     {
         return name;

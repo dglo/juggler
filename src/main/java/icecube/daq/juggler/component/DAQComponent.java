@@ -53,7 +53,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 17113 2018-09-26 09:40:57Z dglo $
+ * @version $Id: DAQComponent.java 17114 2018-09-26 09:51:56Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -404,6 +404,7 @@ public abstract class DAQComponent
      *
      * @throws IOException if there is a problem
      */
+    @Override
     public void closeAll()
         throws IOException
     {
@@ -467,6 +468,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem configuring
      */
+    @Override
     public void configuring(String configName)
         throws DAQCompException
     {
@@ -512,6 +514,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public final void destroy()
         throws DAQCompException
     {
@@ -545,6 +548,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void disconnected()
         throws DAQCompException
     {
@@ -569,6 +573,7 @@ public abstract class DAQComponent
     /**
      * Flush buffer caches
      */
+    @Override
     public void flushCaches()
     {
         Iterator iter = caches.values().iterator();
@@ -584,6 +589,7 @@ public abstract class DAQComponent
      * @throws DAQCompException if there is a problem cleaning up the
      *                          connectors
      */
+    @Override
     public void forceStopping()
         throws DAQCompException
     {
@@ -595,6 +601,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public final void forcedStop()
         throws DAQCompException
     {
@@ -611,6 +618,7 @@ public abstract class DAQComponent
      *
      * @return alert queue
      */
+    @Override
     public AlertQueue getAlertQueue()
     {
         if (alertQueue == null) {
@@ -648,6 +656,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if the cache could not be found
      */
+    @Override
     public final IByteBufferCache getByteBufferCache(String type)
         throws DAQCompException
     {
@@ -692,6 +701,7 @@ public abstract class DAQComponent
      *
      * @return full name
      */
+    @Override
     public String getFullName()
     {
         if (num == 0 && !name.endsWith("Hub")) {
@@ -728,6 +738,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public Object getMBean(String name)
         throws DAQCompException
     {
@@ -915,6 +926,7 @@ public abstract class DAQComponent
      *
      * @return <tt>true</tt> if all connectors have stopped
      */
+    @Override
     public boolean isStopped()
     {
         for (DAQConnector conn : connectors) {
@@ -931,6 +943,7 @@ public abstract class DAQComponent
      *
      * @return connection iterator
      */
+    @Override
     public final Iterable<DAQConnector> listConnectors()
     {
         return connectors;
@@ -941,6 +954,7 @@ public abstract class DAQComponent
      *
      * @return list of MBean names
      */
+    @Override
     public Set<String> listMBeans()
     {
         return mbeanAgent.listBeans();
@@ -979,6 +993,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem resetting
      */
+    @Override
     public void resetting()
         throws DAQCompException
     {
@@ -1035,6 +1050,7 @@ public abstract class DAQComponent
      *
      * @param alerter alert manager
      */
+    @Override
     public void setAlerter(Alerter alerter)
     {
         if (alertQueue != null) {
@@ -1078,6 +1094,7 @@ public abstract class DAQComponent
      *
      * @param dirName directory name
      */
+    @Override
     public void setGlobalConfigurationDir(String dirName)
     {
         // Override me!
@@ -1157,6 +1174,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if input server cannot be started
      */
+    @Override
     public final void start(boolean startMBeanAgent)
         throws DAQCompException
     {
@@ -1221,6 +1239,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public final void startEngines()
         throws DAQCompException
     {
@@ -1289,6 +1308,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem starting the component
      */
+    @Override
     public void started(int runNumber)
         throws DAQCompException
     {
@@ -1303,6 +1323,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem starting the component
      */
+    @Override
     public void starting(int runNumber)
         throws DAQCompException
     {
@@ -1314,6 +1335,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if MBean agent was not stopped
      */
+    @Override
     public void stopMBeanAgent()
         throws DAQCompException
     {
@@ -1349,6 +1371,7 @@ public abstract class DAQComponent
     /**
      * Stop the state task associated with this component.
      */
+    @Override
     public void stopStateTask()
     {
         if (stateTask != null) {
@@ -1363,6 +1386,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem stopping the component
      */
+    @Override
     public void stopped()
         throws DAQCompException
     {
@@ -1375,6 +1399,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem stopping the component
      */
+    @Override
     public void stopping()
         throws DAQCompException
     {
@@ -1409,6 +1434,7 @@ public abstract class DAQComponent
      *
      * @throws DAQCompException if there is a problem switching the component
      */
+    @Override
     public void switching(int runNumber)
         throws DAQCompException
     {
@@ -1440,6 +1466,7 @@ public abstract class DAQComponent
      *
      * @return debugging string
      */
+    @Override
     public String toString()
     {
         StringBuilder buf = new StringBuilder(getName());
@@ -1493,6 +1520,7 @@ public abstract class DAQComponent
          *
          * @return the usual comparator values
          */
+        @Override
         public int compare(Object o1, Object o2)
         {
             if (o1 == null) {
@@ -1552,6 +1580,7 @@ public abstract class DAQComponent
          *
          * @return <tt>true</tt> if object is being compared to itself
          */
+        @Override
         public boolean equals(Object obj)
         {
             return (obj == this);

@@ -28,6 +28,7 @@ public class DAQSplicer
      *
      * @throws Exception if there was a problem
      */
+    @Override
     public void destroy()
         throws Exception
     {
@@ -39,6 +40,7 @@ public class DAQSplicer
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void forcedStopProcessing()
         throws Exception
     {
@@ -50,6 +52,7 @@ public class DAQSplicer
      *
      * @return number of channels
      */
+    @Override
     public int getNumberOfChannels()
     {
         return splicer.getStrandCount();
@@ -70,6 +73,7 @@ public class DAQSplicer
      *
      * @return state string
      */
+    @Override
     public String getState()
     {
         return splicer.getState().name();
@@ -80,6 +84,7 @@ public class DAQSplicer
      *
      * @return <tt>true</tt> if this connector is running
      */
+    @Override
     public boolean isRunning()
     {
         return (splicer.getState() != Splicer.State.STOPPED);
@@ -90,6 +95,7 @@ public class DAQSplicer
      *
      * @return <tt>true</tt>
      */
+    @Override
     public boolean isSplicer()
     {
         return true;
@@ -100,6 +106,7 @@ public class DAQSplicer
      *
      * @return <tt>true</tt> if this connector is stopped
      */
+    @Override
     public boolean isStopped()
     {
         return (splicer.getState() == Splicer.State.STOPPED);
@@ -110,6 +117,7 @@ public class DAQSplicer
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void start()
         throws Exception
     {
@@ -121,6 +129,7 @@ public class DAQSplicer
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void startProcessing()
         throws Exception
     {
@@ -132,6 +141,7 @@ public class DAQSplicer
      *
      * @return debugging string
      */
+    @Override
     public String toString()
     {
         return "Splicer[" + getType() + "=>" + splicer + "]";

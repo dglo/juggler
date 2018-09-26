@@ -196,6 +196,7 @@ public class SystemStatistics
      *
      * @return array of CPU times
      */
+    @Override
     public Map<String, long[]> getCPUStatistics()
     {
         if (!hasProcStat) {
@@ -321,6 +322,7 @@ public class SystemStatistics
         return tmpMap;
     }
 
+    @Override
     public double[] getLoadAverage()
     {
         Process proc;
@@ -609,6 +611,7 @@ public class SystemStatistics
      *
      * @return description of current statistics
      */
+    @Override
     public String toString()
     {
         double[] loadAvg = getLoadAverage();
@@ -752,6 +755,7 @@ public class SystemStatistics
          *
          * @return kbyte string
          */
+        @Override
         public String toString()
         {
             return Integer.toString(total);

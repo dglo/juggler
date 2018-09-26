@@ -50,6 +50,7 @@ public class MockHandler
     /* (non-API documentation)
      * @see java.util.logging.Handler#close()
      */
+    @Override
     public void close()
         throws SecurityException
     {
@@ -59,6 +60,7 @@ public class MockHandler
     /* (non-API documentation)
      * @see java.util.logging.Handler#flush()
      */
+    @Override
     public void flush()
     {
         // don't need to do anything

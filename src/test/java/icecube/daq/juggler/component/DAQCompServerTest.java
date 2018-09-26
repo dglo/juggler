@@ -38,6 +38,7 @@ class MockServer
         super(comp, args);
     }
 
+    @Override
     public void startServing()
     {
         // do nothing
@@ -88,6 +89,7 @@ public class DAQCompServerTest
         return ret && path.delete();
     }
 
+    @Override
     protected void setUp()
         throws Exception
     {
@@ -104,6 +106,7 @@ public class DAQCompServerTest
         return new TestSuite(DAQCompServerTest.class);
     }
 
+    @Override
     public final void tearDown()
         throws FileNotFoundException
     {

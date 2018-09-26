@@ -145,6 +145,7 @@ class XMLRPCServer
         return val;
     }
 
+    @Override
     public Object get(String mbeanName, String attrName)
         throws MBeanAgentException
     {
@@ -219,6 +220,7 @@ class XMLRPCServer
         return map;
     }
 
+    @Override
     public Map<String, Object> getDictionary()
         throws MBeanAgentException
     {
@@ -315,6 +317,7 @@ class XMLRPCServer
         }
     }
 
+    @Override
     public String[] listGetters(String mbeanName)
         throws MBeanAgentException
     {
@@ -350,6 +353,7 @@ class XMLRPCServer
         return names;
     }
 
+    @Override
     public String[] listMBeans()
         throws MBeanAgentException
     {
@@ -367,11 +371,13 @@ class XMLRPCServer
         return false;
     }
 
+    @Override
     public void postDeregister()
     {
         // do nothing
     }
 
+    @Override
     public void postRegister(Boolean registrationDone)
     {
         if (delegateName == null) {
@@ -392,6 +398,7 @@ class XMLRPCServer
         }
     }
 
+    @Override
     public void preDeregister()
     {
         try {

@@ -45,6 +45,7 @@ public class DAQInputConnector
      *
      * @throws Exception if there was a problem
      */
+    @Override
     public void destroy()
         throws Exception
     {
@@ -62,6 +63,7 @@ public class DAQInputConnector
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void forcedStopProcessing()
         throws Exception
     {
@@ -73,6 +75,7 @@ public class DAQInputConnector
      *
      * @return number of channels
      */
+    @Override
     public int getNumberOfChannels()
     {
         return engine.getNumberOfChannels();
@@ -83,6 +86,7 @@ public class DAQInputConnector
      *
      * @return port
      */
+    @Override
     public int getPort()
     {
         return engine.getServerPort();
@@ -93,6 +97,7 @@ public class DAQInputConnector
      *
      * @return state string
      */
+    @Override
     public String getState()
     {
         return engine.getPresentState();
@@ -103,6 +108,7 @@ public class DAQInputConnector
      *
      * @return <tt>true</tt>
      */
+    @Override
     public boolean isInput()
     {
         return true;
@@ -113,6 +119,7 @@ public class DAQInputConnector
      *
      * @return <tt>true</tt> if this connector is running
      */
+    @Override
     public boolean isRunning()
     {
         return engine.isRunning();
@@ -123,6 +130,7 @@ public class DAQInputConnector
      *
      * @return <tt>true</tt> if this connector is stopped
      */
+    @Override
     public boolean isStopped()
     {
         return engine.isStopped();
@@ -133,6 +141,7 @@ public class DAQInputConnector
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void start()
         throws Exception
     {
@@ -144,6 +153,7 @@ public class DAQInputConnector
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void startProcessing()
         throws Exception
     {
@@ -157,6 +167,7 @@ public class DAQInputConnector
      *
      * @throws IOException if there is a problem
      */
+    @Override
     public void startServer(IByteBufferCache bufCache)
         throws IOException
     {
@@ -168,6 +179,7 @@ public class DAQInputConnector
      *
      * @return debugging string
      */
+    @Override
     public String toString()
     {
         return "InConn[" + getType() + "=>" + engine + "]";

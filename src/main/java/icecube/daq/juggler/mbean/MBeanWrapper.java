@@ -137,6 +137,7 @@ public class MBeanWrapper
         }
     }
 
+    @Override
     public String toString()
     {
         return "MBeanWrapper[" + wrappedObj.getClass().getName() + ":" +

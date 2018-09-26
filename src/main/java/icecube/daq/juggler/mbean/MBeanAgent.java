@@ -73,6 +73,7 @@ class BeanBin
      *
      * @return debugging string
      */
+    @Override
     public String toString()
     {
         return name + ":" + bean;

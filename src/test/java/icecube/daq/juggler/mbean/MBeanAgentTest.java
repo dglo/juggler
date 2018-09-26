@@ -117,6 +117,7 @@ public class MBeanAgentTest
         return true;
     }
 
+    @Override
     protected void setUp()
         throws Exception
     {
@@ -130,6 +131,7 @@ public class MBeanAgentTest
         return new TestSuite(MBeanAgentTest.class);
     }
 
+    @Override
     protected void tearDown()
         throws Exception
     {

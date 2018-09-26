@@ -432,6 +432,7 @@ class LoggingConfiguration
         handler = new StreamHandler(System.out, new SimpleFormatter());
     }
 
+    @Override
     public String toString()
     {
         return compName + ":" +

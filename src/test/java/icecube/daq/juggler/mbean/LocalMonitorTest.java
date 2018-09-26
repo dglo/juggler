@@ -27,6 +27,7 @@ class MyMonitor
         return writer.toString();
     }
 
+    @Override
     public PrintWriter openWriter()
     {
         writer = new StringWriter();
@@ -47,6 +48,7 @@ class MockData
     private int[] countHash = new int[] { 1, 3, 100 };
     private String[] hashNames = new String[] { "First", "Third", "100th" };
 
+    @Override
     public Object get(String mbeanName, String attrName)
         throws MBeanAgentException
     {
@@ -102,12 +104,14 @@ class MockData
         return map;
     }
 
+    @Override
     public Map<String, Object> getDictionary()
         throws MBeanAgentException
     {
         return null;
     }
 
+    @Override
     public String[] listGetters(String mbeanName)
         throws MBeanAgentException
     {
@@ -118,6 +122,7 @@ class MockData
         }
     }
 
+    @Override
     public String[] listMBeans()
         throws MBeanAgentException
     {

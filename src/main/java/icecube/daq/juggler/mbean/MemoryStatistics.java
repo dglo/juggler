@@ -44,6 +44,7 @@ public class MemoryStatistics
         return Long.toString(bytes) + MEMORY_SUFFIX[sufIdx];
     }
 
+    @Override
     public long[] getMemoryStatistics()
     {
         long total = rt.totalMemory();
@@ -57,6 +58,7 @@ public class MemoryStatistics
      *
      * @return description of current statistics
      */
+    @Override
     public String toString()
     {
         long free = rt.freeMemory();

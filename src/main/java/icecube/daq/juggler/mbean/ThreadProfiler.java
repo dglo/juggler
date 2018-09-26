@@ -18,6 +18,7 @@ public class ThreadProfiler
         bean.setThreadCpuTimeEnabled(true);
     }
 
+    @Override
     public Map<String, Long> getBlockedTime()
     {
         HashMap<String, Long> map = new HashMap<String, Long>();
@@ -31,6 +32,7 @@ public class ThreadProfiler
         return map;
     }
 
+    @Override
     public Map<String, Long> getCPUTime()
     {
         HashMap<String, Long> map = new HashMap<String, Long>();
@@ -64,6 +66,7 @@ public class ThreadProfiler
         return map;
     }
 
+    @Override
     public Map<String, Long> getUserTime()
     {
         HashMap<String, Long> map = new HashMap<String, Long>();
@@ -78,6 +81,7 @@ public class ThreadProfiler
         return map;
     }
 
+    @Override
     public Map<String, Long> getWaitedTime()
     {
         HashMap<String, Long> map = new HashMap<String, Long>();

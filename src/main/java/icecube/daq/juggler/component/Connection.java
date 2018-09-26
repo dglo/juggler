@@ -98,6 +98,7 @@ public class Connection
      *
      * @return debugging description of the connection
      */
+    @Override
     public String toString()
     {
         return type + "=>" + compName + "#" + compNum + "@" + host + ":" + port;

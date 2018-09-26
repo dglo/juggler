@@ -41,6 +41,7 @@ class BadOutputEngine
         super();
     }
 
+    @Override
     public PayloadTransmitChannel connect(IByteBufferCache cache,
                                           WritableByteChannel chan, int srcId)
         throws IOException
@@ -54,6 +55,7 @@ class BadOutputEngine
         return super.connect(cache, chan,srcId);
     }
 
+    @Override
     public void destroyProcessor()
     {
         if (destroyEx != null) {
@@ -65,6 +67,7 @@ class BadOutputEngine
         super.destroyProcessor();
     }
 
+    @Override
     public void forcedStopProcessing()
     {
         if (forcedEx != null) {
@@ -76,6 +79,7 @@ class BadOutputEngine
         super.forcedStopProcessing();
     }
 
+    @Override
     public void startProcessing()
     {
         if (startEx != null) {
@@ -116,11 +120,13 @@ class MiniComponent
         super(name, num);
     }
 
+    @Override
     public String getVersionInfo()
     {
         return "$Id$";
     }
 
+    @Override
     public void initialize()
     {
     }
@@ -144,6 +150,7 @@ public class DAQComponentTest
         return new TestSuite(DAQComponentTest.class);
     }
 
+    @Override
     protected void tearDown()
         throws Exception
     {

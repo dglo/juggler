@@ -88,6 +88,7 @@ public class XmlRpcStatisticsServer
         }
     }
 
+    @Override
     public Map<String, double[]> getProfileTimes()
     {
         HashMap<String, double[]> rpcStats = new HashMap<String, double[]>();
