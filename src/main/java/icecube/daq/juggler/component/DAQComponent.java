@@ -53,7 +53,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 16315 2016-11-03 20:37:09Z bendfelt $
+ * @version $Id: DAQComponent.java 17113 2018-09-26 09:40:57Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -578,6 +578,19 @@ public abstract class DAQComponent
     }
 
     /**
+     * Override this method to perform any clean-up before connectors
+     * are force-stopped.
+     *
+     * @throws DAQCompException if there is a problem cleaning up the
+     *                          connectors
+     */
+    public void forceStopping()
+        throws DAQCompException
+    {
+        // Override me!
+    }
+
+    /**
      * Emergency stop of component.
      *
      * @throws DAQCompException if there is a problem
@@ -591,19 +604,6 @@ public abstract class DAQComponent
         }
 
         stateTask.forcedStop();
-    }
-
-    /**
-     * Override this method to perform any clean-up before connectors
-     * are force-stopped.
-     *
-     * @throws DAQCompException if there is a problem cleaning up the
-     *                          connectors
-     */
-    public void forceStopping()
-        throws DAQCompException
-    {
-        // Override me!
     }
 
     /**
