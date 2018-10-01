@@ -3,10 +3,10 @@ package icecube.daq.juggler.component;
 import icecube.daq.io.BlockingOutputEngine;
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentOutputProcess;
-import icecube.daq.io.PayloadReader;
+import icecube.daq.io.DAQStreamReader;
 import icecube.daq.io.SimpleOutputEngine;
-import icecube.daq.io.SimpleReader;
-import icecube.daq.io.SpliceablePayloadReader;
+import icecube.daq.io.SimpleStreamReader;
+import icecube.daq.io.SpliceableStreamReader;
 import icecube.daq.io.SpliceableSimpleReader;
 import icecube.daq.juggler.alert.AlertException;
 import icecube.daq.juggler.alert.AlertQueue;
@@ -53,7 +53,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 17114 2018-09-26 09:51:56Z dglo $
+ * @version $Id: DAQComponent.java 17123 2018-10-01 22:09:41Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -269,12 +269,12 @@ public abstract class DAQComponent
         if (engine instanceof SpliceableSimpleReader) {
             addMBean(type, new MBeanWrapper(engine,
                                             spliceableInputReaderMethods));
-        } else if (engine instanceof SimpleReader) {
+        } else if (engine instanceof SimpleStreamReader) {
             addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
-        } else if (engine instanceof SpliceablePayloadReader) {
+        } else if (engine instanceof SpliceableStreamReader) {
             addMBean(type, new MBeanWrapper(engine,
                                             spliceableInputReaderMethods));
-        } else if (engine instanceof PayloadReader) {
+        } else if (engine instanceof DAQStreamReader) {
             addMBean(type, new MBeanWrapper(engine, inputReaderMethods));
         } else {
             throw new Error("Cannot monitor " + engine.getClass().getName());
