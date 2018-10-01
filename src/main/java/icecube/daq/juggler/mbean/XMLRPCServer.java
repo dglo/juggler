@@ -221,10 +221,10 @@ class XMLRPCServer
     }
 
     @Override
-    public Map<String, Object> getDictionary()
+    public Map<String, Map> getDictionary()
         throws MBeanAgentException
     {
-        HashMap<String, Object> allData = new HashMap<String, Object>();
+        HashMap<String, Map> allData = new HashMap<String, Map>();
 
         for (String mbeanName : beans.keySet()) {
             final String[] attrNames = listGetters(mbeanName);

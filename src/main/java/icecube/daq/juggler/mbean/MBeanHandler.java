@@ -53,7 +53,7 @@ public class MBeanHandler
         return server.getAttributes(mbeanName, attrList);
     }
 
-    public Map<String, Object> getDictionary()
+    public Map<String, Map> getDictionary()
         throws MBeanAgentException
     {
         if (server == null) {

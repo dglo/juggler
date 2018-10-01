@@ -105,7 +105,7 @@ class MockData
     }
 
     @Override
-    public Map<String, Object> getDictionary()
+    public Map<String, Map> getDictionary()
         throws MBeanAgentException
     {
         return null;
