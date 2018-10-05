@@ -26,14 +26,31 @@ public class MockOutputEngine
     {
     }
 
-    public PayloadTransmitChannel addDataChannel(WritableByteChannel x0,
-                                                 IByteBufferCache x1)
+    public PayloadTransmitChannel addDataChannel(WritableByteChannel chan,
+                                                 IByteBufferCache bufMgr,
+                                                 String name)
+    {
+        return addDataChannel(chan, bufMgr, name, Integer.MAX_VALUE);
+    }
+
+    public PayloadTransmitChannel addDataChannel(WritableByteChannel chan,
+                                                 IByteBufferCache bufMgr,
+                                                 String name,
+                                                 int maxDepth)
     {
         throw new Error("Unimplemented");
     }
 
     public PayloadTransmitChannel connect(IByteBufferCache cache,
                                           WritableByteChannel chan, int srcId)
+        throws IOException
+    {
+        return connect(cache, chan, srcId, Integer.MAX_VALUE);
+    }
+
+    public PayloadTransmitChannel connect(IByteBufferCache cache,
+                                          WritableByteChannel chan, int srcId,
+                                          int maxDepth)
         throws IOException
     {
         connected = true;
