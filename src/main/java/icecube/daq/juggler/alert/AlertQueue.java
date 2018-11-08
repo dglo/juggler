@@ -9,8 +9,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 /**
  * Thread which queues and sends alerts
@@ -20,7 +19,7 @@ public class AlertQueue
 {
     public static final String DEFAULT_NAME = "AlertQueue";
 
-    private static final Log LOG = LogFactory.getLog(AlertQueue.class);
+    private static final Logger LOG = Logger.getLogger(AlertQueue.class);
 
     private static final int MAX_QUEUE_SIZE = 1000000;
 

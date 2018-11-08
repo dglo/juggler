@@ -9,8 +9,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 class MyMonitor
     extends LocalMonitor
@@ -39,7 +38,7 @@ class MyMonitor
 class MockData
     implements MBeanData
 {
-    private static final Log LOG = LogFactory.getLog(MockData.class);
+    private static final Logger LOG = Logger.getLogger(MockData.class);
 
     private int countUp;
     private int countByTwo;

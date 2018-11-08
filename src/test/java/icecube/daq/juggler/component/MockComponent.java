@@ -8,13 +8,12 @@ import icecube.daq.util.FlasherboardConfiguration;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 public class MockComponent
     extends DAQComponent
 {
-    private final Log LOG = LogFactory.getLog(MockComponent.class);
+    private final Logger LOG = Logger.getLogger(MockComponent.class);
 
     private boolean calledConfiguring;
     private boolean calledDisconnected;

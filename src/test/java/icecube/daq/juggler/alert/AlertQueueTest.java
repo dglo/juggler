@@ -9,9 +9,6 @@ import icecube.daq.util.LocatePDAQ;
 import java.io.File;
 import java.util.HashMap;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.apache.log4j.BasicConfigurator;
 
 import org.junit.*;

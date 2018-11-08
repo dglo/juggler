@@ -34,8 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
 
 import org.w3c.dom.Element;
@@ -53,12 +52,12 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 17123 2018-10-01 22:09:41Z dglo $
+ * @version $Id: DAQComponent.java 17207 2018-11-08 16:08:59Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
 {
-    private static final Log LOG = LogFactory.getLog(DAQComponent.class);
+    private static final Logger LOG = Logger.getLogger(DAQComponent.class);
 
     /** Methods names for PayloadReader MBean */
     private static final String[] inputReaderMethods = new String[] {

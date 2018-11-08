@@ -5,7 +5,7 @@ import icecube.daq.juggler.alert.AlertException;
 import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
 import icecube.daq.log.DAQLogHandler;
-import icecube.daq.log.LoggingOutputStream;
+import icecube.daq.log.LoggerOutputStream;
 import icecube.daq.util.FlasherboardConfiguration;
 import icecube.daq.util.LocatePDAQ;
 
@@ -26,16 +26,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Handler;
-import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.logging.StreamHandler;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
@@ -354,28 +351,8 @@ class LoggingConfiguration
             }
         }
 
-        Log log = LogFactory.getLog(getClass());
-
-        if (log instanceof Log4JLogger) {
-            ((Log4JLogger) log).getLogger().getRootLogger().setLevel(logLevel);
-        } else {
-            log.error("Cannot reset log level for " +
-                      log.getClass().getName());
-        }
-
-        // find base logger
-        Logger baseLogger = Logger.getLogger("");
-        while (baseLogger.getParent() != null) {
-            baseLogger = baseLogger.getParent();
-        }
-
-        // clear out default handlers
-        Handler[] hList = baseLogger.getHandlers();
-        for (int i = 0; i < hList.length; i++) {
-            baseLogger.removeHandler(hList[i]);
-        }
-
-        baseLogger.addHandler(handler);
+        // set the logging level
+        Logger.getLogger(getClass()).setLevel(logLevel);
     }
 
     private java.util.logging.Level getUtilLevel(Level level)
@@ -457,7 +434,7 @@ public class DAQCompServer
     private static final Object[] NO_PARAMS = new Object[0];
 
     /** Logger for most output */
-    private static final Log LOG = LogFactory.getLog(DAQCompServer.class);
+    private static final Logger LOG = Logger.getLogger(DAQCompServer.class);
 
     /** Set to <tt>true</tt> to redirect standard output to logging stream */
     private static final boolean REDIRECT_STDOUT = false;
@@ -1660,9 +1637,9 @@ public class DAQCompServer
         } else {
             if (REDIRECT_STDOUT && STDOUT.equals(System.out)) {
                 if (outLogStream == null) {
-                    Log outLog = LogFactory.getLog("STDOUT");
-                    LoggingOutputStream tmpStream =
-                        new LoggingOutputStream(outLog, Level.INFO);
+                    Logger outLog = Logger.getLogger("STDOUT");
+                    LoggerOutputStream tmpStream =
+                        new LoggerOutputStream(outLog, Level.INFO);
                     outLogStream = new PrintStream(tmpStream);
                 }
                 System.out.flush();
@@ -1670,9 +1647,9 @@ public class DAQCompServer
             }
             if (REDIRECT_STDERR && STDERR.equals(System.err)) {
                 if (errLogStream == null) {
-                    Log errLog = LogFactory.getLog("STDERR");
-                    LoggingOutputStream tmpStream =
-                        new LoggingOutputStream(errLog, Level.ERROR);
+                    Logger errLog = Logger.getLogger("STDERR");
+                    LoggerOutputStream tmpStream =
+                        new LoggerOutputStream(errLog, Level.ERROR);
                     errLogStream = new PrintStream(tmpStream);
                 }
                 System.err.flush();

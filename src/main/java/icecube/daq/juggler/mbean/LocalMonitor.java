@@ -12,13 +12,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 public class LocalMonitor
     implements Runnable
 {
-    private static final Log LOG = LogFactory.getLog(LocalMonitor.class);
+    private static final Logger LOG = Logger.getLogger(LocalMonitor.class);
 
     private String compName;
     private int compNum;

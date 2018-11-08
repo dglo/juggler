@@ -14,8 +14,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 public class MockInputEngine
     implements DAQComponentInputProcessor
@@ -142,7 +141,7 @@ public class MockInputEngine
     class ServerThread
         implements Runnable
     {
-        private final Log LOG = LogFactory.getLog(ServerThread.class);
+        private final Logger LOG = Logger.getLogger(ServerThread.class);
 
         ServerThread()
         {
