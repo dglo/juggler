@@ -19,8 +19,7 @@ import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
@@ -36,7 +35,7 @@ class XMLRPCServer
     implements MBeanData, MBeanRegistration, NotificationListener,
                XMLRPCServerMBean
 {
-    private static final Log LOG = LogFactory.getLog(XMLRPCServer.class);
+    private static final Logger LOG = Logger.getLogger(XMLRPCServer.class);
 
     private static ObjectName delegateName;
 

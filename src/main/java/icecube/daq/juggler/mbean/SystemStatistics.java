@@ -16,8 +16,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 /**
  * System statistics
@@ -25,7 +24,7 @@ import org.apache.commons.logging.LogFactory;
 public class SystemStatistics
     implements SystemStatisticsMBean
 {
-    private static final Log LOG = LogFactory.getLog(SystemStatistics.class);
+    private static final Logger LOG = Logger.getLogger(SystemStatistics.class);
 
     /** pattern matching a single load average value. */
     private static final String LOAD_AVG_STR = "\\s+(\\d+\\.\\d+),?";

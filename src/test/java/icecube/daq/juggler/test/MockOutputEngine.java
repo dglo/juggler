@@ -9,13 +9,12 @@ import icecube.daq.payload.IByteBufferCache;
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 public class MockOutputEngine
     implements DAQComponentOutputProcess
 {
-    private final Log LOG = LogFactory.getLog(MockOutputEngine.class);
+    private final Logger LOG = Logger.getLogger(MockOutputEngine.class);
 
     private boolean connected;
     private boolean running;

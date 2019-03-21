@@ -12,8 +12,7 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 /**
  * MBean container.
@@ -85,7 +84,7 @@ class BeanBin
  */
 public class MBeanAgent
 {
-    private static final Log LOG = LogFactory.getLog(MBeanAgent.class);
+    private static final Logger LOG = Logger.getLogger(MBeanAgent.class);
 
     /** Mapping from short name to MBean object */
     private HashMap<String, BeanBin> beans = new HashMap<String, BeanBin>();

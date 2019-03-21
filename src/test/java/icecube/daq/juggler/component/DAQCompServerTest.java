@@ -21,8 +21,7 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 class MockServer
     extends DAQCompServer
@@ -48,7 +47,7 @@ class MockServer
 public class DAQCompServerTest
     extends LoggingCase
 {
-    private static final Log LOG = LogFactory.getLog(DAQCompServerTest.class);
+    private static final Logger LOG = Logger.getLogger(DAQCompServerTest.class);
 
     private MockHandler handler;
     private File tmpDir;

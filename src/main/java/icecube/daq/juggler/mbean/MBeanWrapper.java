@@ -12,13 +12,12 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 
 public class MBeanWrapper
     implements DynamicMBean
 {
-    private static final Log LOG = LogFactory.getLog(MBeanWrapper.class);
+    private static final Logger LOG = Logger.getLogger(MBeanWrapper.class);
 
     private Object wrappedObj;
     private String[] methodNames;
