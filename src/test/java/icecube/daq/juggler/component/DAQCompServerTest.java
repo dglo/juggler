@@ -6,6 +6,7 @@ import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.juggler.test.MockCache;
 import icecube.daq.juggler.test.MockHandler;
 import icecube.daq.juggler.test.MockOutputEngine;
+import icecube.daq.util.LocatePDAQ;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -37,6 +38,7 @@ class MockServer
         super(comp, args);
     }
 
+    @Override
     public void startServing()
     {
         // do nothing
@@ -87,6 +89,7 @@ public class DAQCompServerTest
         return ret && path.delete();
     }
 
+    @Override
     protected void setUp()
         throws Exception
     {
@@ -103,9 +106,15 @@ public class DAQCompServerTest
         return new TestSuite(DAQCompServerTest.class);
     }
 
+    @Override
     public final void tearDown()
         throws FileNotFoundException
     {
+        System.clearProperty(LocatePDAQ.CONFIG_DIR_PROPERTY);
+
+        // make sure we don't leave cached directory paths pointing at 'tmpDir'
+        LocatePDAQ.clearCache();
+
         if (tmpDir != null) {
             try {
                 deleteRecursive(tmpDir);
@@ -760,7 +769,8 @@ public class DAQCompServerTest
 
         File testTmp = File.createTempFile("foo", "").getParentFile();
 
-        File tmpDir = new File(testTmp, "tmpTrunk");
+        // tearDown() method will remove this directory
+        tmpDir = new File(testTmp, "tmpTrunk");
 
         File ddTop = new File(tmpDir, "dispatch");
         ddTop.mkdirs();
@@ -777,12 +787,13 @@ public class DAQCompServerTest
         final String globalConfig = cfgTop.getAbsolutePath();
         final long maxFileSize = 678L;
 
+        System.setProperty(LocatePDAQ.CONFIG_DIR_PROPERTY, globalConfig);
+
         String[] args = new String[] {
             "-M", "localhost:3",
             "-S",
             "-c", "foo",
             "-d", dispatchDir,
-            "-g", globalConfig,
             "-l", "localhost:1,debug",
             "-L", "localhost:2,debug",
             "-m", Integer.toString(moniInterval),
@@ -1088,12 +1099,6 @@ public class DAQCompServerTest
         assertEquals("Bad state",
                      DAQState.IDLE, mockComp.getState());
         assertFalse("Unexpected error after reset", mockComp.isError());
-
-/*
-        assertEquals("Expected log message", 1, getNumberOfMessages());
-        assertEquals("Bad log message", "Where am I?", getMessage(0));
-        clearMessages();
-*/
     }
 
     public static void main(String argv[])

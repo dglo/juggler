@@ -25,6 +25,8 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
+import org.apache.xmlrpc.webserver.DAQWebServer;
+import org.apache.xmlrpc.webserver.XmlRpcStatisticsServer;
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**
@@ -43,19 +45,23 @@ class XMLRPCServer
     private int port = Integer.MIN_VALUE;
     private WebServer webServer;
 
-    private HashMap beans = new HashMap();
-
-    public XMLRPCServer()
-    {
-    }
+    private HashMap<String, ObjectName> beans =
+        new HashMap<String, ObjectName>();
 
     private static Object fixArray(Object array)
     {
-        Object newArray = null;
-
         boolean forceString = false;
 
         final int len = Array.getLength(array);
+        if (len == 0) {
+            Class compType = array.getClass().getComponentType();
+            if (compType == long.class) {
+                compType = Integer.class;
+            }
+            return Array.newInstance(compType, len);
+        }
+
+        Object newArray = null;
         for (int i = 0; i < len; i++) {
             Object elem = fixValue(Array.get(array, i));
 
@@ -113,7 +119,7 @@ class XMLRPCServer
         }
 
         if (val.getClass().isArray()) {
-            return fixArray((Object) val);
+            return fixArray(val);
         } else if (val instanceof Byte) {
             return Integer.valueOf(((Byte) val).intValue());
         } else if (val instanceof Character) {
@@ -131,7 +137,7 @@ class XMLRPCServer
 
             return Integer.valueOf((int) lVal);
         } else if (val instanceof Float) {
-            return new Double(((Float) val).doubleValue());
+            return Double.valueOf(((Float) val).doubleValue());
         } else if (val instanceof AbstractMap) {
             return fixMap((AbstractMap) val);
         }
@@ -139,6 +145,7 @@ class XMLRPCServer
         return val;
     }
 
+    @Override
     public Object get(String mbeanName, String attrName)
         throws MBeanAgentException
     {
@@ -147,15 +154,18 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = (ObjectName) beans.get(mbeanName);
+        ObjectName objName = beans.get(mbeanName);
 
+        Object attrVal;
         try {
-            return fixAttribute(server.getAttribute(objName, attrName));
+            attrVal = server.getAttribute(objName, attrName);
         } catch (JMException jme) {
             throw new MBeanAgentException("Couldn't get MBean \"" + mbeanName +
                                           "\" attribute \"" + attrName + "\"",
                                           jme);
         }
+
+        return fixAttribute(attrVal);
     }
 
     public HashMap getAttributes(String mbeanName, String[] attrNames)
@@ -166,7 +176,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = (ObjectName) beans.get(mbeanName);
+        ObjectName objName = beans.get(mbeanName);
 
         Iterator iter;
         try {
@@ -210,6 +220,22 @@ class XMLRPCServer
         return map;
     }
 
+    @Override
+    public Map<String, Map> getDictionary()
+        throws MBeanAgentException
+    {
+        HashMap<String, Map> allData = new HashMap<String, Map>();
+
+        for (String mbeanName : beans.keySet()) {
+            final String[] attrNames = listGetters(mbeanName);
+
+            Map attrs = getAttributes(mbeanName, attrNames);
+            allData.put(mbeanName, attrs);
+        }
+
+        return allData;
+    }
+
     Object[] getList(String mbeanName, String[] attrNames)
         throws MBeanAgentException
     {
@@ -218,7 +244,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = (ObjectName) beans.get(mbeanName);
+        ObjectName objName = beans.get(mbeanName);
 
         Iterator iter;
         try {
@@ -291,6 +317,7 @@ class XMLRPCServer
         }
     }
 
+    @Override
     public String[] listGetters(String mbeanName)
         throws MBeanAgentException
     {
@@ -299,7 +326,7 @@ class XMLRPCServer
                                           "\"");
         }
 
-        ObjectName objName = (ObjectName) beans.get(mbeanName);
+        ObjectName objName = beans.get(mbeanName);
 
         MBeanAttributeInfo[] attrInfo;
         try {
@@ -326,6 +353,7 @@ class XMLRPCServer
         return names;
     }
 
+    @Override
     public String[] listMBeans()
         throws MBeanAgentException
     {
@@ -343,11 +371,13 @@ class XMLRPCServer
         return false;
     }
 
+    @Override
     public void postDeregister()
     {
         // do nothing
     }
 
+    @Override
     public void postRegister(Boolean registrationDone)
     {
         if (delegateName == null) {
@@ -368,6 +398,7 @@ class XMLRPCServer
         }
     }
 
+    @Override
     public void preDeregister()
     {
         try {
@@ -389,7 +420,7 @@ class XMLRPCServer
     {
         String key = (String) beanObjName.getKeyProperty("name");
         if (beans.containsKey(key)) {
-            ObjectName oldObjName = (ObjectName) beans.get(key);
+            ObjectName oldObjName = beans.get(key);
 
             if (!beanObjName.equals(oldObjName)) {
                 LOG.error("Overwriting MBean \"" + key + "\" objectName \"" +
@@ -405,7 +436,7 @@ class XMLRPCServer
         this.port = port;
     }
 
-    public void start()
+    public void start(MBeanAgent agent)
         throws MBeanAgentException
     {
         if (port <= 0) {
@@ -416,9 +447,14 @@ class XMLRPCServer
 
         MBeanHandler.setServer(this);
 
-        webServer = new WebServer(port);
+        DAQWebServer tmpServer = new DAQWebServer("MBean", port);
 
-        XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
+        XmlRpcStatisticsServer xmlRpcServer =
+            (XmlRpcStatisticsServer) tmpServer.getXmlRpcServer();
+
+        agent.addBean("xmlrpcServer", xmlRpcServer);
+
+        webServer = tmpServer;
 
         PropertyHandlerMapping phm = new PropertyHandlerMapping();
         try {

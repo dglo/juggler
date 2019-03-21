@@ -123,6 +123,7 @@ public class LogReader
         verbose = val;
     }
 
+    @Override
     public String toString()
     {
         return getReaderName();
@@ -156,6 +157,7 @@ public class LogReader
         {
         }
 
+        @Override
         public void run()
         {
             running = true;

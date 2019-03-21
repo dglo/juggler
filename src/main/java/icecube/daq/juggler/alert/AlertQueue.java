@@ -1,6 +1,7 @@
 package icecube.daq.juggler.alert;
 
 import icecube.daq.payload.IUTCTime;
+import icecube.daq.payload.impl.UTCTime;
 
 import java.util.ArrayDeque;
 import java.util.Calendar;
@@ -15,8 +16,10 @@ import org.apache.commons.logging.LogFactory;
  * Thread which queues and sends alerts
  */
 public class AlertQueue
-    implements Runnable
+    implements Runnable, IAlertQueue
 {
+    public static final String DEFAULT_NAME = "AlertQueue";
+
     private static final Log LOG = LogFactory.getLog(AlertQueue.class);
 
     private static final int MAX_QUEUE_SIZE = 1000000;
@@ -33,9 +36,9 @@ public class AlertQueue
     private int maxQueueSize = MAX_QUEUE_SIZE;
     private boolean queueFull;
 
-    private boolean idle = true;
-    private boolean stopping;
-    private boolean stopped = true;
+    private volatile boolean idle = true;
+    private volatile boolean stopping;
+    private volatile boolean stopped = true;
 
     /**
      * Create an AlertQueue with a thread named <tt>"AlertQueue"</tt>
@@ -44,7 +47,7 @@ public class AlertQueue
      */
     public AlertQueue(Alerter alerter)
     {
-        this("AlertQueue", alerter);
+        this(DEFAULT_NAME, alerter);
     }
 
     /**
@@ -62,34 +65,11 @@ public class AlertQueue
 
     private Map<String, Object> buildMessage(String varname,
                                              Alerter.Priority priority,
-                                             Map<String, Object> values)
-    {
-        return buildMessage(varname, priority, Calendar.getInstance(), values);
-    }
-
-    private Map<String, Object> buildMessage(String varname,
-                                             Alerter.Priority priority,
                                              IUTCTime utc,
                                              Map<String, Object> values)
     {
-        return buildMessage(varname, priority, utc.toDateString(), values);
-    }
+        final String dateStr = utc.toDateString();
 
-    private Map<String, Object> buildMessage(String varname,
-                                             Alerter.Priority priority,
-                                             Calendar date,
-                                             Map<String, Object> values)
-    {
-        final String dateStr =
-            String.format("%tF %tT.%tL000", date, date, date);
-        return buildMessage(varname, priority, dateStr, values);
-    }
-
-    private Map<String, Object> buildMessage(String varname,
-                                             Alerter.Priority priority,
-                                             String dateStr,
-                                             Map<String, Object> values)
-    {
         String service;
         if (alerter != null) {
             service = alerter.getService();
@@ -153,6 +133,7 @@ public class AlertQueue
      *
      * @return <tt>true</tt> if the thread is not running
      */
+    @Override
     public boolean isStopped()
     {
         return stopped;
@@ -161,18 +142,20 @@ public class AlertQueue
     /**
      * Add <tt>obj</tt> to the queue of alerts to be sent
      *
-     * @param obj alert to be sent
+     * @param map alert to be sent
      *
      * @throws AlertException if there is a problem with the alerter or
      *                        the thread is stopped
      */
-    public void push(Object obj)
+    @Override
+    public void push(Map<String, Object> map)
         throws AlertException
     {
         if (alerter == null) {
             throw new AlertException("Alerter has not been set");
         } else if (stopping || stopped) {
-            throw new AlertException("AlertQueue has not been started");
+            throw new AlertException("Alert queue " + name +
+                                     " has not been started");
         }
 
         synchronized (queue) {
@@ -180,23 +163,23 @@ public class AlertQueue
                 // if queue is "too large", stop adding stuff
                 queueFull = queue.size() >= maxQueueSize;
                 if (queueFull) {
-                    LOG.error("Disabled alert queue containing " +
+                    LOG.error("Disabled alert queue " + name + " containing " +
                               queue.size() + " messages");
                 }
             } else {
                 // if queue has shrunk enough, resume adding stuff
                 queueFull = queue.size() >= maxQueueSize / 2;
                 if (!queueFull) {
-                    LOG.error("Reenabled alert queue containing " +
-                              queue.size() + " messages (dropped " +
-                              numDropped + ")");
+                    LOG.error("Reenabled alert queue " + name +
+                              " containing " + queue.size() +
+                              " messages (dropped " + numDropped + ")");
                 }
             }
 
             if (queueFull) {
                 numDropped++;
             } else {
-                queue.addLast(obj);
+                queue.addLast(map);
                 queue.notify();
             }
         }
@@ -212,11 +195,12 @@ public class AlertQueue
      * @throws AlertException if there is a problem with the alerter or
      *                        the thread is stopped
      */
+    @Override
     public void push(String varname, Alerter.Priority prio,
                      Map<String, Object> values)
         throws AlertException
     {
-        push(buildMessage(varname, prio, values));
+        push(varname, prio, new UTCTime(), values);
     }
 
     /**
@@ -230,16 +214,22 @@ public class AlertQueue
      * @throws AlertException if there is a problem with the alerter or
      *                        the thread is stopped
      */
+    @Override
     public void push(String varname, Alerter.Priority prio, IUTCTime utcTime,
                      Map<String, Object> values)
         throws AlertException
     {
+        if (utcTime == null) {
+            utcTime = new UTCTime();
+        }
+
         push(buildMessage(varname, prio, utcTime, values));
     }
 
     /**
      * Run the thread
      */
+    @Override
     public void run()
     {
         stopped = false;
@@ -258,13 +248,13 @@ public class AlertQueue
         while (!stopping || queue.size() > 0) {
             Object obj;
             synchronized (queue) {
-                if (queue.size() == 0) {
+                if (queue.size() == 0 && !stopping) {
                     try {
                         idle = true;
                         queue.wait();
                     } catch (InterruptedException ie) {
-                        LOG.error("Interrupt while waiting for alert queue",
-                                  ie);
+                        LOG.error("Interrupt while waiting for alert queue " +
+                                  name, ie);
                     }
                     idle = false;
                 }
@@ -277,7 +267,8 @@ public class AlertQueue
             }
 
             if (obj == null) {
-                // we woke up to an empty queue; go to top of loop
+                // we woke up to an empty queue or were stopped when the
+                // queue was empty; go to top of loop
                 continue;
             }
 
@@ -285,7 +276,7 @@ public class AlertQueue
                 alerter.sendObject(obj);
                 numSent++;
             } catch (AlertException ae) {
-                LOG.error("Cannot send " + obj, ae);
+                LOG.error("Alert queue " + name + " cannot send " + obj, ae);
             }
         }
 
@@ -326,6 +317,7 @@ public class AlertQueue
     /**
      * Start the thread if it isn't already running
      */
+    @Override
     public void start()
     {
         synchronized (queue) {
@@ -343,6 +335,7 @@ public class AlertQueue
     /**
      * Stop the thread if it's running
      */
+    @Override
     public void stop()
     {
         synchronized (queue) {
@@ -390,6 +383,7 @@ public class AlertQueue
     /**
      * Thread name
      */
+    @Override
     public String toString()
     {
         return name;

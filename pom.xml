@@ -81,7 +81,6 @@
 
   <!--
       Dependencies for this project.  These should not contain versions.
-      (except for jzmq-native!!)
   -->
   <dependencies>
     <dependency>
@@ -121,21 +120,8 @@
 
     <dependency>
       <groupId>org.zeromq</groupId>
-      <artifactId>jzmq</artifactId>
+      <artifactId>jeromq</artifactId>
     </dependency>
-
-    <!--
-        I'm not sure why, but jzmq-native doesn't work when specified in
-        the top-level pom.xml, only when it's fully qualified here
-    -->
-<!-- Deactivate until I figure out why the new Java interface kills StringHub
-    <dependency>
-      <groupId>org.zeromq</groupId>
-      <artifactId>jzmq-native</artifactId>
-      <classifier>${native.arch}-${native.os}</classifier>
-      <version>${jzmq.version}</version>
-    </dependency>
--->
 
     <dependency>
       <groupId>com.google.code.gson</groupId>

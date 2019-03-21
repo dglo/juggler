@@ -1,12 +1,14 @@
 package icecube.daq.juggler.mbean;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public interface MBeanData
 {
     Object get(String mbeanName, String attrName)
         throws MBeanAgentException;
-    HashMap getAttributes(String mbeanName, String[] attrNames)
+    Map getAttributes(String mbeanName, String[] attrNames)
+        throws MBeanAgentException;
+    Map<String, Map> getDictionary()
         throws MBeanAgentException;
     String[] listGetters(String mbeanName)
         throws MBeanAgentException;

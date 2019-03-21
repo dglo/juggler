@@ -31,8 +31,6 @@ public abstract class DAQConnector
     public static final String TYPE_TEST_HIT = "testHit";
     /** General payload data connector. */
     public static final String TYPE_TEST_DATA = "testData";
-    /** stringHub-&gt;trackEngine hit connector. */
-    public static final String TYPE_TRACKENG_HIT = "trackEngHit";
     /** icetopTrigger/iniceTrigger-&gt;globalTrigger trigger connector. */
     public static final String TYPE_TRIGGER = "trigger";
     /** self-contained connector which doesn't need any external connections */

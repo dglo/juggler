@@ -73,6 +73,7 @@ class BeanBin
      *
      * @return debugging string
      */
+    @Override
     public String toString()
     {
         return name + ":" + bean;
@@ -391,10 +392,11 @@ public class MBeanAgent
                                           jme);
         }
 
+        // register all MBeans
         registerBeans();
 
         htmlAdapter.start();
-        xmlRpcAdapter.start();
+        xmlRpcAdapter.start(this);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Started MBean agent: HTML port " + htmlPort +

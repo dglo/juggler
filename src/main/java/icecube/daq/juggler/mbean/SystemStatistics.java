@@ -3,9 +3,11 @@ package icecube.daq.juggler.mbean;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -61,11 +63,17 @@ public class SystemStatistics
     private Pattern dataPattern  = Pattern.compile("[:\\s]+");
     private Pattern spacePattern = Pattern.compile("\\s+");
 
+    /** Path to CPU statistics file */
+    public static File STAT_FILE = new File("/proc/stat");
+
+    /** Does this system have a /proc/stat file? */
+    private boolean hasProcStat;
     /**
      * Simple constructor.
      */
     public SystemStatistics()
     {
+        hasProcStat = STAT_FILE.exists();
     }
 
     public HashMap getAvailableDiskSpace()
@@ -171,6 +179,150 @@ public class SystemStatistics
         return map;
     }
 
+    /*
+     * Return a list of overall and per-core CPU statistics.
+     *
+     * Individual entries contain these CPU times:
+     * <ol>
+     * <li>user
+     * <li>nice
+     * <li>system
+     * <li>idle
+     * <li>iowait
+     * <li>irq
+     * <li>softirq
+     * <li>other
+     * </ol>
+     *
+     * @return array of CPU times
+     */
+    @Override
+    public Map<String, long[]> getCPUStatistics()
+    {
+        if (!hasProcStat) {
+            return null;
+        }
+
+        BufferedReader reader;
+        try {
+            reader = new BufferedReader(new FileReader(STAT_FILE));
+        } catch (FileNotFoundException fnfe) {
+            LOG.error("Couldn't open " + STAT_FILE + " on OS: " +
+                      System.getProperty("os.name"));
+            return null;
+        }
+
+        Pattern white = Pattern.compile("\\s+");
+
+        Map<String, long[]> tmpMap = new HashMap<String, long[]>();
+
+        boolean badLine = false;
+        while (true) {
+            String line;
+            try {
+                line = reader.readLine();
+            } catch (IOException ioe) {
+                LOG.error("Problem reading CPU stats", ioe);
+                continue;
+            }
+
+            if (line == null) {
+                break;
+            }
+
+            if (!line.startsWith("cpu")) {
+                continue;
+            }
+
+            final int knownFields = 7;
+            final String[] fields = white.split(line);
+            if (fields.length < knownFields + 1) {
+                if (badLine) {
+                    LOG.error("Giving up on CPU statistics after line" +
+                          " \"" + line.trim() + "\"");
+                    hasProcStat = false;
+                    break;
+                }
+
+                LOG.error("Expected at least " + (knownFields + 1) +
+                          " fields in CPU statistics line \"" +
+                          line.trim() + "\"");
+                badLine = true;
+                continue;
+            }
+
+            long[] values = new long[knownFields + 1];
+            for (int i = 0; i < fields.length; i++) {
+                boolean badOne = false;
+                if (i == 0) {
+                    // validate the "cpu" or "cpu##" value; first entry should
+                    //   be "cpu", followed by "cpu0", "cpu1", etc.
+                    if (fields[0].length() == 3) {
+                        // this must be the system-wide 'cpu' line
+                        if (tmpMap.size() != 0) {
+                            LOG.error("System-wide 'cpu' entry seen after" +
+                                      " other CPU entries");
+                            badOne = true;
+                        }
+                    } else {
+                        // this entry is one of the CPU cores
+                        try {
+                            final String numStr = fields[0].substring(3);
+                            final int num = Integer.parseInt(numStr);
+                            if (num + 1 != tmpMap.size()) {
+                                LOG.error("Expected \"cpu" +
+                                          (tmpMap.size() - 1) +
+                                          "\", not \"" + fields[0] +
+                                          "\" in \"" + line.trim() + "\"");
+                                badOne = true;
+                            }
+                        } catch (Throwable thr) {
+                            LOG.error("Bad CPU statistics line \"" +
+                                      line.trim() + "\"", thr);
+                            badOne = true;
+                        }
+                    }
+                } else {
+                    long value;
+                    try {
+                        value = Long.parseLong(fields[i]);
+                    } catch (NumberFormatException nfe) {
+                        LOG.error("Bad CPU statistics field #" + i + " \"" +
+                                  fields[i] + "\" in \"" + line.trim() +
+                                  "\"");
+                        value = -1;
+                        badOne = true;
+                    }
+
+                    if (!badOne) {
+                        // unknown values get added to the final value
+                        if (i - 1 < values.length) {
+                            values[i - 1] = value;
+                        } else {
+                            values[values.length - 1] += value;
+                        }
+                    }
+                }
+
+                if (!badOne) {
+                    // ignore single-line failues
+                    badLine = false;
+                } else if (!badLine) {
+                    // give them one chance to fail
+                    badLine = true;
+                } else {
+                    // two strikes and you're out!
+                    break;
+                }
+            }
+
+            tmpMap.put(fields[0], values);
+        }
+
+        return tmpMap;
+    }
+
+    @Override
     public double[] getLoadAverage()
     {
         Process proc;
@@ -275,7 +427,7 @@ public class SystemStatistics
             try {
                 line = PNDreader.readLine();
             } catch (IOException ioe) {
-                LOG.error("Problem reading io stats: " + ioe);
+                LOG.error("Problem reading io stats", ioe);
             }
 
             if (line == null) {
@@ -459,6 +611,7 @@ public class SystemStatistics
      *
      * @return description of current statistics
      */
+    @Override
     public String toString()
     {
         double[] loadAvg = getLoadAverage();
@@ -477,7 +630,7 @@ public class SystemStatistics
         if (dfMap == null || dfMap.size() == 0) {
             dfStr = "";
         } else {
-            StringBuffer buf = new StringBuffer("space: {");
+            StringBuilder buf = new StringBuilder("space: {");
 
             boolean needComma = false;
             for(Map.Entry entry : (Set<Map.Entry>)dfMap.entrySet()) {
@@ -501,7 +654,7 @@ public class SystemStatistics
         if (ioMap == null || ioMap.size() == 0) {
             ioStr = "";
         } else {
-            StringBuffer buf = new StringBuffer("network: {");
+            StringBuilder buf = new StringBuilder("network: {");
 
             boolean needComma = false;
             for(Map.Entry entry: ioMap.entrySet()) {
@@ -517,7 +670,28 @@ public class SystemStatistics
             ioStr = buf.append("}\n").toString();
         }
 
-        return loadStr + dfStr + ioStr;
+        Map<String, long[]> cpuStats = getCPUStatistics();
+        String cpuStr;
+        if (cpuStats == null) {
+            cpuStr = "";
+        } else {
+            StringBuilder buf = new StringBuilder("cpu: {\n");
+            for (Map.Entry<String, long[]> pair : cpuStats.entrySet()) {
+                buf.append("    \"").append(pair.getKey()).append("\": [");
+
+                final long[] values = pair.getValue();
+                for (int i = 0; i < values.length; i++) {
+                    if (i > 0) {
+                        buf.append(", ");
+                    }
+                    buf.append(values[i]);
+                }
+                buf.append("],\n");
+            }
+            cpuStr = buf.append("}\n").toString();
+        }
+
+        return loadStr + dfStr + ioStr + cpuStr;
     }
 
     /**
@@ -581,6 +755,7 @@ public class SystemStatistics
          *
          * @return kbyte string
          */
+        @Override
         public String toString()
         {
             return Integer.toString(total);

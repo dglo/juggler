@@ -1,6 +1,7 @@
 package icecube.daq.juggler.mbean;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class MBeanHandler
 {
@@ -50,6 +51,16 @@ public class MBeanHandler
         }
 
         return server.getAttributes(mbeanName, attrList);
+    }
+
+    public Map<String, Map> getDictionary()
+        throws MBeanAgentException
+    {
+        if (server == null) {
+            throw new MBeanAgentException("XML-RPC server is unknown");
+        }
+
+        return server.getDictionary();
     }
 
     public Object[] getList(String mbeanName, Object[] objList)

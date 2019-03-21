@@ -1,10 +1,13 @@
 package icecube.daq.juggler.alert;
 
+import icecube.daq.common.MockAppender;
 import icecube.daq.juggler.alert.Alerter.Priority;
 import icecube.daq.juggler.test.MockAlerter;
-import icecube.daq.juggler.test.MockAppender;
-import icecube.daq.juggler.test.MockAlerter;
 import icecube.daq.juggler.test.MockUTCTime;
+import icecube.daq.util.LocatePDAQ;
+
+import java.io.File;
+import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,12 +50,22 @@ public class AlertQueueTest
     public void setUp()
         throws Exception
     {
-        appender.clear();
-
         BasicConfigurator.resetConfiguration();
         BasicConfigurator.configure(appender);
 
         alerter = new MockAlerter();
+
+        // ensure LocatePDAQ uses the test version of the config directory
+        File configDir =
+            new File(getClass().getResource("/config").getPath());
+        if (!configDir.exists()) {
+            throw new IllegalArgumentException("Cannot find config" +
+                                               " directory under " +
+                                               getClass().getResource("/"));
+        }
+
+        System.setProperty(LocatePDAQ.CONFIG_DIR_PROPERTY,
+                           configDir.getAbsolutePath());
     }
 
     private void startQueue(AlertQueue aq)
@@ -80,8 +93,9 @@ public class AlertQueueTest
     public void tearDown()
         throws Exception
     {
-        assertEquals("Bad number of log messages",
-                     0, appender.getNumberOfMessages());
+        System.clearProperty(LocatePDAQ.CONFIG_DIR_PROPERTY);
+
+        appender.assertNoLogMessages();
 
         //assertEquals("Bad number of alert messages",
         //             0, alerter.countAllAlerts());
@@ -107,7 +121,9 @@ public class AlertQueueTest
         int numExpected = 0;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 30; j++) {
-                aq.push("Alert#" + i + "/" + j);
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("alert", String.format("%d/%d", i, j));
+                aq.push(map);
                 numExpected++;
             }
 
@@ -158,33 +174,72 @@ public class AlertQueueTest
         assertTrue("AlertQueue should be stopped", aq.isStopped());
         assertTrue("AlertQueue should not be idle", aq.isIdle());
 
-        aq.setMaxQueueSize(1);
+        final int maxSize = 4;
+
+        aq.setMaxQueueSize(maxSize);
         alerter.setSendDelay(500);
 
         startQueue(aq);
 
-        aq.push("ABC");
-        aq.push("DEF");
+        // track number of alerts sent
+        int sent = 0;
 
+        // queue maximum number of alerts
+        for (int i = 0; i < maxSize; i++) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("alert", i);
+            aq.push(map);
+            sent++;
+        }
+
+        // keep pushing alerts until we see the overflow error
+        for (int i = maxSize; i < maxSize * 2; i++) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("alert", i);
+            aq.push(map);
+            sent++;
+            if (appender.getNumberOfMessages() > 0) {
+                break;
+            }
+        }
+
+        // should only receive one error
+        final String front = "Disabled alert queue " +
+            AlertQueue.DEFAULT_NAME + " containing ";
+        appender.assertLogMessage(front);
+        appender.assertNoLogMessages();
+
+        // wait for queue to be emptied
         flushQueue(aq);
-        assertEquals("Bad number of log messages",
-                     1, appender.getNumberOfMessages());
-        assertEquals("Bad log message",
-                     "Disabled alert queue containing 1 messages",
-                     appender.getMessage(0));
-        appender.clear();
 
-        aq.push("GHI");
+        // push into empty queue
+        HashMap<String, Object> finalMap = new HashMap<String, Object>();
+        finalMap.put("Valid", "yes");
+        aq.push(finalMap);
+        sent++;
 
+        // wait for the log message
+        for (int i = 0; i < 100 && appender.getNumberOfMessages() == 0; i++) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ie) {
+                // ignore interrupts
+            }
+        }
+
+        // the previous push should cause a 'reenabled' log message
+        final String reMsg = "Reenabled alert queue " +
+            AlertQueue.DEFAULT_NAME + " containing 0 messages (dropped " +
+            aq.getNumDropped() + ")";
+        appender.assertLogMessage(reMsg);
+        appender.assertNoLogMessages();
+
+        // empty the queue again and stop
         flushQueue(aq);
-        assertEquals("Bad number of log messages",
-                     1, appender.getNumberOfMessages());
-        assertEquals("Bad log message",
-                     "Reenabled alert queue containing 0 messages (dropped 1)",
-                     appender.getMessage(0));
-        appender.clear();
-
         aq.stopAndWait();
-        assertEquals("Bad number of alerts sent", 2, aq.getNumSent());
+
+        // make sure we got the expected number of alerts
+        assertEquals("Bad number of alerts sent",
+                     sent - aq.getNumDropped(), aq.getNumSent());
     }
 }

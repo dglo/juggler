@@ -43,6 +43,9 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
+import org.apache.xmlrpc.server.XmlRpcStreamServer;
+import org.apache.xmlrpc.webserver.DAQWebServer;
+import org.apache.xmlrpc.webserver.XmlRpcStatisticsServer;
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**
@@ -429,6 +432,7 @@ class LoggingConfiguration
         handler = new StreamHandler(System.out, new SimpleFormatter());
     }
 
+    @Override
     public String toString()
     {
         return compName + ":" +
@@ -508,6 +512,7 @@ public class DAQCompServer
         comp.setLogLevel(Level.INFO);
 
         processArgs(comp, args);
+        comp.initialize();
 
         resetLoggingConfiguration();
     }
@@ -530,12 +535,12 @@ public class DAQCompServer
                                       rtnMap.size() + " elements");
         }
 
-        final int compId = ((Integer) rtnMap.get("id")).intValue();
+        final int compId = ((Number) rtnMap.get("id")).intValue();
         final String logIP = (String) rtnMap.get("logIP");
-        final int logPort = ((Integer) rtnMap.get("logPort")).intValue();
+        final int logPort = ((Number) rtnMap.get("logPort")).intValue();
         final String liveIP = (String) rtnMap.get("liveIP");
-        final int livePort = ((Integer) rtnMap.get("livePort")).intValue();
-        final int tmpServerId =  ((Integer) rtnMap.get("serverId")).intValue();
+        final int livePort = ((Number) rtnMap.get("livePort")).intValue();
+        final int tmpServerId =  ((Number) rtnMap.get("serverId")).intValue();
 
         if (serverId != tmpServerId) {
             setServerId(tmpServerId);
@@ -706,9 +711,9 @@ public class DAQCompServer
 
             String type = (String) map.get("type");
             String compName = (String) map.get("compName");
-            int compNum = ((Integer) map.get("compNum")).intValue();
+            int compNum = ((Number) map.get("compNum")).intValue();
             String host = (String) map.get("host");
-            int port = ((Integer) map.get("port")).intValue();
+            int port = ((Number) map.get("port")).intValue();
 
             connList[i] = new Connection(type, compName, compNum, host, port);
         }
@@ -1040,7 +1045,7 @@ public class DAQCompServer
         try {
             Object obj = client.execute("rpc_ping", NO_PARAMS);
 
-            int val = ((Integer) obj).intValue();
+            int val = ((Number) obj).intValue();
 
             sawServer = (val == serverId);
         } catch (XmlRpcException xre) {
@@ -1085,7 +1090,7 @@ public class DAQCompServer
 
         // get the configuration directory from a system property
         String propConfigDir =
-            System.getProperty("icecube.daq.component.configDir");
+            System.getProperty(LocatePDAQ.CONFIG_DIR_PROPERTY);
 
         boolean usage = false;
         for (int i = 0; i < args.length; i++) {
@@ -1136,7 +1141,7 @@ public class DAQCompServer
 
                     // if the system property was set ignore
                     // the -g option
-                    if (propConfigDir==null) {
+                    if (propConfigDir == null) {
                         propConfigDir = args[i];
                     } else {
                         System.err.println("Both the configuration file property " +
@@ -1161,7 +1166,7 @@ public class DAQCompServer
                     int secs;
                     try {
                         secs = Integer.parseInt(args[i]);
-                    } catch (NumberFormatException e) {
+                    } catch (NumberFormatException nfe) {
                         System.err.println("Bad monitoring interval '" +
                                            args[i] + "'");
                         usage = true;
@@ -1175,7 +1180,7 @@ public class DAQCompServer
                     long maxFileSize = 0;
                     try {
                         maxFileSize = Long.parseLong(args[i]);
-                    } catch (NumberFormatException e) {
+                    } catch (NumberFormatException nfe) {
                         System.err.println("Bad file size = " + args[i]);
                         usage = true;
                         break;
@@ -1231,7 +1236,7 @@ public class DAQCompServer
                 " [-c configServerURL]" +
                 " [-d dispatchDestPath]" +
                 " [-g globalConfigPath - note deprecated, " +
-                "     use -Dicecube.daq.component.configDir]" +
+                "     use -D" + LocatePDAQ.CONFIG_DIR_PROPERTY + "]" +
                 " [-l logAddress:logPort,logLevel]" +
                 " [-m localMoniSeconds]" +
                 " [-s maxDispatchFileSize]" +
@@ -1326,9 +1331,18 @@ public class DAQCompServer
     private void runEverything(DAQComponent comp, URL cfgServerURL)
         throws DAQCompException
     {
-        WebServer webServer = startServer();
+        DAQWebServer webServer = startServer();
         if (LOG.isDebugEnabled()) {
             LOG.debug("XML-RPC on port " + webServer.getPort());
+        }
+
+        try {
+            XmlRpcStatisticsServer statsServer =
+                (XmlRpcStatisticsServer) webServer.getXmlRpcServer();
+
+            comp.addMBean("rpcServer", statsServer);
+        } catch (Throwable thr) {
+            LOG.error("Failed to add RPC statistics MBean", thr);
         }
 
         try {
@@ -1511,7 +1525,7 @@ public class DAQCompServer
      * XML-RPC method setting first "good" time in the specified component.
      * run.
      *
-     * @param firstTime first "good" time
+     * @param firstTimeStr first "good" time (as a String)
      *
      * @return <tt>"OK"</tt>
      *
@@ -1570,7 +1584,7 @@ public class DAQCompServer
      * XML-RPC method setting last "good" time in the specified component.
      * run.
      *
-     * @param lastTime last "good" time
+     * @param lastTimeStr last "good" time (as a String)
      *
      * @return <tt>"OK"</tt>
      *
@@ -1705,7 +1719,7 @@ public class DAQCompServer
     /**
      * XML-RPC method to set the offset applied to each hit being replayed.
      *
-     * @param offset offset to apply to hit times
+     * @param offsetStr offset to apply to hit times (as a String)
      *
      * @return <tt>"OK"</tt>
      *
@@ -1784,7 +1798,7 @@ public class DAQCompServer
      *
      * @throws DAQCompException if there is a problem
      */
-    private WebServer startServer()
+    private DAQWebServer startServer()
         throws DAQCompException
     {
         int port;
@@ -1800,9 +1814,9 @@ public class DAQCompServer
             throw new DAQCompException("Couldn't search for port", ex);
         }
 
-        WebServer webServer;
+        DAQWebServer webServer;
         while (true) {
-            webServer = new WebServer(port);
+            webServer = new DAQWebServer("DAQ-RPC", port);
             try {
                 webServer.start();
                 break;
@@ -1814,7 +1828,8 @@ public class DAQCompServer
             }
         }
 
-        XmlRpcServer server = webServer.getXmlRpcServer();
+        XmlRpcStatisticsServer server =
+            (XmlRpcStatisticsServer) webServer.getXmlRpcServer();
 
         PropertyHandlerMapping propMap = new PropertyHandlerMapping();
         try {
@@ -1898,7 +1913,7 @@ public class DAQCompServer
 
                 int[] vals = new int[5];
                 for (int i = 0; i < vals.length; i++) {
-                    vals[i] = ((Integer) array[i + 1]).intValue();
+                    vals[i] = ((Number) array[i + 1]).intValue();
                 }
 
                 data.add(new FlasherboardConfiguration(mbid, vals[0], vals[1],

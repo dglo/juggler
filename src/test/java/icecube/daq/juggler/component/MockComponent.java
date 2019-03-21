@@ -56,21 +56,25 @@ public class MockComponent
         calledSwitching = false;
     }
 
+    @Override
     public void commitSubrun(int subrunNumber, long startTime)
     {
         subrunCommitTime = startTime;
     }
 
+    @Override
     public void configuring(String name)
     {
         calledConfiguring = true;
     }
 
+    @Override
     public void disconnected()
     {
         calledDisconnected = true;
     }
 
+    @Override
     public void enableLocalMonitoring(int interval)
     {
         moniInterval = interval;
@@ -90,6 +94,7 @@ public class MockComponent
         return dispatchDirName;
     }
 
+    @Override
     public long getEvents(int subrun)
     {
         return numEvents;
@@ -115,21 +120,30 @@ public class MockComponent
         return subrunCommitTime;
     }
 
+    @Override
     public String getVersionInfo()
     {
         return version;
     }
 
+    @Override
+    public void initialize()
+    {
+    }
+
+    @Override
     public void prepareSubrun(int subrunNumber)
     {
         calledPrepareSubrun = true;
     }
 
+    @Override
     public void resetting()
     {
         calledResetting = true;
     }
 
+    @Override
     public void setDispatchDestStorage(String dirName)
     {
         this.dispatchDirName = dirName;
@@ -140,11 +154,13 @@ public class MockComponent
         this.numEvents = numEvents;
     }
 
+    @Override
     public void setGlobalConfigurationDir(String dirName)
     {
         globalConfigDirName = dirName;
     }
 
+    @Override
     public void setMaxFileSize(long maxFileSize)
     {
         this.maxFileSize = maxFileSize;
@@ -165,6 +181,7 @@ public class MockComponent
         stopEngines = true;
     }
 
+    @Override
     public long startSubrun(List<FlasherboardConfiguration> data)
         throws DAQCompException
     {
@@ -181,21 +198,25 @@ public class MockComponent
         return subrunStartTime;
     }
 
+    @Override
     public void started(int runNumber)
     {
         calledStarted = true;
     }
 
+    @Override
     public void starting(int runNumber)
     {
         calledStarting = true;
     }
 
+    @Override
     public void stopped()
     {
         calledStopped = true;
     }
 
+    @Override
     public void stopping()
     {
         calledStopping = true;
@@ -211,6 +232,7 @@ public class MockComponent
         }
     }
 
+    @Override
     public void switching(int runNumber)
     {
         calledSwitching = true;

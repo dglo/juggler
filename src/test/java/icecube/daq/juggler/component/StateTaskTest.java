@@ -5,6 +5,7 @@ import icecube.daq.juggler.alert.Alerter;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.payload.IByteBufferCache;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -45,12 +46,26 @@ class StateComponent
     }
 
     /**
+     * Close all open files, sockets, etc.
+     * NOTE: This is only used by unit tests.
+     *
+     * @throws IOException if there is a problem
+     */
+    @Override
+    public void closeAll()
+        throws IOException
+    {
+        throw new UnimplementedException();
+    }
+
+    /**
      * Configure a component using the specified configuration name.
      *
      * @param configName configuration name
      *
      * @throws DAQCompException if there is a problem configuring
      */
+    @Override
     public void configuring(String configName)
         throws DAQCompException
     {
@@ -62,6 +77,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void destroy()
         throws DAQCompException
     {
@@ -87,6 +103,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void disconnected()
         throws DAQCompException
     {
@@ -96,6 +113,7 @@ class StateComponent
     /**
      * Flush buffer caches
      */
+    @Override
     public void flushCaches()
     {
         didFlushCaches = true;
@@ -107,6 +125,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void forceStopping()
         throws DAQCompException
     {
@@ -118,12 +137,14 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void forcedStop()
         throws DAQCompException
     {
         throw new UnimplementedException();
     }
 
+    @Override
     public AlertQueue getAlertQueue()
     {
         throw new UnimplementedException();
@@ -138,6 +159,7 @@ class StateComponent
      *
      * @throws DAQCompException if the cache could not be found
      */
+    @Override
     public IByteBufferCache getByteBufferCache(String type)
         throws DAQCompException
     {
@@ -149,6 +171,7 @@ class StateComponent
      *
      * @return full name
      */
+    @Override
     public String getFullName()
     {
         return fullName;
@@ -161,6 +184,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public Object getMBean(String name)
         throws DAQCompException
     {
@@ -172,6 +196,7 @@ class StateComponent
      *
      * @return <tt>true</tt> if all connectors have stopped
      */
+    @Override
     public boolean isStopped()
     {
         return connStopped;
@@ -182,6 +207,7 @@ class StateComponent
      *
      * @return connection iterator
      */
+    @Override
     public Iterable<DAQConnector> listConnectors()
     {
         return connList;
@@ -192,6 +218,7 @@ class StateComponent
      *
      * @return list of MBean names
      */
+    @Override
     public Set<String> listMBeans()
     {
         throw new UnimplementedException();
@@ -218,12 +245,14 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem resetting
      */
+    @Override
     public void resetting()
         throws DAQCompException
     {
         didResetting = true;
     }
 
+    @Override
     public void setAlerter(Alerter alerter)
     {
         throw new UnimplementedException();
@@ -234,6 +263,7 @@ class StateComponent
      *
      * @param dirName absolute path of configuration directory
      */
+    @Override
     public void setGlobalConfigurationDir(String dirName)
     {
         throw new UnimplementedException();
@@ -246,6 +276,7 @@ class StateComponent
      *
      * @throws DAQCompException if input server cannot be started
      */
+    @Override
     public void start(boolean startMBeanAgent)
         throws DAQCompException
     {
@@ -257,6 +288,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem
      */
+    @Override
     public void startEngines()
         throws DAQCompException
     {
@@ -270,6 +302,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem starting the component
      */
+    @Override
     public void started(int runNumber)
         throws DAQCompException
     {
@@ -283,6 +316,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem starting the component
      */
+    @Override
     public void starting(int runNumber)
         throws DAQCompException
     {
@@ -294,6 +328,7 @@ class StateComponent
      *
      * @throws DAQCompException if MBean agent was not stopped
      */
+    @Override
     public void stopMBeanAgent()
         throws DAQCompException
     {
@@ -303,6 +338,7 @@ class StateComponent
     /**
      * Stop the state task associated with this component.
      */
+    @Override
     public void stopStateTask()
     {
         didStopStateTask = true;
@@ -313,6 +349,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem stopping the component
      */
+    @Override
     public void stopped()
         throws DAQCompException
     {
@@ -324,6 +361,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem stopping the component
      */
+    @Override
     public void stopping()
         throws DAQCompException
     {
@@ -337,6 +375,7 @@ class StateComponent
      *
      * @throws DAQCompException if there is a problem switching the component
      */
+    @Override
     public void switching(int runNumber)
         throws DAQCompException
     {
@@ -481,21 +520,27 @@ public class StateTaskTest
             Thread thread = new Thread(st);
             thread.setName("StateTask");
             thread.start();
-            while (!st.isRunning()) {
+            for (int j = 0; !st.isRunning() && j < 100; j++) {
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(10);
                 } catch (InterruptedException ie) {
                     // ignore interrupts
                 }
             }
+            if (!st.isRunning()) {
+                fail("StateTask " + st + " was not started!");
+            }
 
             st.stop();
-            while (!st.isStopped()) {
+            for (int j = 0; !st.isStopped() && j < 100; j++) {
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(10);
                 } catch (InterruptedException ie) {
                     // ignore interrupts
                 }
+            }
+            if (!st.isStopped()) {
+                fail("StateTask " + st + " was not stopped!");
             }
 
             assertEquals("Unexpected final state for " + trans.getOldState() +
@@ -504,9 +549,8 @@ public class StateTaskTest
 
             checkFunctions(comp, trans, trans.getFunctionBitmap());
 
-            assertEquals("Bad number of log messages " + trans.getOldState() +
-                         "->" + trans.getAction(),
-                         0, getNumberOfMessages());
+            assertNoLogMessages(trans.getOldState() + "->" +
+                                trans.getAction());
         }
     }
 }

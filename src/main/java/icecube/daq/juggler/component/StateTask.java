@@ -314,7 +314,7 @@ public class StateTask
 
         if (prevState == DAQState.STARTING || prevState == DAQState.RUNNING ||
             prevState == DAQState.STOPPING ||
-            prevState == DAQState.FORCING_STOP)
+            prevState == DAQState.FORCING_STOP || prevState == DAQState.ERROR)
         {
             // if we haven't called the component's stopping() method yet...
             if (!calledStopping) {
@@ -461,6 +461,7 @@ public class StateTask
         }
     }
 
+    @Override
     public void run()
     {
         running = true;
@@ -499,18 +500,11 @@ public class StateTask
         case CONFIGURING:
             try {
                 doConfigure();
-                success = true;
             } catch (DAQCompException dce) {
                 LOG.error("Configure failed", dce);
-                success = false;
+                state = DAQState.ERROR;
                 caughtError = true;
             }
-
-            if (!success) {
-                // revert to the previous state if configure failed
-                state = prevState;
-            }
-
             break;
         case CONNECTED:
             // nothing to be done
@@ -571,19 +565,17 @@ public class StateTask
                 success = true;
             } catch (DAQCompException dce) {
                 LOG.error("Disconnect failed", dce);
-                success = false;
+                state = DAQState.ERROR;
                 caughtError = true;
             } catch (IOException ioe) {
                 LOG.error("Disconnect failed", ioe);
-                success = false;
+                state = DAQState.ERROR;
                 caughtError = true;
             }
 
-            if (!success) {
-                // revert to the previous state if disconnect failed
-                state = prevState;
-            }
-
+            break;
+        case ERROR:
+            // do nothing if we're in an ERROR state
             break;
         case FORCING_STOP:
             try {
@@ -591,13 +583,8 @@ public class StateTask
                 success = true;
             } catch (DAQCompException dce) {
                 LOG.error("Forced stop failed", dce);
-                success = false;
+                state = DAQState.ERROR;
                 caughtError = true;
-            }
-
-            if (!success) {
-                // revert to the previous state if forced stop failed
-                state = prevState;
             }
 
             break;
@@ -612,9 +599,11 @@ public class StateTask
                 doReset();
             } catch (DAQCompException dce) {
                 LOG.error("Reset failed", dce);
+                state = DAQState.ERROR;
                 caughtError = true;
             } catch (IOException ioe) {
                 LOG.error("Reset failed", ioe);
+                state = DAQState.ERROR;
                 caughtError = true;
             }
 
@@ -628,13 +617,8 @@ public class StateTask
                 success = true;
             } catch (DAQCompException dce) {
                 LOG.error("Start run failed", dce);
-                success = false;
+                state = DAQState.ERROR;
                 caughtError = true;
-            }
-
-            if (!success) {
-                // revert to the previous state if startRun failed
-                state = prevState;
             }
 
             break;
@@ -644,13 +628,8 @@ public class StateTask
                 success = true;
             } catch (DAQCompException dce) {
                 LOG.error("Stop run failed", dce);
-                success = false;
+                state = DAQState.ERROR;
                 caughtError = true;
-            }
-
-            if (!success) {
-                // revert to the previous state if stopRun failed
-                state = prevState;
             }
 
             break;
@@ -660,13 +639,8 @@ public class StateTask
                 success = true;
             } catch (DAQCompException dce) {
                 LOG.error("Switch run failed", dce);
-                success = false;
+                state = DAQState.ERROR;
                 caughtError = true;
-            }
-
-            if (!success) {
-                // revert to the previous state if switchRun failed
-                state = prevState;
             }
 
             break;
@@ -761,6 +735,7 @@ public class StateTask
         }
     }
 
+    @Override
     public String toString()
     {
         return "StateTask[" + state + "(prev=" + prevState + ")," +

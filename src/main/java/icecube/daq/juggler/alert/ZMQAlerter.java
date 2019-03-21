@@ -71,6 +71,7 @@ public class ZMQAlerter
     /**
      * Close any open files/sockets.
      */
+    @Override
     public void close()
     {
         synchronized (this) {
@@ -92,6 +93,7 @@ public class ZMQAlerter
      *
      * @return service name
      */
+    @Override
     public String getService()
     {
         return service;
@@ -102,6 +104,7 @@ public class ZMQAlerter
      *
      * @return <tt>true</tt> if this alerter will send messages
      */
+    @Override
     public boolean isActive()
     {
         return zmqHost != null && context != null;
@@ -199,6 +202,7 @@ public class ZMQAlerter
      *
      * @param obj object to send
      */
+    @Override
     public void sendObject(Object obj)
         throws AlertException
     {
@@ -307,6 +311,7 @@ public class ZMQAlerter
      * @param port - port number for 0MQ server
      * @throws AlertException if there is a problem with one of the parameters
      */
+    @Override
     public void setAddress(String host, int port)
         throws AlertException
     {
@@ -354,6 +359,7 @@ public class ZMQAlerter
      *
      * @return debugging string
      */
+    @Override
     public String toString()
     {
         return String.format("ZMQAlerter[%s]",

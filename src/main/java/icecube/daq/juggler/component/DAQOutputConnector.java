@@ -76,6 +76,9 @@ public class DAQOutputConnector
     public OutputChannel connect(IByteBufferCache bufMgr, Connection conn)
         throws IOException
     {
+        DAQComponentOutputProcess.ChannelRequirements channelRequirement =
+                engine.getChannelRequirement();
+
         InetSocketAddress addr =
             new InetSocketAddress(conn.getHost(), conn.getPort());
 
@@ -88,8 +91,17 @@ public class DAQOutputConnector
                                                conn.getPort(), uae);
         }
 
-        chan.configureBlocking(false);
-
+        switch (channelRequirement)
+        {
+            case NON_BLOCKING:
+                chan.configureBlocking(false);
+                break;
+            case BLOCKING:
+                chan.configureBlocking(true);
+                break;
+            default:
+                throw new Error("Unknown enum: " + channelRequirement);
+        }
         final String name = conn.getComponentName();
         final int num = conn.getComponentNumber();
 
@@ -114,6 +126,7 @@ public class DAQOutputConnector
      *
      * @throws Exception if there was a problem
      */
+    @Override
     public void destroy()
         throws Exception
     {
@@ -142,6 +155,7 @@ public class DAQOutputConnector
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void forcedStopProcessing()
         throws Exception
     {
@@ -153,6 +167,7 @@ public class DAQOutputConnector
      *
      * @return number of channels
      */
+    @Override
     public int getNumberOfChannels()
     {
         return engine.getNumberOfChannels();
@@ -163,6 +178,7 @@ public class DAQOutputConnector
      *
      * @return state string
      */
+    @Override
     public String getState()
     {
         return engine.getPresentState();
@@ -183,6 +199,7 @@ public class DAQOutputConnector
      *
      * @return <tt>true</tt>
      */
+    @Override
     public boolean isOutput()
     {
         return true;
@@ -193,6 +210,7 @@ public class DAQOutputConnector
      *
      * @return <tt>true</tt> if this connector is running
      */
+    @Override
     public boolean isRunning()
     {
         return engine.isRunning();
@@ -203,6 +221,7 @@ public class DAQOutputConnector
      *
      * @return <tt>true</tt> if this connector is stopped
      */
+    @Override
     public boolean isStopped()
     {
         return engine.isStopped();
@@ -213,6 +232,7 @@ public class DAQOutputConnector
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void start()
         throws Exception
     {
@@ -224,6 +244,7 @@ public class DAQOutputConnector
      *
      * @throws Exception if there is a problem
      */
+    @Override
     public void startProcessing()
         throws Exception
     {
@@ -235,6 +256,7 @@ public class DAQOutputConnector
      *
      * @return debugging string
      */
+    @Override
     public String toString()
     {
         return "OutConn[" + getType() + "=>" + engine + "]";

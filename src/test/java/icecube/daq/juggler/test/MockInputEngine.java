@@ -47,51 +47,61 @@ public class MockInputEngine
         throw new Error("Unimplemented");
     }
 
+    @Override
     public void destroyProcessor()
     {
         serving = false;
     }
 
+    @Override
     public void forcedStopProcessing()
     {
         running = false;
     }
 
+    @Override
     public int getNumberOfChannels()
     {
         throw new Error("Unimplemented");
     }
 
+    @Override
     public String getPresentState()
     {
         return state;
     }
 
+    @Override
     public int getServerPort()
     {
         return port;
     }
 
+    @Override
     public boolean isDestroyed()
     {
         return server == null;
     }
 
+    @Override
     public boolean isDisposing()
     {
         throw new Error("Unimplemented");
     }
 
+    @Override
     public boolean isRunning()
     {
         return running;
     }
 
+    @Override
     public boolean isStopped()
     {
         return !running;
     }
 
+    @Override
     public void registerComponentObserver(DAQComponentObserver x0)
     {
         throw new Error("Unimplemented");
@@ -102,21 +112,25 @@ public class MockInputEngine
         this.state = state;
     }
 
+    @Override
     public void start()
     {
         // do nothing
     }
 
+    @Override
     public void startDisposing()
     {
         throw new Error("Unimplemented");
     }
 
+    @Override
     public void startProcessing()
     {
         running = true;
     }
 
+    @Override
     public void startServer(IByteBufferCache x0)
         throws IOException
     {
@@ -139,6 +153,7 @@ public class MockInputEngine
             // do nothing
         }
 
+        @Override
         public void run()
         {
             serving = true;

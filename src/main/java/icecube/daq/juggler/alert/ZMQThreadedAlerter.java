@@ -67,6 +67,7 @@ public class ZMQThreadedAlerter
      *
      * @return <tt>true</tt> if this alerter will send messages
      */
+    @Override
     public boolean isActive()
     {
         return running;
@@ -77,6 +78,7 @@ public class ZMQThreadedAlerter
      *
      * @return service name
      */
+    @Override
     public String getService()
     {
         return service;
@@ -188,6 +190,7 @@ public class ZMQThreadedAlerter
      *
      * @param obj object to send
      */
+    @Override
     public void sendObject(Object obj)
         throws AlertException
     {
@@ -249,6 +252,7 @@ public class ZMQThreadedAlerter
     /**
      * Close any open files/sockets.
      */
+    @Override
     public void close()
     {
 	// multiple threads can call alert
@@ -275,6 +279,7 @@ public class ZMQThreadedAlerter
      * @param port - port number for IceCube Live server
      * @throws AlertException if there is a problem with one of the parameters
      */
+    @Override
     public void setAddress(String host, int port)
         throws AlertException
     {
@@ -305,6 +310,7 @@ public class ZMQThreadedAlerter
     }
 
 
+    @Override
     public void run() {
 	boolean update_socket=false;
 

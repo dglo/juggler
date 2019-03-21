@@ -15,16 +15,19 @@ public class Hello
         setMessage(message);
     }
 
+    @Override
     public void setMessage(String message)
     {
         this.message = message;
     }
 
+    @Override
     public String getMessage()
     {
         return message;
     }
 
+    @Override
     public void sayHello()
     {
         System.out.println(message);
