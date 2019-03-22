@@ -4,7 +4,6 @@ import icecube.daq.common.DAQCmdInterface;
 import icecube.daq.juggler.test.LogReader;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.juggler.test.MockCache;
-import icecube.daq.juggler.test.MockHandler;
 import icecube.daq.juggler.test.MockOutputEngine;
 import icecube.daq.util.LocatePDAQ;
 
@@ -49,7 +48,6 @@ public class DAQCompServerTest
 {
     private static final Logger LOG = Logger.getLogger(DAQCompServerTest.class);
 
-    private MockHandler handler;
     private File tmpDir;
 
     public DAQCompServerTest(String name)
@@ -96,8 +94,7 @@ public class DAQCompServerTest
 
         DAQCompServer.resetStaticValues();
 
-        handler = new MockHandler();
-        DAQCompServer.setDefaultLoggingConfiguration(getAppender(), handler);
+        DAQCompServer.setDefaultLoggingConfiguration(getAppender());
     }
 
     public static Test suite()

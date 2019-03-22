@@ -4,7 +4,6 @@ import icecube.daq.common.IDAQAppender;
 import icecube.daq.juggler.alert.AlertException;
 import icecube.daq.log.BasicAppender;
 import icecube.daq.log.DAQLogAppender;
-import icecube.daq.log.DAQLogHandler;
 import icecube.daq.log.LoggerOutputStream;
 import icecube.daq.util.FlasherboardConfiguration;
 import icecube.daq.util.LocatePDAQ;
@@ -25,9 +24,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Handler;
-import java.util.logging.SimpleFormatter;
-import java.util.logging.StreamHandler;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.FileAppender;
@@ -277,7 +273,6 @@ class LoggingConfiguration
     private int livePort;
     private File logFile;
     private IDAQAppender appender;
-    private Handler handler;
 
     LoggingConfiguration(String compName, Level logLevel)
         throws SocketException, UnknownHostException
@@ -307,13 +302,10 @@ class LoggingConfiguration
             appender =
                 new DAQLogAppender(compName, logLevel, logHost, logPort,
                                    liveHost, livePort);
-            handler =
-                new DAQLogHandler(compName, getUtilLevel(logLevel), logHost,
-                                  logPort, liveHost, livePort);
         }
     }
 
-    LoggingConfiguration(IDAQAppender appender, Handler handler, Level logLevel)
+    LoggingConfiguration(IDAQAppender appender, Level logLevel)
     {
         this.compName = null;
         this.logHost = null;
@@ -322,7 +314,6 @@ class LoggingConfiguration
         this.livePort = -1;
         this.logLevel = logLevel;
         this.appender = appender;
-        this.handler = handler;
     }
 
     void configure()
@@ -355,31 +346,6 @@ class LoggingConfiguration
         Logger.getLogger(getClass()).setLevel(logLevel);
     }
 
-    private java.util.logging.Level getUtilLevel(Level level)
-    {
-        if (level.equals(Level.ALL)) {
-            return java.util.logging.Level.ALL;
-        }
-
-        if (level.equals(Level.OFF)) {
-            return java.util.logging.Level.OFF;
-        }
-
-        if (level.toInt() > Level.WARN.toInt()) {
-            return java.util.logging.Level.SEVERE;
-        }
-
-        if (level.toInt() > Level.INFO.toInt()) {
-            return java.util.logging.Level.WARNING;
-        }
-
-        if (level.toInt() > Level.DEBUG.toInt()) {
-            return java.util.logging.Level.INFO;
-        }
-
-        return java.util.logging.Level.FINE;
-    }
-
     boolean matches(Level logLevel, String logHost, int logPort,
                     String liveHost, int livePort)
     {
@@ -406,7 +372,6 @@ class LoggingConfiguration
     void setBasic()
     {
         appender = new BasicAppender(logLevel);
-        handler = new StreamHandler(System.out, new SimpleFormatter());
     }
 
     @Override
@@ -1489,13 +1454,10 @@ public class DAQCompServer
      * Set the default logging configuration for unit testing.
      *
      * @param appender mock appender
-     * @param handler mock handler
      */
-    public static void setDefaultLoggingConfiguration(IDAQAppender appender,
-                                                      Handler handler)
+    public static void setDefaultLoggingConfiguration(IDAQAppender appender)
     {
-        defaultLogConfig =
-            new LoggingConfiguration(appender, handler, Level.WARN);
+        defaultLogConfig = new LoggingConfiguration(appender, Level.WARN);
     }
 
     /**
