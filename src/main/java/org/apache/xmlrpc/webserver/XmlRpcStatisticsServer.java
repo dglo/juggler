@@ -66,25 +66,33 @@ public class XmlRpcStatisticsServer
     public Object execute(XmlRpcRequest req)
         throws XmlRpcException
     {
-        final String name = req.getMethodName();
-
-        final String key;
-        if (!name.startsWith("xmlrpc.")) {
-            key = name;
-        } else {
-            key = name.substring(7);
-        }
-
-        // if this is a new method, create a new statistics object for it
-        if (!statDict.containsKey(key)) {
-            statDict.put(key, new RPCStat());
-        }
-
         final long start = System.nanoTime();
         try {
             return super.execute(req);
         } finally {
-            statDict.get(key).tally(start - System.nanoTime());
+            try {
+                final long stop = System.nanoTime();
+
+                final String name = req.getMethodName();
+
+                final String key;
+                if (name == null || !name.startsWith("xmlrpc.")) {
+                    key = name;
+                } else {
+                    key = name.substring(7);
+                }
+
+                if (key != null) {
+                    if (!statDict.containsKey(key)) {
+                        // add a new statistics object for this method
+                        statDict.put(key, new RPCStat());
+                    }
+
+                    statDict.get(key).tally(start - stop);
+                }
+            } catch (Throwable thr) {
+                // ignore failures in statistics-gathering code
+            }
         }
     }
 

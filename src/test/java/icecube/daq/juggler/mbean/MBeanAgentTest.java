@@ -107,6 +107,7 @@ public class MBeanAgentTest
 
         Object[] params = new Object[] { name };
         Object reply = client.execute("mbean.listGetters", params);
+
         assertNotNull("No response from mbean.listGetters", reply);
         assertTrue("Expected array, got " + reply.getClass().getName(),
                    reply.getClass().isArray());
@@ -184,14 +185,18 @@ public class MBeanAgentTest
     public void testXmlRpc()
         throws IOException, JMException, MBeanAgentException, XmlRpcException
     {
-        final String beanName = "hello";
+        if (!XMLRPCServer.TIME_RPC_CALLS) {
+            System.out.println("Not testing MBean timing");
+        } else {
+            final String beanName = "hello";
 
-        Hello bean = new Hello();
-        agent.addBean(beanName, bean);
+            Hello bean = new Hello();
+            agent.addBean(beanName, bean);
 
-        agent.start();
+            agent.start();
 
-        findBeanInXmlRpc(agent, beanName);
+            findBeanInXmlRpc(agent, beanName);
+        }
     }
 
     public void testDynamicMBean()

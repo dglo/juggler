@@ -35,6 +35,9 @@ class XMLRPCServer
     implements MBeanData, MBeanRegistration, NotificationListener,
                XMLRPCServerMBean
 {
+    /** If true, gather timing data for all MBean calls */
+    public static final boolean TIME_RPC_CALLS = false;
+
     private static final Logger LOG = Logger.getLogger(XMLRPCServer.class);
 
     private static ObjectName delegateName;
@@ -446,14 +449,21 @@ class XMLRPCServer
 
         MBeanHandler.setServer(this);
 
-        DAQWebServer tmpServer = new DAQWebServer("MBean", port);
+        XmlRpcServer xmlRpcServer;
+        if (TIME_RPC_CALLS) {
+            DAQWebServer tmpServer = new DAQWebServer("MBean", port);
 
-        XmlRpcStatisticsServer xmlRpcServer =
-            (XmlRpcStatisticsServer) tmpServer.getXmlRpcServer();
+            xmlRpcServer =
+                (XmlRpcStatisticsServer) tmpServer.getXmlRpcServer();
 
-        agent.addBean("xmlrpcServer", xmlRpcServer);
+            agent.addBean("xmlrpcServer", xmlRpcServer);
 
-        webServer = tmpServer;
+            webServer = tmpServer;
+        } else {
+            webServer = new WebServer(port);
+
+            xmlRpcServer = new XmlRpcServer();
+        }
 
         PropertyHandlerMapping phm = new PropertyHandlerMapping();
         try {
