@@ -36,7 +36,7 @@ class XMLRPCServer
                XMLRPCServerMBean
 {
     /** If true, gather timing data for all MBean calls */
-    public static final boolean TIME_RPC_CALLS = false;
+    public static final boolean TIME_MBEAN_CALLS = false;
 
     private static final Logger LOG = Logger.getLogger(XMLRPCServer.class);
 
@@ -450,7 +450,7 @@ class XMLRPCServer
         MBeanHandler.setServer(this);
 
         XmlRpcServer xmlRpcServer;
-        if (TIME_RPC_CALLS) {
+        if (TIME_MBEAN_CALLS) {
             DAQWebServer tmpServer = new DAQWebServer("MBean", port);
 
             xmlRpcServer =
@@ -462,7 +462,7 @@ class XMLRPCServer
         } else {
             webServer = new WebServer(port);
 
-            xmlRpcServer = new XmlRpcServer();
+            xmlRpcServer = webServer.getXmlRpcServer();
         }
 
         PropertyHandlerMapping phm = new PropertyHandlerMapping();

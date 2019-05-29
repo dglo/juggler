@@ -389,7 +389,7 @@ class LoggingConfiguration
  */
 public class DAQCompServer
 {
-    /** If true, gather timing data for all MBean calls */
+    /** If true, gather timing data for all XML-RPC calls */
     public static final boolean TIME_RPC_CALLS = false;
 
     /**
@@ -1276,9 +1276,27 @@ public class DAQCompServer
     private void runEverything(DAQComponent comp, URL cfgServerURL)
         throws DAQCompException
     {
-        WebServer webServer = startServer(comp);
+        WebServer webServer;
+        try {
+            webServer = startServer(comp);
+        } catch (Exception exc) {
+            LOG.error("Cannot start webserver for " + comp, exc);
+            throw exc;
+        }
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("XML-RPC on port " + webServer.getPort());
+        }
+
+        if (TIME_RPC_CALLS) {
+            try {
+                XmlRpcStatisticsServer statsServer =
+                    (XmlRpcStatisticsServer) webServer.getXmlRpcServer();
+
+                comp.addMBean("rpcServer", statsServer);
+            } catch (Throwable thr) {
+                LOG.error("Failed to add RPC statistics MBean", thr);
+            }
         }
 
         try {
@@ -1761,7 +1779,7 @@ public class DAQCompServer
             }
 
             // try the next port number
-            System.err.println("Port " + port + " is in use");
+            LOG.error("Port " + port + " is in use");
             port++;
         }
 
@@ -1780,7 +1798,7 @@ public class DAQCompServer
                 LOG.error("Failed to add RPC statistics MBean", thr);
             }
         } else {
-            server = new XmlRpcServer();
+            server = webServer.getXmlRpcServer();
         }
 
         PropertyHandlerMapping propMap = new PropertyHandlerMapping();

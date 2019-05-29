@@ -185,7 +185,7 @@ public class MBeanAgentTest
     public void testXmlRpc()
         throws IOException, JMException, MBeanAgentException, XmlRpcException
     {
-        if (!XMLRPCServer.TIME_RPC_CALLS) {
+        if (!XMLRPCServer.TIME_MBEAN_CALLS) {
             System.out.println("Not testing MBean timing");
         } else {
             final String beanName = "hello";
