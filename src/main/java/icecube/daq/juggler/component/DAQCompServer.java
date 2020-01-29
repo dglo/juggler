@@ -447,6 +447,9 @@ class LoggingConfiguration
  */
 public class DAQCompServer
 {
+    /** If true, gather timing data for all XML-RPC calls */
+    public static final boolean TIME_RPC_CALLS = false;
+
     /**
      * Frequency (in milliseconds) that config server is 'pinged' to
      * check that it's still alive.
@@ -1331,18 +1334,27 @@ public class DAQCompServer
     private void runEverything(DAQComponent comp, URL cfgServerURL)
         throws DAQCompException
     {
-        DAQWebServer webServer = startServer();
+        WebServer webServer;
+        try {
+            webServer = startServer(comp);
+        } catch (Exception exc) {
+            LOG.error("Cannot start webserver for " + comp, exc);
+            throw exc;
+        }
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("XML-RPC on port " + webServer.getPort());
         }
 
-        try {
-            XmlRpcStatisticsServer statsServer =
-                (XmlRpcStatisticsServer) webServer.getXmlRpcServer();
+        if (TIME_RPC_CALLS) {
+            try {
+                XmlRpcStatisticsServer statsServer =
+                    (XmlRpcStatisticsServer) webServer.getXmlRpcServer();
 
-            comp.addMBean("rpcServer", statsServer);
-        } catch (Throwable thr) {
-            LOG.error("Failed to add RPC statistics MBean", thr);
+                comp.addMBean("rpcServer", statsServer);
+            } catch (Throwable thr) {
+                LOG.error("Failed to add RPC statistics MBean", thr);
+            }
         }
 
         try {
@@ -1798,7 +1810,7 @@ public class DAQCompServer
      *
      * @throws DAQCompException if there is a problem
      */
-    private DAQWebServer startServer()
+    private WebServer startServer(DAQComponent comp)
         throws DAQCompException
     {
         int port;
@@ -1814,22 +1826,41 @@ public class DAQCompServer
             throw new DAQCompException("Couldn't search for port", ex);
         }
 
-        DAQWebServer webServer;
+        WebServer webServer;
+
         while (true) {
-            webServer = new DAQWebServer("DAQ-RPC", port);
-            try {
-                webServer.start();
-                break;
-            } catch (BindException be) {
-                System.err.println("Port " + port + " is in use");
-                port++;
-            } catch (IOException ioe) {
-                throw new DAQCompException("Couldn't start web server", ioe);
+            if (TIME_RPC_CALLS) {
+                webServer = new DAQWebServer("DAQ-RPC", port);
+            } else {
+                webServer = new WebServer(port);
             }
+
+            if (startServerInternal(webServer)) {
+                break;
+            }
+
+            // try the next port number
+            LOG.error("Port " + port + " is in use");
+            port++;
         }
 
-        XmlRpcStatisticsServer server =
-            (XmlRpcStatisticsServer) webServer.getXmlRpcServer();
+        XmlRpcServer server;
+        if (TIME_RPC_CALLS) {
+            server = ((DAQWebServer) webServer).getXmlRpcServer();
+            if (!(server instanceof XmlRpcStatisticsServer)) {
+                throw new DAQCompException("Expected XmlRpcStatisticsServer," +
+                                           " not " +
+                                           server.getClass().getName());
+            }
+
+            try {
+                comp.addMBean("rpcServer", server);
+            } catch (Throwable thr) {
+                LOG.error("Failed to add RPC statistics MBean", thr);
+            }
+        } else {
+            server = webServer.getXmlRpcServer();
+        }
 
         PropertyHandlerMapping propMap = new PropertyHandlerMapping();
         try {
@@ -1846,6 +1877,20 @@ public class DAQCompServer
         serverConfig.setContentLengthOptional(false);
 
         return webServer;
+    }
+
+    private static boolean startServerInternal(WebServer server)
+        throws DAQCompException
+    {
+        try {
+            server.start();
+        } catch (BindException be) {
+            return false;
+        } catch (IOException ioe) {
+            throw new DAQCompException("Couldn't start web server", ioe);
+        }
+
+        return true;
     }
 
     /**
