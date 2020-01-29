@@ -6,6 +6,7 @@ public class DAQWebServer
     extends WebServer
 {
     private String name;
+
     public DAQWebServer(String name, int port)
     {
         super(port);
@@ -13,6 +14,7 @@ public class DAQWebServer
     }
 
     String getThreadPrefix() { return name; }
+
     protected XmlRpcStreamServer newXmlRpcStreamServer()
     {
         return new XmlRpcStatisticsServer(this);

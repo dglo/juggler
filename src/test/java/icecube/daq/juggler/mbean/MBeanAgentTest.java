@@ -107,6 +107,7 @@ public class MBeanAgentTest
 
         Object[] params = new Object[] { name };
         Object reply = client.execute("mbean.listGetters", params);
+
         assertNotNull("No response from mbean.listGetters", reply);
         assertTrue("Expected array, got " + reply.getClass().getName(),
                    reply.getClass().isArray());
