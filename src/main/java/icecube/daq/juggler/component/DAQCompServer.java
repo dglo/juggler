@@ -343,7 +343,7 @@ class LoggingConfiguration
         }
 
         // set the logging level
-        Logger.getLogger(getClass()).setLevel(logLevel);
+        Logger.getRootLogger().setLevel(logLevel);
     }
 
     boolean matches(Level logLevel, String logHost, int logPort,
