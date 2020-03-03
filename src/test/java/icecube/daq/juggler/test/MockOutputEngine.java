@@ -3,7 +3,7 @@ package icecube.daq.juggler.test;
 import icecube.daq.io.DAQComponentObserver;
 import icecube.daq.io.DAQComponentOutputProcess;
 import icecube.daq.io.OutputChannel;
-import icecube.daq.io.PayloadTransmitChannel;
+import icecube.daq.io.QueuedOutputChannel;
 import icecube.daq.payload.IByteBufferCache;
 
 import java.io.IOException;
@@ -25,14 +25,14 @@ public class MockOutputEngine
     {
     }
 
-    public PayloadTransmitChannel addDataChannel(WritableByteChannel chan,
+    public QueuedOutputChannel addDataChannel(WritableByteChannel chan,
                                                  IByteBufferCache bufMgr,
                                                  String name)
     {
         return addDataChannel(chan, bufMgr, name, Integer.MAX_VALUE);
     }
 
-    public PayloadTransmitChannel addDataChannel(WritableByteChannel chan,
+    public QueuedOutputChannel addDataChannel(WritableByteChannel chan,
                                                  IByteBufferCache bufMgr,
                                                  String name,
                                                  int maxDepth)
@@ -40,14 +40,14 @@ public class MockOutputEngine
         throw new Error("Unimplemented");
     }
 
-    public PayloadTransmitChannel connect(IByteBufferCache cache,
+    public QueuedOutputChannel connect(IByteBufferCache cache,
                                           WritableByteChannel chan, int srcId)
         throws IOException
     {
         return connect(cache, chan, srcId, Integer.MAX_VALUE);
     }
 
-    public PayloadTransmitChannel connect(IByteBufferCache cache,
+    public QueuedOutputChannel connect(IByteBufferCache cache,
                                           WritableByteChannel chan, int srcId,
                                           int maxDepth)
         throws IOException

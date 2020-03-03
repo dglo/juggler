@@ -1,7 +1,7 @@
 package icecube.daq.juggler.component;
 
 import icecube.daq.common.DAQCmdInterface;
-import icecube.daq.io.PayloadTransmitChannel;
+import icecube.daq.io.QueuedOutputChannel;
 import icecube.daq.juggler.test.LoggingCase;
 import icecube.daq.juggler.test.MockCache;
 import icecube.daq.juggler.test.MockInputEngine;
@@ -42,8 +42,8 @@ class BadOutputEngine
     }
 
     @Override
-    public PayloadTransmitChannel connect(IByteBufferCache cache,
-                                          WritableByteChannel chan, int srcId)
+    public QueuedOutputChannel connect(IByteBufferCache cache,
+                                       WritableByteChannel chan, int srcId)
         throws IOException
     {
         if (connEx != null) {

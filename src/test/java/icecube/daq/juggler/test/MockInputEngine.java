@@ -2,7 +2,6 @@ package icecube.daq.juggler.test;
 
 import icecube.daq.io.DAQComponentInputProcessor;
 import icecube.daq.io.DAQComponentObserver;
-import icecube.daq.io.PayloadReceiveChannel;
 import icecube.daq.payload.IByteBufferCache;
 
 import java.io.IOException;
@@ -38,12 +37,6 @@ public class MockInputEngine
         port = ssChan.socket().getLocalPort();
 
         ssChan.register(selector, SelectionKey.OP_ACCEPT);
-    }
-
-    public PayloadReceiveChannel addDataChannel(ReadableByteChannel x0,
-                                                IByteBufferCache x1)
-    {
-        throw new Error("Unimplemented");
     }
 
     @Override
