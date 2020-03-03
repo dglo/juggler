@@ -26,30 +26,30 @@ public class MockOutputEngine
     }
 
     public QueuedOutputChannel addDataChannel(WritableByteChannel chan,
-                                                 IByteBufferCache bufMgr,
-                                                 String name)
+                                              IByteBufferCache bufMgr,
+                                              String name)
     {
         return addDataChannel(chan, bufMgr, name, Integer.MAX_VALUE);
     }
 
     public QueuedOutputChannel addDataChannel(WritableByteChannel chan,
-                                                 IByteBufferCache bufMgr,
-                                                 String name,
-                                                 int maxDepth)
+                                              IByteBufferCache bufMgr,
+                                              String name,
+                                              int maxDepth)
     {
         throw new Error("Unimplemented");
     }
 
     public QueuedOutputChannel connect(IByteBufferCache cache,
-                                          WritableByteChannel chan, int srcId)
+                                       WritableByteChannel chan, int srcId)
         throws IOException
     {
         return connect(cache, chan, srcId, Integer.MAX_VALUE);
     }
 
     public QueuedOutputChannel connect(IByteBufferCache cache,
-                                          WritableByteChannel chan, int srcId,
-                                          int maxDepth)
+                                       WritableByteChannel chan, int srcId,
+                                       int maxDepth)
         throws IOException
     {
         connected = true;
