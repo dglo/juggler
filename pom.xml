@@ -99,7 +99,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.sun.jmdk</groupId>
+      <groupId>com.sun.jdmk</groupId>
       <artifactId>jmxtools</artifactId>
     </dependency>
 
