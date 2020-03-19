@@ -26,32 +26,26 @@ public class MockCache
     }
 
     @Override
-    public void flush()
-    {
-        // do nothing
-    }
-
-    @Override
-    public int getCurrentAquiredBuffers()
+    public int getCurrentAcquiredBuffers()
     {
         throw new Error("Unimplemented");
     }
 
     @Override
-    public long getCurrentAquiredBytes()
+    public long getCurrentAcquiredBytes()
     {
         throw new Error("Unimplemented");
     }
 
 
     @Override
-    public boolean getIsCacheBounded()
+    public boolean isCacheBounded()
     {
         throw new Error("Unimplemented");
     }
 
     @Override
-    public long getMaxAquiredBytes()
+    public long getMaxAcquiredBytes()
     {
         throw new Error("Unimplemented");
     }
@@ -88,12 +82,6 @@ public class MockCache
 
     @Override
     public boolean isBalanced()
-    {
-        throw new Error("Unimplemented");
-    }
-
-    @Override
-    public void receiveByteBuffer(ByteBuffer x0)
     {
         throw new Error("Unimplemented");
     }

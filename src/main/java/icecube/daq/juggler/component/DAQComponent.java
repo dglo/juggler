@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 17207 2018-11-08 16:08:59Z dglo $
+ * @version $Id: DAQComponent.java 17771 2020-03-19 22:06:07Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -575,10 +575,7 @@ public abstract class DAQComponent
     @Override
     public void flushCaches()
     {
-        Iterator iter = caches.values().iterator();
-        while (iter.hasNext()) {
-            ((IByteBufferCache) iter.next()).flush();
-        }
+        // VitreousBufferCaches don't need to be flushed
     }
 
     /**
