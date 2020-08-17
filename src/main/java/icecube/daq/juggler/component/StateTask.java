@@ -29,6 +29,7 @@ public class StateTask
     private Connection[] connectList;
     private String configName;
     private int startNumber;
+    private int startMode;
     private int switchNumber;
 
     StateTask(IComponent comp)
@@ -354,7 +355,7 @@ public class StateTask
         // haven't yet called stopping() for this run
         calledStopping = false;
 
-        comp.starting(startNumber);
+        comp.starting(startNumber, startMode);
 
         comp.startEngines();
 
@@ -659,7 +660,7 @@ public class StateTask
         this.state = state;
     }
 
-    void startRun(int runNumber)
+    void startRun(int runNumber, int domMode)
         throws DAQCompException
     {
         // ignore start command if already starting or running
@@ -675,6 +676,7 @@ public class StateTask
 
         synchronized (this) {
             startNumber = runNumber;
+            startMode = domMode;
             changeState(DAQState.STARTING);
         }
     }
@@ -743,7 +745,8 @@ public class StateTask
             (stateChanged ? "" : "!") + "stateChanged," +
             (calledStopping ? "" : "!") + "calledStopping," +
             "config=" + configName + "," +
-            "startNum=" + startNumber +
+            "startNum=" + startNumber + "," +
+            "startMode=" + startMode +
             "]";
     }
 }

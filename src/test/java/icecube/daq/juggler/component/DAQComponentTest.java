@@ -327,7 +327,7 @@ public class DAQComponentTest
                      DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state " + mockComp.getState() +
                      " after startRun",
@@ -384,7 +384,7 @@ public class DAQComponentTest
         testComp = mockComp;
 
         try {
-            mockComp.startRun(123);
+            mockComp.startRun(123, IComponent.DOMMODE_NORMAL);
             fail("Shouldn't be able to start newly created component");
         } catch (DAQCompException dce) {
             // expect failure
@@ -399,7 +399,7 @@ public class DAQComponentTest
         assertFalse("Unexpected error after connect", mockComp.isError());
 
         try {
-            mockComp.startRun(123);
+            mockComp.startRun(123, IComponent.DOMMODE_NORMAL);
             fail("Shouldn't be able to start unconfigured component");
         } catch (DAQCompException dce) {
             // expect failure
@@ -416,7 +416,7 @@ public class DAQComponentTest
                      DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -468,7 +468,7 @@ public class DAQComponentTest
                      DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after stopRun", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -499,7 +499,7 @@ public class DAQComponentTest
                      DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -536,7 +536,7 @@ public class DAQComponentTest
         assertTrue("Bad isStopped() value", testComp.isStopped());
         assertFalse("Unexpected error after configure", testComp.isError());
 
-        testComp.startRun(1);
+        testComp.startRun(1, IComponent.DOMMODE_NORMAL);
         testComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, testComp.getState());
@@ -584,7 +584,7 @@ public class DAQComponentTest
                    mockComp.wasConfiguringCalled());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -634,7 +634,7 @@ public class DAQComponentTest
                    mockComp.wasConfiguringCalled());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -918,7 +918,7 @@ public class DAQComponentTest
         assertEquals("Bad state after premature forcedStop",
                      DAQState.READY, mockComp.getState());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -960,7 +960,7 @@ public class DAQComponentTest
                      DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -1020,7 +1020,7 @@ public class DAQComponentTest
 
         assertNoLogMessages();
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after bad startRun",
                      DAQState.ERROR, mockComp.getState());
@@ -1105,7 +1105,7 @@ public class DAQComponentTest
                     if (i > 2) {
                         final DAQState startState = DAQState.STARTING;
 
-                        mockComp.startRun(1);
+                        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
                         mockComp.waitForStateChange(startState);
                         assertEquals("Bad state after startRun#" + i,
                                      DAQState.RUNNING,
@@ -1193,7 +1193,7 @@ public class DAQComponentTest
                    mockComp.wasConfiguringCalled());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -1267,7 +1267,7 @@ public class DAQComponentTest
                    mockComp.wasConfiguringCalled());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        mockComp.startRun(1);
+        mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
                      DAQState.RUNNING, mockComp.getState());
@@ -1356,7 +1356,7 @@ public class DAQComponentTest
                          DAQState.READY, mockComp.getState());
             assertFalse("Unexpected error after configure", mockComp.isError());
 
-            mockComp.startRun(1);
+            mockComp.startRun(1, IComponent.DOMMODE_NORMAL);
             mockComp.waitForStateChange(DAQState.STARTING);
             assertEquals("Bad state after startRun#" + i,
                          DAQState.RUNNING, mockComp.getState());

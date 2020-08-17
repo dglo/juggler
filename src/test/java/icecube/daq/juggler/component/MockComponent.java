@@ -204,7 +204,7 @@ public class MockComponent
     }
 
     @Override
-    public void starting(int runNumber)
+    public void starting(int runNumber, int domMode)
     {
         calledStarting = true;
     }

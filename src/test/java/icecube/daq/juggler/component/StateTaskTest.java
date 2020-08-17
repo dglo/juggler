@@ -313,11 +313,12 @@ class StateComponent
      * Perform any actions which should happen just before a run is started.
      *
      * @param runNumber new run number
+     * @param domMode either DOMMODE_NORMAL or DOMMODE_EXTENDED
      *
      * @throws DAQCompException if there is a problem starting the component
      */
     @Override
-    public void starting(int runNumber)
+    public void starting(int runNumber, int domMode)
         throws DAQCompException
     {
         didStarting = true;
@@ -489,7 +490,7 @@ public class StateTaskTest
                     st.reset();
                     break;
                 case DO_START_RUN:
-                    st.startRun(12345);
+                    st.startRun(12345, IComponent.DOMMODE_NORMAL);
                     break;
                 case DO_STOP_RUN:
                     st.stopRun();

@@ -9,6 +9,12 @@ import java.util.Set;
 
 public interface IComponent
 {
+    // NOTE: These values must match the Python RunData.DOMMODE_* values
+    /** Normal DOM mode */
+    public static final int DOMMODE_NORMAL = 0x1;
+    /** Extended DOM mode */
+    public static final int DOMMODE_EXTENDED = 0x2;
+
     /**
      * Configure a component using the specified configuration name.
      *
@@ -177,10 +183,11 @@ public interface IComponent
      * Perform any actions which should happen just before a run is started.
      *
      * @param runNumber new run number
+     * @param domMode either DOMMODE_NORMAL or DOMMODE_EXTENDED
      *
      * @throws DAQCompException if there is a problem starting the component
      */
-    void starting(int runNumber)
+    void starting(int runNumber, int domMode)
         throws DAQCompException;
 
     /**

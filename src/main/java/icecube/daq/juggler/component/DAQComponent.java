@@ -52,7 +52,7 @@ import org.w3c.dom.Element;
  * <li>stopRun()
  * </ol>
  *
- * @version $Id: DAQComponent.java 17771 2020-03-19 22:06:07Z dglo $
+ * @version $Id: DAQComponent.java 17851 2020-08-17 22:20:12Z dglo $
  */
 public abstract class DAQComponent
     implements IComponent
@@ -1263,10 +1263,11 @@ public abstract class DAQComponent
      * Start a run.
      *
      * @param runNumber run number
+     * @param domMode either DOMMODE_NORMAL or DOMMODE_EXTENDED
      *
      * @throws DAQCompException if there is a problem
      */
-    public final void startRun(int runNumber)
+    public final void startRun(int runNumber, int domMode)
         throws DAQCompException
     {
         if (taskDestroyed) {
@@ -1278,7 +1279,7 @@ public abstract class DAQComponent
             moniLocal.startMonitoring();
         }
 
-        stateTask.startRun(runNumber);
+        stateTask.startRun(runNumber, domMode);
 
         this.runNumber = runNumber;
     }
@@ -1316,11 +1317,12 @@ public abstract class DAQComponent
      * started.
      *
      * @param runNumber run number
+     * @param domMode either DOMMODE_NORMAL or DOMMODE_EXTENDED
      *
      * @throws DAQCompException if there is a problem starting the component
      */
     @Override
-    public void starting(int runNumber)
+    public void starting(int runNumber, int domMode)
         throws DAQCompException
     {
         // Override me!

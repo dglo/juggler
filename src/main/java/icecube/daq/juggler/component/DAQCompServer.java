@@ -1726,20 +1726,22 @@ public class DAQCompServer
      * XML-RPC method requesting the specified component to start a run.
      *
      * @param runNumber run number
+     * @param domMode either IComponent.DOMMODE_NORMAL or
+     *                IComponent.DOMMODE_EXTENDED
      *
      * @return <tt>"OK"</tt>
      *
      * @throws DAQCompException if component does not exist
      * @throws IOException if there was a problem starting the component
      */
-    public String startRun(int runNumber)
+    public String startRun(int runNumber, int domMode)
         throws DAQCompException, IOException
     {
         if (comp == null) {
             throw new DAQCompException("Component not found");
         }
 
-        comp.startRun(runNumber);
+        comp.startRun(runNumber, domMode);
 
         return "OK";
     }

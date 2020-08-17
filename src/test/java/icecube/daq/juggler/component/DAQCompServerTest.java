@@ -455,7 +455,7 @@ public class DAQCompServerTest
                      DAQState.READY, mockComp.getState());
         assertFalse("Unexpected error after forcedStop", mockComp.isError());
 
-        rtnVal = srvr.startRun(123);
+        rtnVal = srvr.startRun(123, IComponent.DOMMODE_NORMAL);
         assertEquals("Bad startRun() return value", "OK", rtnVal);
         mockComp.waitForStateChange(DAQState.STARTING);
         assertEquals("Bad state after startRun",
@@ -855,7 +855,7 @@ public class DAQCompServerTest
         MockServer srvr = new MockServer();
 
         try {
-            srvr.startRun(1);
+            srvr.startRun(1, IComponent.DOMMODE_NORMAL);
             fail("Should have failed due to null component");
         } catch (DAQCompException dce) {
             assertEquals("Unexpected exception",
@@ -1054,7 +1054,7 @@ public class DAQCompServerTest
                    mockComp.wasConfiguringCalled());
         assertFalse("Unexpected error after configure", mockComp.isError());
 
-        rtnVal = srvr.startRun(runNum);
+        rtnVal = srvr.startRun(runNum, IComponent.DOMMODE_NORMAL);
         assertEquals("Bad startRun() return value", "OK", rtnVal);
 
         mockComp.waitForStateChange(DAQState.STARTING);
